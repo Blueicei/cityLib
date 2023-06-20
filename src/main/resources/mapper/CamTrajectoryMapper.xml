@@ -25,6 +25,16 @@
         where
         car_number = #{carNumber,jdbcType=VARCHAR} order by photo_time
     </select>
+    <select id="listByTrajectoryDto" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from camtrajectory
+        where
+        car_number = #{param1} and
+        car_type = #{param2} and
+        photo_time between #{param3} and #{param4}
+        order by photo_time
+    </select>
     <insert id="insertAll">
         insert into camtrajectory
         (car_number, car_type, cam_id, direction,

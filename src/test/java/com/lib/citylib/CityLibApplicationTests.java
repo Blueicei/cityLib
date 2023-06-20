@@ -1,10 +1,11 @@
 package com.lib.citylib;
 
 
+import com.lib.citylib.camTra.dto.TrajectoryDto;
 import com.lib.citylib.camTra.mapper.CamTrajectoryMapper;
 import com.lib.citylib.camTra.model.CamTrajectory;
 import com.lib.citylib.camTra.model.CarTrajectory;
-import com.lib.citylib.camTra.service.impl.CamTrajectoryServiceImpl;
+import com.lib.citylib.camTra.service.CamTrajectoryService;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.flink.api.common.functions.FilterFunction;
 import org.apache.flink.api.common.functions.FlatMapFunction;
@@ -22,6 +23,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import javax.annotation.Resource;
 import java.io.*;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -33,7 +35,7 @@ class CityLibApplicationTests {
     @Resource
     private CamTrajectoryMapper camTrajectoryMapper;
     @Resource
-    private CamTrajectoryServiceImpl camTrajectoryServiceImpl;
+    private CamTrajectoryService camTrajectoryService;
 
     @Test
     void testCamTra() throws IOException {
@@ -46,6 +48,38 @@ class CityLibApplicationTests {
 //        camTrajectoryService.insert();
         List<CamTrajectory> camTraList = camTrajectoryMapper.selectAllByCarNumber("鲁AS599D-小型汽车号牌");
         for(CamTrajectory canTra : camTraList) {
+            System.out.printf(canTra.toString());
+        }
+    }
+    @Test
+    void test() throws Exception {
+//        CamTrajectory camTra = new CamTrajectory();
+//        camTra.setCarNumber("鲁AS599D");
+//        camTra.setCamId("3701033109");
+//        camTra.setDirection("由东向西");
+//        camTra.setPhotoTime(new Date(Long.parseLong("1612137859000")));
+//        camTrajectoryMapper.insertAll(camTra);
+//        camTrajectoryService.insert();
+        TrajectoryDto trajectoryDto = new TrajectoryDto();
+        List<String> carNumbers = new ArrayList<>();
+        carNumbers.add("0000652551");
+        List<String> carTypes = new ArrayList<>();
+        carTypes.add("农用运输车号牌");
+        List<String> camIds = new ArrayList<>();
+        carTypes.add("3701126286");
+        String trajectoryCut = "15";
+        trajectoryDto.setCarNumbers(carNumbers);
+        trajectoryDto.setCamIds(camIds);
+        trajectoryDto.setCarTypes(carTypes);
+        trajectoryDto.setTrajectoryCut(trajectoryCut);
+
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        Date startTime = sdf.parse("2021-2-1 0:00:00");
+        Date endTime = sdf.parse("2021-2-1 20:00:00");
+        trajectoryDto.setStartTime(startTime);
+        trajectoryDto.setEndTime(endTime);
+        List<CarTrajectory> camTraList = camTrajectoryService.listByTrajectoryDto(trajectoryDto);
+        for(CarTrajectory canTra : camTraList) {
             System.out.printf(canTra.toString());
         }
     }
@@ -74,7 +108,7 @@ class CityLibApplicationTests {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         Date startTime = sdf.parse("2021-2-1 0:00:00");
         Date endTime = sdf.parse("2021-2-1 20:00:00");
-        CarTrajectory carTra = camTrajectoryServiceImpl.listByCarNumberOrderInTimeRange("鲁A0000999046", startTime, endTime);
+        CarTrajectory carTra = camTrajectoryService.listByCarNumberOrderInTimeRange("鲁A0000999046", startTime, endTime);
         String carNumber = carTra.getCarNumber();
         String carType = carTra.getCarType();
         ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();

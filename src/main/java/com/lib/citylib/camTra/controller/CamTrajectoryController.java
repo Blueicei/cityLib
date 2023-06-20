@@ -4,12 +4,11 @@ import com.lib.citylib.camTra.dto.TrajectoryDto;
 import com.lib.citylib.camTra.model.CamTrajectory;
 import com.lib.citylib.camTra.model.CarTrajectory;
 import com.lib.citylib.camTra.service.CamTrajectoryService;
-import com.lib.citylib.camTra.service.impl.CamTrajectoryServiceImpl;
 
+
+import com.lib.citylib.camTra.utils.CommonResult;
 import io.swagger.annotations.ApiOperation;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.io.IOException;
@@ -34,10 +33,14 @@ public class CamTrajectoryController {
         return new CarTrajectory(carNumber, camTrajectoryService.listByCarNumber(carNumber));
     }
 
-    @ApiOperation(value = "查询车辆轨迹2",notes = "查询车辆轨迹")
-    @GetMapping("/searchCarTrajectory")
-    public List<CarTrajectory> camTraList2(TrajectoryDto trajectoryDto){
-        return camTrajectoryService.listByTrajectoryDto(trajectoryDto);
+    @ResponseBody
+    @PostMapping("/searchCarTrajectory")
+    public CommonResult camTraList2(@RequestBody TrajectoryDto trajectoryDto) throws Exception {
+        System.out.println(trajectoryDto);
+        List<CarTrajectory> camTrajectories = camTrajectoryService.listByTrajectoryDto(trajectoryDto);
+        if (camTrajectories.isEmpty())
+            return CommonResult.error();
+        return CommonResult.success(camTrajectories);
     }
 
     @GetMapping("/insert")

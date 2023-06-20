@@ -1,6 +1,8 @@
 package com.lib.citylib.camTra.mapper;
 import java.util.Date;
 import java.util.List;
+
+import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import com.lib.citylib.camTra.model.CamTrajectory;
@@ -15,7 +17,10 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 public interface CamTrajectoryMapper extends BaseMapper<CamTrajectory> {
     List<CamTrajectory> selectAllByCarNumber(@Param("carNumber") String carNumber);
 
-    List<CamTrajectory> searchAllByCarNumberOrderInTimeRange(@Param("carNumber") String carNumber, @Param("startTime") Date startTime, @Param("endtTime") Date endTime);
+    List<CamTrajectory> searchAllByCarNumberOrderInTimeRange(@Param("carNumber") String carNumber, @Param("startTime") Date startTime, @Param("endTime") Date endTime);
+
+    List<CamTrajectory> listByTrajectoryDto(@Param("carNumber") String carNumber, @Param("carType") String carType, @Param("startTime") Date startTime, @Param("endTime") Date endTime);
+
     int insertAll(CamTrajectory camTrajectory);
 
 }

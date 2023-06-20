@@ -48,7 +48,6 @@ public class CamTrajectory implements Serializable {
      * 
      */
     private Double camLat;
-
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 

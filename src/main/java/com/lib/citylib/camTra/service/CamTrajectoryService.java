@@ -1,16 +1,268 @@
 package com.lib.citylib.camTra.service;
 
 import com.lib.citylib.camTra.dto.TrajectoryDto;
+import com.lib.citylib.camTra.mapper.CamTrajectoryMapper;
 import com.lib.citylib.camTra.model.CamTrajectory;
 import com.lib.citylib.camTra.model.CarTrajectory;
+import com.opencsv.CSVReader;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.flink.api.common.functions.FilterFunction;
+import org.apache.flink.api.common.functions.FlatMapFunction;
+import org.apache.flink.api.common.functions.MapFunction;
+import org.apache.flink.api.common.functions.ReduceFunction;
+import org.apache.flink.api.common.operators.Order;
+import org.apache.flink.api.java.DataSet;
+import org.apache.flink.api.java.ExecutionEnvironment;
+import org.apache.flink.util.Collector;
+import org.springframework.stereotype.Service;
 
-import java.io.IOException;
+import javax.annotation.Resource;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
-public interface CamTrajectoryService {
-    public List<CamTrajectory> listByCarNumber(String carNumber);
-    public CarTrajectory listByCarNumberOrderInTimeRange(String carNumber, Date startTime, Date endtTime);
-    public List<CarTrajectory> listByTrajectoryDto(TrajectoryDto trajectoryDto);
-    public void insert() throws IOException;
+@Service
+public class CamTrajectoryService {
+    @Resource
+    private CamTrajectoryMapper camTrajectoryMapper;
+
+    public List<CamTrajectory> listByCarNumber(String carNumber) {
+        return camTrajectoryMapper.selectAllByCarNumber(carNumber);
+    }
+
+    public CarTrajectory listByCarNumberOrderInTimeRange(String carNumber, Date startTime, Date endtTime) {
+        List<CamTrajectory> camTraList = camTrajectoryMapper.searchAllByCarNumberOrderInTimeRange(carNumber, startTime, endtTime);
+        if (camTraList.size() > 0) {
+            String carType = camTraList.get(0).getCarType();
+            return new CarTrajectory(carNumber, carType, camTraList);
+        }
+        return new CarTrajectory(carNumber, new ArrayList<CamTrajectory>());
+    }
+
+    public List<CarTrajectory> listByTrajectoryDto(TrajectoryDto trajectoryDto) throws Exception {
+        if (trajectoryDto.getCarTypes().isEmpty())
+            return new ArrayList<CarTrajectory>();
+        List<CarTrajectory> carTrajectories = new ArrayList<>();
+        for (int i = 0; i < trajectoryDto.getCarNumbers().size(); i++) {
+            for (int j = 0; j < trajectoryDto.getCarTypes().size(); j++) {
+                List<CamTrajectory> camTrajectories = camTrajectoryMapper.listByTrajectoryDto(
+                        trajectoryDto.getCarNumbers().get(i),
+                        trajectoryDto.getCarTypes().get(j),
+                        trajectoryDto.getStartTime(),
+                        trajectoryDto.getEndTime()
+                );
+
+                if (camTrajectories.size() > 0) {
+                    String carType = camTrajectories.get(0).getCarType();
+                    String carNumber = camTrajectories.get(0).getCarNumber();
+                    CarTrajectory carTrajectory = new CarTrajectory(carNumber, carType, camTrajectories);
+                    System.out.println(carTrajectory.getPoints().get(0).getCamId());
+//                    System.out.println(carTrajectory.getPoints());
+
+                    ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
+                    DataSet<CamTrajectory> points = env.fromCollection(carTrajectory.getPoints()).name("row-camtra-points");
+
+                    //carTrajectories.add(carTrajectory);
+                    DataSet<CarTrajectory> newPoints = points.filter(new LonLatNotNullFilter()).
+                            sortPartition(CamTrajectory::getPhotoTime, Order.ASCENDING).
+                            map(new PointListMap()).
+                            reduce(new MergePoints()).
+                            flatMap(new CutPointsToTrajectory(trajectoryDto.getTrajectoryCut())).
+                            filter((List<CamTrajectory> l1) -> {return l1.size() > 2;}).
+                            map(new PointListToTraMap()).
+//                            filter((CarTrajectory c) -> {
+//                                for (CamTrajectory point : c.getPoints()) {
+//                                    if (trajectoryDto.getCamIds().contains(point.getCamId())) {
+//                                        return true;
+//                                    }
+//                                }
+//                                return false;
+//                            }).
+//                            filter((CarTrajectory c) -> {return c.getCarNumber().contains("鲁A");}).
+//                            filter((CarTrajectory c) -> {return ArrayUtils.contains(new String[]{"小型汽车号牌", "小型新能源汽车号牌"}, c.getCarType());}).
+//                            filter((CarTrajectory c) -> {return c.getDistance() > 2000;}).
+                            name("points-to-trajectory");
+
+                    List<CarTrajectory> newTraList = newPoints.collect();
+                    System.out.printf(newTraList.toString());
+                    carTrajectories.addAll(newTraList);
+                }
+
+            }
+        }
+
+        return carTrajectories;
+    }
+
+    public void insert() throws IOException {
+        File dir = new File("D:\\workspace_py\\TrajMatchV1\\data\\202102");
+        File[] files = dir.listFiles();
+        for (File fileName : files) {
+            try (FileInputStream fis = new FileInputStream(fileName);
+                 InputStreamReader isr = new InputStreamReader(fis,
+                         StandardCharsets.UTF_8);
+                 CSVReader reader = new CSVReader(isr)) {
+                String[] nextLine;
+                while ((nextLine = reader.readNext()) != null) {
+                    String carNumber = nextLine[0].split("-")[0];
+                    String carType = nextLine[0].split("-")[1];
+                    String[] pointList = Arrays.copyOfRange(nextLine, 1, nextLine.length);
+//                    System.out.format("%s\n", carNumber);
+                    for (String point : pointList) {
+                        String camId = point.split("-")[0];
+                        String direction = point.split("-")[1].split("@")[0];
+                        String photoTime = point.split("@")[1];
+//                        System.out.format("%s %s %s\n", camId, direction, photoTime);
+                        CamTrajectory camTra = new CamTrajectory();
+                        camTra.setCarNumber(carNumber);
+                        camTra.setCarType(carType);
+                        camTra.setCamId(camId);
+                        camTra.setDirection(direction);
+                        camTra.setPhotoTime(new Date(Long.parseLong(photoTime)));
+                        camTrajectoryMapper.insertAll(camTra);
+                    }
+                }
+                System.exit(0);
+            }
+        }
+    }
+    public static class LonLatNotNullFilter implements FilterFunction<CamTrajectory> {
+
+        @Override
+        public boolean filter(CamTrajectory camTrajectory) throws Exception {
+            return camTrajectory.getCamLon() != null && camTrajectory.getCamLat() != null;
+        }
+    }
+    public static class PointListToTraMap implements MapFunction<List<CamTrajectory>, CarTrajectory> {
+
+        @Override
+        public CarTrajectory map(List<CamTrajectory> camTrajectories) throws Exception {
+            String carNumber = camTrajectories.get(0).getCarNumber();
+            String carType = camTrajectories.get(0).getCarType();
+            Double distance = 0.0d;
+            for (int i = 1; i < camTrajectories.size(); i++){
+                CamTrajectory beforePoint = camTrajectories.get(i-1);
+                CamTrajectory afterPoint = camTrajectories.get(i);
+                distance += GetDistance(beforePoint.getCamLon(), beforePoint.getCamLat(), afterPoint.getCamLon(), afterPoint.getCamLat());
+            }
+            Date startTime = camTrajectories.get(0).getPhotoTime();
+            Date endTime = camTrajectories.get(camTrajectories.size()-1).getPhotoTime();
+            Long timeInterval = (endTime.getTime() - startTime.getTime()) / 1000;
+            return new CarTrajectory(carNumber, carType, camTrajectories,distance, startTime, endTime, timeInterval);
+        }
+    }
+    public static class PointListMap implements MapFunction<CamTrajectory, List<CamTrajectory>> {
+
+        @Override
+        public List<CamTrajectory> map(CamTrajectory camTrajectory) throws Exception {
+            List<CamTrajectory> tempPoints = new ArrayList<>();
+            tempPoints.add(camTrajectory);
+            return tempPoints;
+        }
+    }
+
+    public static class MergePoints implements ReduceFunction<List<CamTrajectory>> {
+
+        @Override
+        public List<CamTrajectory> reduce(List<CamTrajectory> camTrajectories, List<CamTrajectory> t1) throws Exception {
+            camTrajectories.add(t1.get(0));
+            return camTrajectories;
+        }
+    }
+    public static class CutPointsToTrajectory implements FlatMapFunction<List<CamTrajectory>, List<CamTrajectory>> {
+        private int trajectoryCut = 0; // 自定义间隔时间（单位：毫秒）
+
+        public CutPointsToTrajectory(int trajectoryCut) {
+            this.trajectoryCut = trajectoryCut;
+        }
+        @Override
+        public void flatMap(List<CamTrajectory> camTrajectories, Collector<List<CamTrajectory>> collector) throws Exception {
+//            System.out.println(this.trajectoryCut);
+            List<CamTrajectory> tempPoints = new ArrayList<>();
+            CamTrajectory beforePoint = camTrajectories.get(0);
+            tempPoints.add(beforePoint);
+            for (int i = 1; i < camTrajectories.size(); i++){
+                CamTrajectory afterPoint = camTrajectories.get(i);
+//                System.out.println(afterPoint.getPhotoTime().getTime());
+//                System.out.println(beforePoint.getPhotoTime().getTime());
+//                System.out.println(afterPoint.getPhotoTime().getTime() - beforePoint.getPhotoTime().getTime());
+                if ((afterPoint.getPhotoTime().getTime() - beforePoint.getPhotoTime().getTime()) / (1000 * 60) > trajectoryCut) {
+                    collector.collect(tempPoints);
+                    tempPoints.clear();
+                    tempPoints.add(afterPoint);
+                }
+                else {
+                    tempPoints.add(afterPoint);
+                }
+                beforePoint = afterPoint;
+            }
+            collector.collect(tempPoints);
+        }
+
+    }
+    public static <T> void FileWriteList(String path, List<T> list) {
+        try {
+            BufferedWriter bufferedWriter = new BufferedWriter(
+                    new OutputStreamWriter(new FileOutputStream(path), "UTF-8"));
+            for (T s : list) {
+                bufferedWriter.write(s.toString());
+                bufferedWriter.newLine();
+                bufferedWriter.flush();
+            }
+            bufferedWriter.close();
+        } catch (UnsupportedEncodingException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (FileNotFoundException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+
+    public static class Enrichment implements MapFunction<CamTrajectory, CarTrajectory> {
+
+        @Override
+        public CarTrajectory map(CamTrajectory camTrajectory) throws Exception {
+            return new CarTrajectory(camTrajectory.getCarNumber(), camTrajectory);
+        }
+    }
+    public static class AggregatePoints implements ReduceFunction<CarTrajectory> {
+        @Override
+        public CarTrajectory reduce(CarTrajectory carTrajectory, CarTrajectory t1) throws Exception {
+            return carTrajectory.mergePoint(t1);
+        }
+    }
+    private static double EARTH_RADIUS = 6371000;//赤道半径(单位m)
+
+    /**
+     * 转化为弧度(rad)
+     * */
+    private static double rad(double d)
+    {
+        return d * Math.PI / 180.0;
+    }
+    /**
+     * @param lon1 第一点的精度
+     * @param lat1 第一点的纬度
+     * @param lon2 第二点的精度
+     * @param lat2 第二点的纬度
+     * @return 返回的距离，单位m
+     * */
+    public static double GetDistance(double lon1,double lat1,double lon2, double lat2) {
+        double radLat1 = rad(lat1);
+        double radLat2 = rad(lat2);
+        double a = radLat1 - radLat2;
+        double b = rad(lon1) - rad(lon2);
+        double s = 2 * Math.asin(Math.sqrt(Math.pow(Math.sin(a / 2), 2) + Math.cos(radLat1) * Math.cos(radLat2) * Math.pow(Math.sin(b / 2), 2)));
+        s = s * EARTH_RADIUS;
+        s = Math.round(s * 10000) / 10000;
+        return s;
+    }
+
 }
