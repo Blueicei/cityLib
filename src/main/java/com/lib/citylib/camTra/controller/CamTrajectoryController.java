@@ -1,8 +1,10 @@
 package com.lib.citylib.camTra.controller;
 
+import com.lib.citylib.camTra.dto.TrajectoryDto;
 import com.lib.citylib.camTra.model.CamTrajectory;
 import com.lib.citylib.camTra.model.CarTrajectory;
 import com.lib.citylib.camTra.service.CamTrajectoryService;
+import com.lib.citylib.camTra.service.impl.CamTrajectoryServiceImpl;
 
 import io.swagger.annotations.ApiOperation;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -30,6 +32,12 @@ public class CamTrajectoryController {
     @GetMapping("/listByCarNum1")
     public CarTrajectory camTraList1(String carNumber){
         return new CarTrajectory(carNumber, camTrajectoryService.listByCarNumber(carNumber));
+    }
+
+    @ApiOperation(value = "查询车辆轨迹2",notes = "查询车辆轨迹")
+    @GetMapping("/searchCarTrajectory")
+    public List<CarTrajectory> camTraList2(TrajectoryDto trajectoryDto){
+        return camTrajectoryService.listByTrajectoryDto(trajectoryDto);
     }
 
     @GetMapping("/insert")

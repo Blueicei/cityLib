@@ -4,7 +4,7 @@ package com.lib.citylib;
 import com.lib.citylib.camTra.mapper.CamTrajectoryMapper;
 import com.lib.citylib.camTra.model.CamTrajectory;
 import com.lib.citylib.camTra.model.CarTrajectory;
-import com.lib.citylib.camTra.service.CamTrajectoryService;
+import com.lib.citylib.camTra.service.impl.CamTrajectoryServiceImpl;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.flink.api.common.functions.FilterFunction;
 import org.apache.flink.api.common.functions.FlatMapFunction;
@@ -33,7 +33,7 @@ class CityLibApplicationTests {
     @Resource
     private CamTrajectoryMapper camTrajectoryMapper;
     @Resource
-    private CamTrajectoryService camTrajectoryService;
+    private CamTrajectoryServiceImpl camTrajectoryServiceImpl;
 
     @Test
     void testCamTra() throws IOException {
@@ -74,7 +74,7 @@ class CityLibApplicationTests {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         Date startTime = sdf.parse("2021-2-1 0:00:00");
         Date endTime = sdf.parse("2021-2-1 20:00:00");
-        CarTrajectory carTra = camTrajectoryService.listByCarNumberOrderInTimeRange("鲁A0000999046", startTime, endTime);
+        CarTrajectory carTra = camTrajectoryServiceImpl.listByCarNumberOrderInTimeRange("鲁A0000999046", startTime, endTime);
         String carNumber = carTra.getCarNumber();
         String carType = carTra.getCarType();
         ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
