@@ -19,6 +19,7 @@ public class CamTrajectoryController {
     @Resource
     private CamTrajectoryService camTrajectoryService;
 
+
     @ApiOperation(value = "查询车辆轨迹",notes = "根据车牌号查询车辆轨迹")
     @GetMapping("/listByCarNum")
     public List<CamTrajectory> camTraList(String carNumber){
