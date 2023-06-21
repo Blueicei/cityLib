@@ -68,38 +68,38 @@ class CityLibApplicationTests {
             System.out.printf(canTra.toString());
         }
     }
-    @Test
-    void test() throws Exception {
-//        CamTrajectory camTra = new CamTrajectory();
-//        camTra.setCarNumber("鲁AS599D");
-//        camTra.setCamId("3701033109");
-//        camTra.setDirection("由东向西");
-//        camTra.setPhotoTime(new Date(Long.parseLong("1612137859000")));
-//        camTrajectoryMapper.insertAll(camTra);
-//        camTrajectoryService.insert();
-        TrajectoryDto trajectoryDto = new TrajectoryDto();
-        List<String> carNumbers = new ArrayList<>();
-        carNumbers.add("0000652551");
-        List<String> carTypes = new ArrayList<>();
-        carTypes.add("农用运输车号牌");
-        List<String> camIds = new ArrayList<>();
-        carTypes.add("3701126286");
-        String trajectoryCut = "15";
-        trajectoryDto.setCarNumbers(carNumbers);
-        trajectoryDto.setCamIds(camIds);
-        trajectoryDto.setCarTypes(carTypes);
-        trajectoryDto.setTrajectoryCut(trajectoryCut);
-
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        Date startTime = sdf.parse("2021-2-1 0:00:00");
-        Date endTime = sdf.parse("2021-2-1 20:00:00");
-        trajectoryDto.setStartTime(startTime);
-        trajectoryDto.setEndTime(endTime);
-        List<CarTrajectory> camTraList = camTrajectoryService.listByTrajectoryDto(trajectoryDto);
-        for(CarTrajectory canTra : camTraList) {
-            System.out.printf(canTra.toString());
-        }
-    }
+//    @Test
+//    void test() throws Exception {
+////        CamTrajectory camTra = new CamTrajectory();
+////        camTra.setCarNumber("鲁AS599D");
+////        camTra.setCamId("3701033109");
+////        camTra.setDirection("由东向西");
+////        camTra.setPhotoTime(new Date(Long.parseLong("1612137859000")));
+////        camTrajectoryMapper.insertAll(camTra);
+////        camTrajectoryService.insert();
+//        TrajectoryDto trajectoryDto = new TrajectoryDto();
+//        List<String> carNumbers = new ArrayList<>();
+//        carNumbers.add("0000652551");
+//        List<String> carTypes = new ArrayList<>();
+//        carTypes.add("农用运输车号牌");
+//        List<String> camIds = new ArrayList<>();
+//        carTypes.add("3701126286");
+//        String trajectoryCut = "15";
+//        trajectoryDto.setCarNumbers(carNumbers);
+//        trajectoryDto.setCamIds(camIds);
+//        trajectoryDto.setCarTypes(carTypes);
+//        trajectoryDto.setTrajectoryCut(trajectoryCut);
+//
+//        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+//        Date startTime = sdf.parse("2021-2-1 0:00:00");
+//        Date endTime = sdf.parse("2021-2-1 20:00:00");
+//        trajectoryDto.setStartTime(startTime);
+//        trajectoryDto.setEndTime(endTime);
+//        List<CarTrajectory> camTraList = camTrajectoryService.listByTrajectoryDto(trajectoryDto);
+//        for(CarTrajectory canTra : camTraList) {
+//            System.out.printf(canTra.toString());
+//        }
+//    }
 
     @Test
     void  testStreamFlink() throws Exception {
