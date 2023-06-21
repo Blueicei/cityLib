@@ -71,7 +71,6 @@ class CityLibApplicationTests {
         trajectoryDto.setCarNumbers(carNumbers);
         trajectoryDto.setCamIds(camIds);
         trajectoryDto.setCarTypes(carTypes);
-        trajectoryDto.setTrajectoryCut(trajectoryCut);
 
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         Date startTime = sdf.parse("2021-2-1 0:00:00");
