@@ -35,6 +35,23 @@ class CityLibApplicationTests {
     @Resource
     private CamTrajectoryService camTrajectoryService;
 
+    //v1
+//    @Test
+//    void testCamTra() throws IOException {
+////        CamTrajectory camTra = new CamTrajectory();
+////        camTra.setCarNumber("鲁AS599D");
+////        camTra.setCamId("3701033109");
+////        camTra.setDirection("由东向西");
+////        camTra.setPhotoTime(new Date(Long.parseLong("1612137859000")));
+////        camTrajectoryMapper.insertAll(camTra);
+////        camTrajectoryService.insert();
+//        List<CamTrajectory> camTraList = camTrajectoryMapper.selectAllByCarNumber("鲁AS599D-小型汽车号牌");
+//        for(CamTrajectory canTra : camTraList) {
+//            System.out.printf(canTra.toString());
+//        }
+//    }
+
+    //v2
     @Test
     void testCamTra() throws IOException {
 //        CamTrajectory camTra = new CamTrajectory();
