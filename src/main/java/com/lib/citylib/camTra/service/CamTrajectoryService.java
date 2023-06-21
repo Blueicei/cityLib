@@ -19,10 +19,9 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 @Service
 public class CamTrajectoryService {
@@ -42,15 +41,16 @@ public class CamTrajectoryService {
         return new CarTrajectory(carNumber, new ArrayList<CamTrajectory>());
     }
 
+    //可优化性能？
     public List<CarTrajectory> listByTrajectoryDto(TrajectoryDto trajectoryDto) throws Exception {
         if (trajectoryDto.getCarTypes().isEmpty())
             return new ArrayList<CarTrajectory>();
         List<CarTrajectory> carTrajectories = new ArrayList<>();
-        for (int i = 0; i < trajectoryDto.getCarNumbers().size(); i++) {
-            for (int j = 0; j < trajectoryDto.getCarTypes().size(); j++) {
+//        for (int i = 0; i < trajectoryDto.getCarNumbers().size(); i++) {
+            for (int j = 0; j < trajectoryDto.getCarNumbers().size(); j++) {
                 List<CamTrajectory> camTrajectories = camTrajectoryMapper.listByTrajectoryDto(
-                        trajectoryDto.getCarNumbers().get(i),
-                        trajectoryDto.getCarTypes().get(j),
+                        trajectoryDto.getCarNumbers().get(j),
+//                        trajectoryDto.getCarTypes().get(j),
                         trajectoryDto.getStartTime(),
                         trajectoryDto.getEndTime()
                 );
@@ -59,31 +59,30 @@ public class CamTrajectoryService {
                     String carType = camTrajectories.get(0).getCarType();
                     String carNumber = camTrajectories.get(0).getCarNumber();
                     CarTrajectory carTrajectory = new CarTrajectory(carNumber, carType, camTrajectories);
-                    System.out.println(carTrajectory.getPoints().get(0).getCamId());
+////                    System.out.println(carTrajectory.getPoints().get(0).getCamId());
 //                    System.out.println(carTrajectory.getPoints());
 
                     ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
                     DataSet<CamTrajectory> points = env.fromCollection(carTrajectory.getPoints()).name("row-camtra-points");
 
                     //carTrajectories.add(carTrajectory);
-                    DataSet<CarTrajectory> newPoints = points.filter(new LonLatNotNullFilter()).
+                    DataSet<CarTrajectory> newPoints = points.
+                            filter((CamTrajectory c) -> trajectoryDto.getCarTypes().contains(c.getCarType())).
+                            filter(new LonLatNotNullFilter()).
                             sortPartition(CamTrajectory::getPhotoTime, Order.ASCENDING).
                             map(new PointListMap()).
                             reduce(new MergePoints()).
                             flatMap(new CutPointsToTrajectory(trajectoryDto.getTrajectoryCut())).
-                            filter((List<CamTrajectory> l1) -> {return l1.size() > 2;}).
+                            filter((List<CamTrajectory> l1) -> {return l1.size() > 3;}).
                             map(new PointListToTraMap()).
-//                            filter((CarTrajectory c) -> {
-//                                for (CamTrajectory point : c.getPoints()) {
-//                                    if (trajectoryDto.getCamIds().contains(point.getCamId())) {
-//                                        return true;
-//                                    }
-//                                }
-//                                return false;
-//                            }).
-//                            filter((CarTrajectory c) -> {return c.getCarNumber().contains("鲁A");}).
-//                            filter((CarTrajectory c) -> {return ArrayUtils.contains(new String[]{"小型汽车号牌", "小型新能源汽车号牌"}, c.getCarType());}).
-//                            filter((CarTrajectory c) -> {return c.getDistance() > 2000;}).
+                            filter((CarTrajectory c) -> {
+                                for (CamTrajectory point : c.getPoints()) {
+                                    if (trajectoryDto.getCamIds().contains(point.getCamId())) {
+                                        return true;
+                                    }
+                                }
+                                return false;
+                            }).
                             name("points-to-trajectory");
 
                     List<CarTrajectory> newTraList = newPoints.collect();
@@ -92,10 +91,12 @@ public class CamTrajectoryService {
                 }
 
             }
-        }
+
 
         return carTrajectories;
     }
+
+
 
     public void insert() throws IOException {
         File dir = new File("D:\\workspace_py\\TrajMatchV1\\data\\202102");
@@ -189,7 +190,7 @@ public class CamTrajectoryService {
 //                System.out.println(afterPoint.getPhotoTime().getTime());
 //                System.out.println(beforePoint.getPhotoTime().getTime());
 //                System.out.println(afterPoint.getPhotoTime().getTime() - beforePoint.getPhotoTime().getTime());
-                if ((afterPoint.getPhotoTime().getTime() - beforePoint.getPhotoTime().getTime()) / (1000 * 60) > trajectoryCut) {
+                if ((afterPoint.getPhotoTime().getTime() - beforePoint.getPhotoTime().getTime()) / (1000.0 * 60.0) > trajectoryCut) {
                     collector.collect(tempPoints);
                     tempPoints.clear();
                     tempPoints.add(afterPoint);

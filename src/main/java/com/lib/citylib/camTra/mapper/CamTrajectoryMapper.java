@@ -19,7 +19,7 @@ public interface CamTrajectoryMapper extends BaseMapper<CamTrajectory> {
 
     List<CamTrajectory> searchAllByCarNumberOrderInTimeRange(@Param("carNumber") String carNumber, @Param("startTime") Date startTime, @Param("endTime") Date endTime);
 
-    List<CamTrajectory> listByTrajectoryDto(@Param("carNumber") String carNumber, @Param("carType") String carType, @Param("startTime") Date startTime, @Param("endTime") Date endTime);
+    List<CamTrajectory> listByTrajectoryDto(@Param("carNumber") String carNumber, @Param("startTime") Date startTime, @Param("endTime") Date endTime);
 
     int insertAll(CamTrajectory camTrajectory);
 

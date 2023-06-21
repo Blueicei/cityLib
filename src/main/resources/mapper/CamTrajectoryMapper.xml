@@ -30,9 +30,8 @@
         <include refid="Base_Column_List"/>
         from camtrajectory
         where
-        car_number = #{param1} and
-        car_type = #{param2} and
-        photo_time between #{param3} and #{param4}
+        car_number = #{carNumber} and
+        photo_time between #{startTime} and #{endTime}
         order by photo_time
     </select>
     <insert id="insertAll">
