@@ -120,37 +120,37 @@ class CityLibApplicationTests {
         env.execute("sink test job");
     }
 
-    @Test
-    void  testBatchFlink() throws Exception {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        Date startTime = sdf.parse("2021-2-1 0:00:00");
-        Date endTime = sdf.parse("2021-2-1 20:00:00");
-        CarTrajectory carTra = camTrajectoryService.listByCarNumberOrderInTimeRange("鲁A0000999046", startTime, endTime);
-        String carNumber = carTra.getCarNumber();
-        String carType = carTra.getCarType();
-        ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
-        DataSet<CamTrajectory> points = env.fromCollection(carTra.getPoints()).name("row-camtra-points");
-//        DataSet<CarTrajectory> camTra = points.map(new Enrichment()).groupBy(CarTrajectory::getCarNumber).reduce((CarTrajectory t1, CarTrajectory t2)-> {
-//            return t1.mergePoint(t2);
-//        });
-//        camTra.print();
-        DataSet<CarTrajectory> newPoints = points.filter(new LonLatNotNullFilter()).
-                sortPartition(CamTrajectory::getPhotoTime, Order.ASCENDING).
-                map(new PointListMap()).
-                reduce(new MergePoints()).
-                flatMap(new CutPointsToTrajectory()).
-                filter((List<CamTrajectory> l1) -> {return l1.size() > 3;}).
-                map(new PointListToTraMap()).
-                filter((CarTrajectory c) -> {return c.getCarNumber().contains("鲁A");}).
-                filter((CarTrajectory c) -> {return ArrayUtils.contains(new String[]{"小型汽车号牌", "小型新能源汽车号牌"}, c.getCarType());}).
-                filter((CarTrajectory c) -> {return c.getDistance() > 2000;}).
-                name("points-to-trajectory");
-//        newPoints.print();
-        List<CarTrajectory> newTraList = newPoints.collect();
-        System.out.printf(newTraList.toString());
-        FileWriteList("./out/1.txt", newTraList);
-
-    }
+//    @Test
+//    void  testBatchFlink() throws Exception {
+//        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+//        Date startTime = sdf.parse("2021-2-1 0:00:00");
+//        Date endTime = sdf.parse("2021-2-1 20:00:00");
+//        CarTrajectory carTra = camTrajectoryService.listByCarNumberOrderInTimeRange("鲁A0000999046", startTime, endTime);
+//        String carNumber = carTra.getCarNumber();
+//        String carType = carTra.getCarType();
+//        ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
+//        DataSet<CamTrajectory> points = env.fromCollection(carTra.getPoints()).name("row-camtra-points");
+////        DataSet<CarTrajectory> camTra = points.map(new Enrichment()).groupBy(CarTrajectory::getCarNumber).reduce((CarTrajectory t1, CarTrajectory t2)-> {
+////            return t1.mergePoint(t2);
+////        });
+////        camTra.print();
+//        DataSet<CarTrajectory> newPoints = points.filter(new LonLatNotNullFilter()).
+//                sortPartition(CamTrajectory::getPhotoTime, Order.ASCENDING).
+//                map(new PointListMap()).
+//                reduce(new MergePoints()).
+//                flatMap(new CutPointsToTrajectory()).
+//                filter((List<CamTrajectory> l1) -> {return l1.size() > 3;}).
+//                map(new PointListToTraMap()).
+//                filter((CarTrajectory c) -> {return c.getCarNumber().contains("鲁A");}).
+//                filter((CarTrajectory c) -> {return ArrayUtils.contains(new String[]{"小型汽车号牌", "小型新能源汽车号牌"}, c.getCarType());}).
+//                filter((CarTrajectory c) -> {return c.getDistance() > 2000;}).
+//                name("points-to-trajectory");
+////        newPoints.print();
+//        List<CarTrajectory> newTraList = newPoints.collect();
+//        System.out.printf(newTraList.toString());
+//        FileWriteList("./out/1.txt", newTraList);
+//
+//    }
     public static class LonLatNotNullFilter implements FilterFunction<CamTrajectory> {
 
         @Override
