@@ -1,8 +1,11 @@
 package com.lib.citylib.camTra.service;
 
+import com.lib.citylib.camTra.Query.QueryVehicleCountByCam;
 import com.lib.citylib.camTra.dto.TrajectoryDto;
+import com.lib.citylib.camTra.dto.VehicleCountByCamDto;
 import com.lib.citylib.camTra.mapper.CamTrajectoryMapper;
 import com.lib.citylib.camTra.model.CamTrajectory;
+import com.lib.citylib.camTra.model.CarNuminCam;
 import com.lib.citylib.camTra.model.CarTrajectory;
 import com.opencsv.CSVReader;
 import org.apache.commons.lang3.ArrayUtils;
@@ -22,6 +25,7 @@ import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class CamTrajectoryService {
@@ -32,14 +36,113 @@ public class CamTrajectoryService {
         return camTrajectoryMapper.selectAllByCarNumber(carNumber);
     }
 
-    public CarTrajectory listByCarNumberOrderInTimeRange(String carNumber, Date startTime, Date endtTime) {
+    public List<CarTrajectory> listByCarNumberOrderInTimeRange(String carNumber, Date startTime, Date endtTime, List<String> camIds) throws Exception {
         List<CamTrajectory> camTraList = camTrajectoryMapper.searchAllByCarNumberOrderInTimeRange(carNumber, startTime, endtTime);
+        List<CarTrajectory> carTrajectories = new ArrayList<>();
         if (camTraList.size() > 0) {
             String carType = camTraList.get(0).getCarType();
-            return new CarTrajectory(carNumber, carType, camTraList);
+
+            CarTrajectory carTrajectory = new CarTrajectory(carNumber, carType, camTraList);
+
+            ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
+            DataSet<CamTrajectory> points = env.fromCollection(carTrajectory.getPoints()).name("row-camtra-points");
+
+            //carTrajectories.add(carTrajectory);
+            DataSet<CarTrajectory> newPoints = points.
+                    filter(new LonLatNotNullFilter()).
+                    sortPartition(CamTrajectory::getPhotoTime, Order.ASCENDING).
+                    map(new PointListMap()).
+                    reduce(new MergePoints()).
+                    flatMap(new CutPointsToTrajectory(30)).
+                    filter((List<CamTrajectory> l1) -> {return l1.size() > 3;}).
+                    map(new PointListToTraMap()).
+                    filter((CarTrajectory c) -> {
+                        for (CamTrajectory point : c.getPoints()) {
+                            if (camIds.contains(point.getCamId())) {
+                                return true;
+                            }
+                        }
+                        return false;
+                    }).
+                    name("points-to-trajectory");
+
+            List<CarTrajectory> newTraList = newPoints.collect();
+            carTrajectories.addAll(newTraList);
         }
-        return new CarTrajectory(carNumber, new ArrayList<CamTrajectory>());
+        return carTrajectories;
     }
+
+    public List<QueryVehicleCountByCam> vehicleCountByCam(VehicleCountByCamDto vehicleCountByCamDto) throws Exception {
+        List<String> allcamId = vehicleCountByCamDto.getCamIds();
+        List<QueryVehicleCountByCam> queryVehicleCountByCams = new ArrayList<>();
+        for (int i = 0; i < allcamId.size(); i++) {
+            if (i == 0){
+                List<String> carNumbers = camTrajectoryMapper.vehicleCountByCam(allcamId.get(i),vehicleCountByCamDto.getStartTime(),vehicleCountByCamDto.getEndTime());
+//                System.out.println(carNumbers);
+                Map<String, Integer> occurrences = new HashMap<>();
+                for (String element : carNumbers) {
+                    occurrences.put(element, occurrences.getOrDefault(element, 0) + 1);
+                }
+                for (Map.Entry<String, Integer> entry : occurrences.entrySet()) {
+                    String element = entry.getKey();
+                    int count = entry.getValue();
+                    queryVehicleCountByCams.add(new QueryVehicleCountByCam(element,allcamId.get(i),count));
+                }
+            }
+            else {
+                List<String> carNumbers = camTrajectoryMapper.vehicleCountByCam(allcamId.get(i),vehicleCountByCamDto.getStartTime(),vehicleCountByCamDto.getEndTime());
+                Map<String, Integer> occurrences = new HashMap<>();
+                for (String element : carNumbers) {
+                    occurrences.put(element, occurrences.getOrDefault(element, 0) + 1);
+                }
+                for (Map.Entry<String, Integer> entry : occurrences.entrySet()) {
+                    String element = entry.getKey();
+                    int count = entry.getValue();
+                    int flag = 0;
+                    for (int j = 0; j < queryVehicleCountByCams.size(); j++) {
+                        if (queryVehicleCountByCams.get(j).getCarNumber().equals(element)){
+                            queryVehicleCountByCams.get(j).addCount(count);
+                            queryVehicleCountByCams.get(j).addCam(allcamId.get(i));
+                            flag = 1;
+                            break;
+                        }
+                    }
+                    if (flag == 0){
+                        queryVehicleCountByCams.add(new QueryVehicleCountByCam(element,allcamId.get(i),count));
+                    }
+                }
+            }
+
+
+        }
+        return queryVehicleCountByCams;
+    }
+
+//            List<CarTrajectory> carTrajectories = new ArrayList<>();
+//            for (int j = 0; j < queryVehicleCountByCams.size(); j++) {
+//                String carNumber = queryVehicleCountByCams.get(i).getCarNumber();
+//                List<CamTrajectory> camTrajectories = camTrajectoryMapper.searchAllByCarNumberOrderInTimeRange(carNumber,vehicleCountByCamDto.getStartTime(),vehicleCountByCamDto.getEndTime());
+//                String carType = camTrajectories.get(0).getCarType();
+//                CarTrajectory carTrajectory = new CarTrajectory(carNumber, carType, camTrajectories);
+//                ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
+//                DataSet<CamTrajectory> points = env.fromCollection(carTrajectory.getPoints()).name("row-camtra-points");
+//
+//                //carTrajectories.add(carTrajectory);
+//                DataSet<CarTrajectory> newPoints = points.
+//                        filter(new LonLatNotNullFilter()).
+//                        sortPartition(CamTrajectory::getPhotoTime, Order.ASCENDING).
+//                        map(new PointListMap()).
+//                        reduce(new MergePoints()).
+//                        flatMap(new CutPointsToTrajectory(30)).
+//                        filter((List<CamTrajectory> l1) -> {return l1.size() > 3;}).
+//                        map(new PointListToTraMap()).
+//                        name("points-to-trajectory");
+//
+//                List<CarTrajectory> newTraList = newPoints.collect();
+//                System.out.printf(newTraList.toString());
+//                queryVehicleCountByCams.get(i).setCarTras(newTraList);
+//            }
+
 
     //可优化性能？
     public List<CarTrajectory> listByTrajectoryDto(TrajectoryDto trajectoryDto) throws Exception {

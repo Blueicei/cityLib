@@ -2,6 +2,8 @@ package com.lib.citylib.camTra.mapper;
 import java.util.Date;
 import java.util.List;
 
+import com.lib.citylib.camTra.Query.QueryVehicleCountByCam;
+import com.lib.citylib.camTra.model.CarNuminCam;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -22,6 +24,10 @@ public interface CamTrajectoryMapper extends BaseMapper<CamTrajectory> {
     List<CamTrajectory> listByTrajectoryDto(@Param("carNumber") String carNumber, @Param("startTime") Date startTime, @Param("endTime") Date endTime);
 
     int insertAll(CamTrajectory camTrajectory);
+
+    List<String> vehicleCountByCam(@Param("camId")String camId, @Param("startTime") Date startTime, @Param("endTime") Date endTime);
+
+
 
 }
 
