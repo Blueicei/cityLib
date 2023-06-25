@@ -1,23 +1,19 @@
 package com.lib.citylib.camTra.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import io.swagger.annotations.ApiModel;
 import lombok.Data;
 
 import java.util.Date;
 import java.util.List;
 
+@ApiModel(value = "VehicleAppearanceByCarDto",description = "这个类定义了车辆出现统计传入参数")
 @Data
-public class TrajectoryDtoByTimeRange {
+public class VehicleAppearanceByCarDto {
     /**
-     * 车牌号
+     * 车牌号列表
      */
-    private String carNumber;
-
-    /**
-     *  卡口号列表
-     */
-    private List<String> camIds;
-
+    private List<String> carNumbers;
     /**
      * 开始时间
      */

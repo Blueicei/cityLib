@@ -1,11 +1,9 @@
 package com.lib.citylib.camTra.controller;
 
 import com.lib.citylib.camTra.Query.QueryCamCountByCar;
+import com.lib.citylib.camTra.Query.QueryVehicleAppearanceByCar;
 import com.lib.citylib.camTra.Query.QueryVehicleCountByCam;
-import com.lib.citylib.camTra.dto.CamCountByCarDto;
-import com.lib.citylib.camTra.dto.TrajectoryDto;
-import com.lib.citylib.camTra.dto.TrajectoryDtoByTimeRange;
-import com.lib.citylib.camTra.dto.VehicleCountByCamDto;
+import com.lib.citylib.camTra.dto.*;
 import com.lib.citylib.camTra.model.CamTrajectory;
 import com.lib.citylib.camTra.model.CarTrajectory;
 import com.lib.citylib.camTra.service.CamTrajectoryService;
@@ -45,20 +43,31 @@ public class CamTrajectoryController {
     }
 
     @ResponseBody
-    @PostMapping("/listByCarNumInTimeRange")
-    public CommonResult listByCarNumInTimeRange(@RequestBody TrajectoryDtoByTimeRange trajectoryDtoByTimeRange) throws Exception {
-        List<CarTrajectory> carTrajectories = camTrajectoryService.listByCarNumberOrderInTimeRange(
-                trajectoryDtoByTimeRange.getCarNumber(),
-                trajectoryDtoByTimeRange.getStartTime(),
-                trajectoryDtoByTimeRange.getEndTime(),
-                trajectoryDtoByTimeRange.getCamIds());
+    @PostMapping("/listByCarNumberAndCamIdsOrderInTimeRange")
+    public CommonResult listByCarNumberAndCamIdsOrderInTimeRange(@RequestBody TrajectoryDtoByCamsAndTimeRange trajectoryDtoByCamsAndTimeRange) throws Exception {
+        List<CarTrajectory> carTrajectories = camTrajectoryService.listByCarNumberAndCamIdOrderInTimeRange(
+                trajectoryDtoByCamsAndTimeRange.getCarNumber(),
+                trajectoryDtoByCamsAndTimeRange.getStartTime(),
+                trajectoryDtoByCamsAndTimeRange.getEndTime(),
+                trajectoryDtoByCamsAndTimeRange.getCamIds());
+        ObjectNode geoJSON = convertToGeoJSON(carTrajectories);
+        return CommonResult.success(geoJSON);
+    }
 
-        return CommonResult.success(carTrajectories);
+    @ResponseBody
+    @PostMapping("/listByCarNumberOrderInTimeRange")
+    public CommonResult listByCarNumberOrderInTimeRange(@RequestBody VehicleAppearanceByCarDto vehicleAppearanceByCarDto) throws Exception {
+        List<CarTrajectory> carTrajectories = camTrajectoryService.listByCarNumberOrderInTimeRange(
+                vehicleAppearanceByCarDto.getCarNumbers(),
+                vehicleAppearanceByCarDto.getStartTime(),
+                vehicleAppearanceByCarDto.getEndTime());
+        ObjectNode geoJSON = convertToGeoJSON(carTrajectories);
+        return CommonResult.success(geoJSON);
     }
 
     @ResponseBody
     @PostMapping("/searchCarTrajectory")
-    public CommonResult camTraList2(@RequestBody TrajectoryDto trajectoryDto) throws Exception {
+    public CommonResult searchCarTrajectory(@RequestBody TrajectoryDto trajectoryDto) throws Exception {
         System.out.println(trajectoryDto);
         List<CarTrajectory> carTrajectories = camTrajectoryService.listByTrajectoryDto(trajectoryDto);
         if (carTrajectories.isEmpty())
@@ -78,9 +87,14 @@ public class CamTrajectoryController {
         return CommonResult.success(vehicleCountByCams);
     }
 
-    @GetMapping("/insert")
-    public void insert() throws IOException {
-        camTrajectoryService.insert();
+    @ResponseBody
+    @PostMapping("/vehicleAppearanceByCar")
+    public CommonResult vehicleAppearanceByCar(@RequestBody VehicleAppearanceByCarDto vehicleAppearanceByCarDto) throws Exception {
+//        System.out.println(vehicleCountByCamDto);
+        List<QueryVehicleAppearanceByCar> vehicleAppearanceByCars = camTrajectoryService.vehicleAppearanceByCar(vehicleAppearanceByCarDto);
+        if (vehicleAppearanceByCars.isEmpty())
+            return CommonResult.error();
+        return CommonResult.success(vehicleAppearanceByCars);
     }
 
     @ResponseBody
@@ -97,7 +111,10 @@ public class CamTrajectoryController {
         return CommonResult.success(queryCamCountByCars);
     }
 
-
+    @GetMapping("/insert")
+    public void insert() throws IOException {
+        camTrajectoryService.insert();
+    }
 
     public ObjectNode convertToGeoJSONFeature(CarTrajectory carTrajectory) {
         // 创建 ObjectMapper 实例
@@ -115,9 +132,6 @@ public class CamTrajectoryController {
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         properties.put("startTime", dateFormat.format(carTrajectory.getStartTime()));
         properties.put("endTime", dateFormat.format(carTrajectory.getEndTime()));
-
-//        properties.put("startTime", carTrajectory.getStartTime().getTime());
-//        properties.put("endTime", carTrajectory.getEndTime().getTime());
         properties.put("timeInterval", carTrajectory.getTimeInterval());
 
         // 创建几何节点
@@ -160,7 +174,5 @@ public class CamTrajectoryController {
 
         return root;
     }
-
-
 
 }
