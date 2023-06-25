@@ -1,11 +1,9 @@
 package com.lib.citylib.camTra.controller;
 
+import com.lib.citylib.camTra.Query.QueryCamCountByCar;
 import com.lib.citylib.camTra.Query.QueryVehicleAppearanceByCar;
 import com.lib.citylib.camTra.Query.QueryVehicleCountByCam;
-import com.lib.citylib.camTra.dto.TrajectoryDto;
-import com.lib.citylib.camTra.dto.TrajectoryDtoByCamsAndTimeRange;
-import com.lib.citylib.camTra.dto.VehicleAppearanceByCarDto;
-import com.lib.citylib.camTra.dto.VehicleCountByCamDto;
+import com.lib.citylib.camTra.dto.*;
 import com.lib.citylib.camTra.model.CamTrajectory;
 import com.lib.citylib.camTra.model.CarTrajectory;
 import com.lib.citylib.camTra.service.CamTrajectoryService;
@@ -69,7 +67,7 @@ public class CamTrajectoryController {
 
     @ResponseBody
     @PostMapping("/searchCarTrajectory")
-    public CommonResult camTraList2(@RequestBody TrajectoryDto trajectoryDto) throws Exception {
+    public CommonResult searchCarTrajectory(@RequestBody TrajectoryDto trajectoryDto) throws Exception {
         System.out.println(trajectoryDto);
         List<CarTrajectory> carTrajectories = camTrajectoryService.listByTrajectoryDto(trajectoryDto);
         if (carTrajectories.isEmpty())
@@ -97,6 +95,20 @@ public class CamTrajectoryController {
         if (vehicleAppearanceByCars.isEmpty())
             return CommonResult.error();
         return CommonResult.success(vehicleAppearanceByCars);
+    }
+
+    @ResponseBody
+    @PostMapping("/camCountByCar")
+    public CommonResult camCountByCar(@RequestBody CamCountByCarDto camCountByCarDto) throws Exception {
+//        System.out.println(vehicleCountByCamDto);
+        if(camCountByCarDto.getCarNumber().isEmpty()||camCountByCarDto.getCarNumber().equals("")){
+            return CommonResult.error("未返回车牌号");
+        }
+        List<QueryCamCountByCar> queryCamCountByCars = camTrajectoryService.listCamCountByCar(camCountByCarDto);
+        if(queryCamCountByCars.size() ==0){
+            return CommonResult.error("暂无数据");
+        }
+        return CommonResult.success(queryCamCountByCars);
     }
 
     @GetMapping("/insert")

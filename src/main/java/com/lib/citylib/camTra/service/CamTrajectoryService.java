@@ -1,7 +1,9 @@
 package com.lib.citylib.camTra.service;
 
+import com.lib.citylib.camTra.Query.QueryCamCountByCar;
 import com.lib.citylib.camTra.Query.QueryVehicleAppearanceByCar;
 import com.lib.citylib.camTra.Query.QueryVehicleCountByCam;
+import com.lib.citylib.camTra.dto.CamCountByCarDto;
 import com.lib.citylib.camTra.dto.TrajectoryDto;
 import com.lib.citylib.camTra.dto.VehicleAppearanceByCarDto;
 import com.lib.citylib.camTra.dto.VehicleCountByCamDto;
@@ -161,6 +163,21 @@ public class CamTrajectoryService {
             queryVehicleAppearanceByCars.add(new QueryVehicleAppearanceByCar(allCarNumbers.get(i),count));
         }
         return queryVehicleAppearanceByCars;
+    }
+
+
+    /**
+     * 6.25
+     * @param camCountByCarDto
+     * @return List<QueryCamCountByCar>
+     * @throws Exception
+     */
+
+
+    public List<QueryCamCountByCar> listCamCountByCar(CamCountByCarDto camCountByCarDto){
+        String carNumber = camCountByCarDto.getCarNumber();
+        List<QueryCamCountByCar> list = camTrajectoryMapper.listCamCountByCar(carNumber,camCountByCarDto.getStartTime(),camCountByCarDto.getEndTime());
+        return list;
     }
 
 
