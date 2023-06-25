@@ -1,6 +1,9 @@
 package com.lib.citylib.camTra.service;
 
+import com.lib.citylib.camTra.Query.QueryCamByCar;
+import com.lib.citylib.camTra.Query.QueryCamCountByCar;
 import com.lib.citylib.camTra.Query.QueryVehicleCountByCam;
+import com.lib.citylib.camTra.dto.CamCountByCarDto;
 import com.lib.citylib.camTra.dto.TrajectoryDto;
 import com.lib.citylib.camTra.dto.VehicleCountByCamDto;
 import com.lib.citylib.camTra.mapper.CamTrajectoryMapper;
@@ -26,6 +29,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
+
 
 @Service
 public class CamTrajectoryService {
@@ -142,6 +146,35 @@ public class CamTrajectoryService {
 //                System.out.printf(newTraList.toString());
 //                queryVehicleCountByCams.get(i).setCarTras(newTraList);
 //            }
+
+    /**
+     * 6.25
+     * @param camCountByCarDto
+     * @return List<QueryCamCountByCar>
+     * @throws Exception
+     */
+//    public List<QueryCamCountByCar> listCamCountByCar(CamCountByCarDto camCountByCarDto){
+//        String carNumber = camCountByCarDto.getCarNumber();
+//        List<QueryCamByCar> list = camTrajectoryMapper.listCamByCar(carNumber,camCountByCarDto.getStartTime(),camCountByCarDto.getEndTime());
+//        List<QueryCamCountByCar> queryCamCountByCarList = new ArrayList<>();
+//        for (QueryCamByCar queryCamByCar: list) {
+//
+//        }
+//    }
+
+    public List<QueryCamCountByCar> listCamCountByCar(CamCountByCarDto camCountByCarDto){
+        String carNumber = camCountByCarDto.getCarNumber();
+        List<QueryCamCountByCar> list = camTrajectoryMapper.listCamCountByCar(carNumber,camCountByCarDto.getStartTime(),camCountByCarDto.getEndTime());
+        return list;
+    }
+
+//    public List<QueryCamCountByCar> listCamCountByCar(CamCountByCarDto camCountByCarDto){
+//        String carNumber = camCountByCarDto.getCarNumber();
+//        List<QueryCamCountByCar> list = camTrajectoryMapper.listCamCountByCar(carNumber,camCountByCarDto.getStartTime(),camCountByCarDto.getEndTime());
+//
+//    }
+
+    // select cam_number last_time count(
 
 
     //可优化性能？
@@ -368,5 +401,7 @@ public class CamTrajectoryService {
         s = Math.round(s * 10000) / 10000;
         return s;
     }
+
+
 
 }

@@ -1,6 +1,8 @@
 package com.lib.citylib.camTra.controller;
 
+import com.lib.citylib.camTra.Query.QueryCamCountByCar;
 import com.lib.citylib.camTra.Query.QueryVehicleCountByCam;
+import com.lib.citylib.camTra.dto.CamCountByCarDto;
 import com.lib.citylib.camTra.dto.TrajectoryDto;
 import com.lib.citylib.camTra.dto.TrajectoryDtoByTimeRange;
 import com.lib.citylib.camTra.dto.VehicleCountByCamDto;
@@ -81,6 +83,22 @@ public class CamTrajectoryController {
         camTrajectoryService.insert();
     }
 
+    @ResponseBody
+    @PostMapping("/camCountByCar")
+    public CommonResult camCountByCar(@RequestBody CamCountByCarDto camCountByCarDto) throws Exception {
+//        System.out.println(vehicleCountByCamDto);
+        if(camCountByCarDto.getCarNumber().isEmpty()||camCountByCarDto.getCarNumber().equals("")){
+            return CommonResult.error("未返回车牌号");
+        }
+        List<QueryCamCountByCar> queryCamCountByCars = camTrajectoryService.listCamCountByCar(camCountByCarDto);
+        if(queryCamCountByCars.size() ==0){
+            return CommonResult.error("暂无数据");
+        }
+        return CommonResult.success(queryCamCountByCars);
+    }
+
+
+
     public ObjectNode convertToGeoJSONFeature(CarTrajectory carTrajectory) {
         // 创建 ObjectMapper 实例
         ObjectMapper objectMapper = new ObjectMapper();
@@ -142,5 +160,7 @@ public class CamTrajectoryController {
 
         return root;
     }
+
+
 
 }

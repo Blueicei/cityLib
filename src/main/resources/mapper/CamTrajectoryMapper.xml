@@ -14,6 +14,9 @@
             <result property="camLat" column="cam_lat"/>
     </resultMap>
 
+
+
+
     <sql id="Base_Column_List">
         car_number,car_type,cam_id,direction,
         photo_time,cam_lon,cam_lat
@@ -57,4 +60,19 @@
         car_number = #{param1} and photo_time between #{param2} and #{param3}
         order by photo_time
     </select>
+
+    <select id="listCamCountByCar" resultType="com.lib.citylib.camTra.Query.QueryCamCountByCar">
+        select cam_id,COUNT(*) as count, MAX(photo_time) as lastTime
+        from camtrajectory
+        where car_number = #{param1}
+        and photo_time between #{param2} and #{param3}
+        group by cam_id
+    </select>
+<!--    <select id="listCamCountByCar" resultType="com.lib.citylib.camTra.Query.QueryCamCountByCar">-->
+<!--        select cam_id, photo_time as lastTime-->
+<!--        from camtrajectory-->
+<!--        where car_number = #{param1}-->
+<!--        and photo_time between #{param2} and #{param3}-->
+<!--        order by photo_time DEC-->
+<!--    </select>-->
 </mapper>
