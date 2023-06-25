@@ -153,6 +153,13 @@ public class CamTrajectoryService {
      * @return List<QueryCamCountByCar>
      * @throws Exception
      */
+
+
+    public List<QueryCamCountByCar> listCamCountByCar(CamCountByCarDto camCountByCarDto){
+        String carNumber = camCountByCarDto.getCarNumber();
+        List<QueryCamCountByCar> list = camTrajectoryMapper.listCamCountByCar(carNumber,camCountByCarDto.getStartTime(),camCountByCarDto.getEndTime());
+        return list;
+    }
 //    public List<QueryCamCountByCar> listCamCountByCar(CamCountByCarDto camCountByCarDto){
 //        String carNumber = camCountByCarDto.getCarNumber();
 //        List<QueryCamByCar> list = camTrajectoryMapper.listCamByCar(carNumber,camCountByCarDto.getStartTime(),camCountByCarDto.getEndTime());
@@ -161,13 +168,6 @@ public class CamTrajectoryService {
 //
 //        }
 //    }
-
-    public List<QueryCamCountByCar> listCamCountByCar(CamCountByCarDto camCountByCarDto){
-        String carNumber = camCountByCarDto.getCarNumber();
-        List<QueryCamCountByCar> list = camTrajectoryMapper.listCamCountByCar(carNumber,camCountByCarDto.getStartTime(),camCountByCarDto.getEndTime());
-        return list;
-    }
-
 //    public List<QueryCamCountByCar> listCamCountByCar(CamCountByCarDto camCountByCarDto){
 //        String carNumber = camCountByCarDto.getCarNumber();
 //        List<QueryCamCountByCar> list = camTrajectoryMapper.listCamCountByCar(carNumber,camCountByCarDto.getStartTime(),camCountByCarDto.getEndTime());
