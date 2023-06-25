@@ -1,7 +1,9 @@
 package com.lib.citylib.camTra.service;
 
+import com.lib.citylib.camTra.Query.QueryVehicleAppearanceByCar;
 import com.lib.citylib.camTra.Query.QueryVehicleCountByCam;
 import com.lib.citylib.camTra.dto.TrajectoryDto;
+import com.lib.citylib.camTra.dto.VehicleAppearanceByCarDto;
 import com.lib.citylib.camTra.dto.VehicleCountByCamDto;
 import com.lib.citylib.camTra.mapper.CamTrajectoryMapper;
 import com.lib.citylib.camTra.model.CamTrajectory;
@@ -36,7 +38,37 @@ public class CamTrajectoryService {
         return camTrajectoryMapper.selectAllByCarNumber(carNumber);
     }
 
-    public List<CarTrajectory> listByCarNumberOrderInTimeRange(String carNumber, Date startTime, Date endtTime, List<String> camIds) throws Exception {
+    public List<CarTrajectory> listByCarNumberOrderInTimeRange(List<String> carNumber, Date startTime, Date endtTime) throws Exception {
+        List<CarTrajectory> carTrajectories = new ArrayList<>();
+        for (int i = 0; i < carNumber.size(); i++) {
+            List<CamTrajectory> camTraList = camTrajectoryMapper.searchAllByCarNumberOrderInTimeRange(carNumber.get(i), startTime, endtTime);
+            if (camTraList.size() > 0) {
+                String carType = camTraList.get(0).getCarType();
+                CarTrajectory carTrajectory = new CarTrajectory(carNumber.get(i), carType, camTraList);
+
+                ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
+                DataSet<CamTrajectory> points = env.fromCollection(carTrajectory.getPoints()).name("row-camtra-points");
+
+                //carTrajectories.add(carTrajectory);
+                DataSet<CarTrajectory> newPoints = points.
+                        filter(new LonLatNotNullFilter()).
+                        sortPartition(CamTrajectory::getPhotoTime, Order.ASCENDING).
+                        map(new PointListMap()).
+                        reduce(new MergePoints()).
+                        flatMap(new CutPointsToTrajectory(30)).
+                        filter((List<CamTrajectory> l1) -> {return l1.size() > 3;}).
+                        map(new PointListToTraMap()).
+                        name("points-to-trajectory");
+
+                List<CarTrajectory> newTraList = newPoints.collect();
+                carTrajectories.addAll(newTraList);
+            }
+        }
+
+        return carTrajectories;
+    }
+
+    public List<CarTrajectory> listByCarNumberAndCamIdOrderInTimeRange(String carNumber, Date startTime, Date endtTime, List<String> camIds) throws Exception {
         List<CamTrajectory> camTraList = camTrajectoryMapper.searchAllByCarNumberOrderInTimeRange(carNumber, startTime, endtTime);
         List<CarTrajectory> carTrajectories = new ArrayList<>();
         if (camTraList.size() > 0) {
@@ -118,30 +150,18 @@ public class CamTrajectoryService {
         return queryVehicleCountByCams;
     }
 
-//            List<CarTrajectory> carTrajectories = new ArrayList<>();
-//            for (int j = 0; j < queryVehicleCountByCams.size(); j++) {
-//                String carNumber = queryVehicleCountByCams.get(i).getCarNumber();
-//                List<CamTrajectory> camTrajectories = camTrajectoryMapper.searchAllByCarNumberOrderInTimeRange(carNumber,vehicleCountByCamDto.getStartTime(),vehicleCountByCamDto.getEndTime());
-//                String carType = camTrajectories.get(0).getCarType();
-//                CarTrajectory carTrajectory = new CarTrajectory(carNumber, carType, camTrajectories);
-//                ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
-//                DataSet<CamTrajectory> points = env.fromCollection(carTrajectory.getPoints()).name("row-camtra-points");
-//
-//                //carTrajectories.add(carTrajectory);
-//                DataSet<CarTrajectory> newPoints = points.
-//                        filter(new LonLatNotNullFilter()).
-//                        sortPartition(CamTrajectory::getPhotoTime, Order.ASCENDING).
-//                        map(new PointListMap()).
-//                        reduce(new MergePoints()).
-//                        flatMap(new CutPointsToTrajectory(30)).
-//                        filter((List<CamTrajectory> l1) -> {return l1.size() > 3;}).
-//                        map(new PointListToTraMap()).
-//                        name("points-to-trajectory");
-//
-//                List<CarTrajectory> newTraList = newPoints.collect();
-//                System.out.printf(newTraList.toString());
-//                queryVehicleCountByCams.get(i).setCarTras(newTraList);
-//            }
+    public List<QueryVehicleAppearanceByCar> vehicleAppearanceByCar(VehicleAppearanceByCarDto vehicleAppearanceByCarDto) throws Exception {
+        List<QueryVehicleAppearanceByCar> queryVehicleAppearanceByCars = new ArrayList<>();
+        List<String> allCarNumbers = vehicleAppearanceByCarDto.getCarNumbers();
+        Date startTime = vehicleAppearanceByCarDto.getStartTime();
+        Date endTime = vehicleAppearanceByCarDto.getEndTime();
+        for (int i = 0; i < allCarNumbers.size(); i++) {
+            List<CamTrajectory> camTraList = camTrajectoryMapper.searchAllByCarNumberOrderInTimeRange(allCarNumbers.get(i), startTime, endTime);
+            int count = camTraList.size();
+            queryVehicleAppearanceByCars.add(new QueryVehicleAppearanceByCar(allCarNumbers.get(i),count));
+        }
+        return queryVehicleAppearanceByCars;
+    }
 
 
     //可优化性能？
@@ -162,7 +182,7 @@ public class CamTrajectoryService {
                     String carType = camTrajectories.get(0).getCarType();
                     String carNumber = camTrajectories.get(0).getCarNumber();
                     CarTrajectory carTrajectory = new CarTrajectory(carNumber, carType, camTrajectories);
-////                    System.out.println(carTrajectory.getPoints().get(0).getCamId());
+//                    System.out.println(carTrajectory.getPoints().get(0).getCamId());
 //                    System.out.println(carTrajectory.getPoints());
 
                     ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
