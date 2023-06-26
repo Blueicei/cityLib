@@ -3,6 +3,7 @@ import java.util.Date;
 import java.util.List;
 
 import com.lib.citylib.camTra.Query.QueryCamCountByCar;
+import com.lib.citylib.camTra.model.CamInfo;
 import com.lib.citylib.camTra.model.CityFlowStats;
 import org.apache.ibatis.annotations.Param;
 
@@ -17,6 +18,8 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 */
 public interface CamTrajectoryMapper extends BaseMapper<CamTrajectory> {
     List<CamTrajectory> selectAllByCarNumber(@Param("carNumber") String carNumber);
+
+    List<CamInfo> getAllCamInfo();
 
     List<CamTrajectory> searchAllByCarNumberOrderInTimeRange(@Param("carNumber") String carNumber, @Param("startTime") Date startTime, @Param("endTime") Date endTime);
 

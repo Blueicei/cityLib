@@ -2,6 +2,7 @@ package com.lib.citylib.camTra.service;
 
 import com.lib.citylib.camTra.Query.QueryCamCountByCar;
 import com.lib.citylib.camTra.Query.QueryCityFlowStats;
+import com.lib.citylib.camTra.model.CamInfo;
 import com.lib.citylib.camTra.model.CityFlowStats;
 import com.lib.citylib.camTra.Query.QueryVehicleAppearanceByCar;
 import com.lib.citylib.camTra.Query.QueryVehicleCountByCam;
@@ -35,6 +36,10 @@ public class CamTrajectoryService {
 
     public List<CamTrajectory> listByCarNumber(String carNumber) {
         return camTrajectoryMapper.selectAllByCarNumber(carNumber);
+    }
+
+    public List<CamInfo> getAllCamInfo() {
+        return camTrajectoryMapper.getAllCamInfo();
     }
 
     public List<CarTrajectory> listByCarNumberOrderInTimeRange(List<String> carNumber, Date startTime, Date endtTime) throws Exception {

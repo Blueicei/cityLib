@@ -25,6 +25,11 @@
         where
         car_number = #{carNumber,jdbcType=VARCHAR} order by photo_time
     </select>
+    <select id="getAllCamInfo" resultType="com.lib.citylib.camTra.model.CamInfo">
+        select *
+        from camdict
+        order by cam_id
+    </select>
     <select id="listByTrajectoryDto" resultMap="BaseResultMap">
         select
         <include refid="Base_Column_List"/>
