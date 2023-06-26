@@ -1,6 +1,8 @@
 package com.lib.citylib.camTra.controller;
 
 import com.lib.citylib.camTra.Query.QueryCamCountByCar;
+import com.lib.citylib.camTra.Query.QueryCityFlowStats;
+import com.lib.citylib.camTra.model.CityFlowStats;
 import com.lib.citylib.camTra.Query.QueryVehicleAppearanceByCar;
 import com.lib.citylib.camTra.Query.QueryVehicleCountByCam;
 import com.lib.citylib.camTra.dto.*;
@@ -78,13 +80,23 @@ public class CamTrajectoryController {
     }
 
     @ResponseBody
-    @PostMapping("/vehicleCountByCam")
-    public CommonResult vehicleCountByCam(@RequestBody VehicleCountByCamDto vehicleCountByCamDto) throws Exception {
+    @PostMapping("/vehicleCamStats")
+    public CommonResult vehicleCamStats(@RequestBody VehicleCountByCamDto vehicleCountByCamDto) throws Exception {
 //        System.out.println(vehicleCountByCamDto);
         List<QueryVehicleCountByCam> vehicleCountByCams = camTrajectoryService.vehicleCountByCam(vehicleCountByCamDto);
         if (vehicleCountByCams.isEmpty())
             return CommonResult.error();
         return CommonResult.success(vehicleCountByCams);
+    }
+
+    @ResponseBody
+    @PostMapping("/cityFlowStats")
+    public CommonResult cityFlowStats(@RequestBody VehicleCountByCamDto vehicleCountByCamDto) throws Exception {
+//        System.out.println(vehicleCountByCamDto);
+        List<QueryCityFlowStats> cityFlowStats = camTrajectoryService.cityFlowStats(vehicleCountByCamDto);
+        if (cityFlowStats.isEmpty())
+            return CommonResult.error();
+        return CommonResult.success(cityFlowStats);
     }
 
     @ResponseBody
@@ -101,7 +113,7 @@ public class CamTrajectoryController {
     @PostMapping("/camCountByCar")
     public CommonResult camCountByCar(@RequestBody CamCountByCarDto camCountByCarDto) throws Exception {
 //        System.out.println(vehicleCountByCamDto);
-        if(camCountByCarDto.getCarNumber().isEmpty()||camCountByCarDto.getCarNumber().equals("")){
+        if(camCountByCarDto.getCarNumber().isEmpty()){
             return CommonResult.error("未返回车牌号");
         }
         List<QueryCamCountByCar> queryCamCountByCars = camTrajectoryService.listCamCountByCar(camCountByCarDto);

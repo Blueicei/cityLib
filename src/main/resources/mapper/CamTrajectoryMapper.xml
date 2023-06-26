@@ -57,7 +57,13 @@
         car_number = #{param1} and photo_time between #{param2} and #{param3}
         order by photo_time
     </select>
-
+    <select id="cityFlowStats" resultType="com.lib.citylib.camTra.model.CityFlowStats">
+        SELECT direction,car_type,COUNT(*) AS flow
+        FROM camtrajectory
+        WHERE cam_id = #{camid}
+        AND photo_time between #{startTime} and #{endTime}
+        GROUP BY cam_id, direction,car_type;
+    </select>
 
     <select id="listCamCountByCar" resultType="com.lib.citylib.camTra.Query.QueryCamCountByCar">
         select cam_id,COUNT(*) as count, MAX(photo_time) as lastTime

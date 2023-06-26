@@ -1,6 +1,8 @@
 package com.lib.citylib.camTra.service;
 
 import com.lib.citylib.camTra.Query.QueryCamCountByCar;
+import com.lib.citylib.camTra.Query.QueryCityFlowStats;
+import com.lib.citylib.camTra.model.CityFlowStats;
 import com.lib.citylib.camTra.Query.QueryVehicleAppearanceByCar;
 import com.lib.citylib.camTra.Query.QueryVehicleCountByCam;
 import com.lib.citylib.camTra.dto.CamCountByCarDto;
@@ -9,10 +11,8 @@ import com.lib.citylib.camTra.dto.VehicleAppearanceByCarDto;
 import com.lib.citylib.camTra.dto.VehicleCountByCamDto;
 import com.lib.citylib.camTra.mapper.CamTrajectoryMapper;
 import com.lib.citylib.camTra.model.CamTrajectory;
-import com.lib.citylib.camTra.model.CarNuminCam;
 import com.lib.citylib.camTra.model.CarTrajectory;
 import com.opencsv.CSVReader;
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.flink.api.common.functions.FilterFunction;
 import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.api.common.functions.MapFunction;
@@ -26,10 +26,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 public class CamTrajectoryService {
@@ -234,6 +231,27 @@ public class CamTrajectoryService {
 
 
         return carTrajectories;
+    }
+
+    public List<QueryCityFlowStats> cityFlowStats(VehicleCountByCamDto vehicleCountByCamDto){
+        List<String> camids = vehicleCountByCamDto.getCamIds();
+        Date startTime = vehicleCountByCamDto.getStartTime();
+        Date endTime = vehicleCountByCamDto.getEndTime();
+        List<QueryCityFlowStats> queryCityFlowStatsList = new ArrayList<>();
+        for (int i = 0; i < camids.size(); i++) {
+            QueryCityFlowStats queryCityFlowStats = new QueryCityFlowStats();
+            queryCityFlowStats.setCamId(camids.get(i));
+            List<CityFlowStats> list = camTrajectoryMapper.cityFlowStats(camids.get(i), startTime, endTime);
+            int totalFlow = 0;
+            for (CityFlowStats stat : list) {
+                totalFlow += stat.getFlow();
+            }
+            queryCityFlowStats.setTotalFlow(totalFlow);
+            queryCityFlowStats.setCityFlowStats(list);
+            queryCityFlowStatsList.add(queryCityFlowStats);
+        }
+        return queryCityFlowStatsList;
+
     }
 
 
