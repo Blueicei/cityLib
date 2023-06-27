@@ -5,6 +5,7 @@ import java.util.List;
 import com.lib.citylib.camTra.Query.QueryCamCountByCar;
 import com.lib.citylib.camTra.model.CamInfo;
 import com.lib.citylib.camTra.model.CityFlowStats;
+import com.lib.citylib.camTra.model.ForeignVehicleStats;
 import org.apache.ibatis.annotations.Param;
 
 import com.lib.citylib.camTra.model.CamTrajectory;
@@ -33,6 +34,7 @@ public interface CamTrajectoryMapper extends BaseMapper<CamTrajectory> {
 
     List<CityFlowStats> cityFlowStats(@Param("camid") String camid, @Param("startTime") Date startTime, @Param("endTime") Date endTime);
 
+    List<CamTrajectory> foreignVehiclesStats(@Param("camid") String camid, @Param("startTime") Date startTime, @Param("endTime") Date endTime);
 }
 
 

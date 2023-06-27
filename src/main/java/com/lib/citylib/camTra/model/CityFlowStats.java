@@ -11,6 +11,4 @@ public class CityFlowStats {
 
     private String direction;
 
-
-
 }
