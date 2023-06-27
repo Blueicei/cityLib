@@ -12,7 +12,7 @@ public class CorsConfig implements WebMvcConfigurer {
                 .allowedOriginPatterns("*") //浏览器允许所有的域访问 / 注意 * 不能满足带有cookie的访问,Origin 必须是全匹配
                 .allowedMethods("*")
                 .allowCredentials(true)  // 允许带cookie访问
-                .allowedHeaders("token")
+                .allowedHeaders("*")
                 .maxAge(3600);
 
     }
