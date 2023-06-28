@@ -101,7 +101,7 @@ public class CamTrajectoryController {
     @PostMapping("/camCountByCar")
     public CommonResult camCountByCar(@RequestBody CamCountByCarDto camCountByCarDto) throws Exception {
 //        System.out.println(vehicleCountByCamDto);
-        if(camCountByCarDto.getCarNumber().isEmpty()||camCountByCarDto.getCarNumber().equals("")){
+        if(camCountByCarDto.getCarNumber().isEmpty()||camCountByCarDto.getCarNumber().equals("")) {
             return CommonResult.error("未返回车牌号");
         }
         List<QueryCamCountByCar> queryCamCountByCars = camTrajectoryService.listCamCountByCar(camCountByCarDto);
