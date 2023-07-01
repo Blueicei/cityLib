@@ -51,20 +51,8 @@ public class CamTrajectoryController {
         List<CamInfo> camInfoList = camTrajectoryService.getAllCamInfo();
         if (camInfoList.isEmpty())
             return CommonResult.error();
-
-        List<Map<String, Object>> result = new ArrayList<>();
-        for (CamInfo camInfo : camInfoList) {
-            Map<String, Object> info = new HashMap<>();
-            List<String> lnglat = new ArrayList<>();
-            lnglat.add(String.valueOf(camInfo.getCamLon()));
-            lnglat.add(String.valueOf(camInfo.getCamLat()));
-            info.put("lnglat", lnglat);
-            info.put("camId", camInfo.getCamId());
-            info.put("camAddress", camInfo.getCamAddress());
-            result.add(info);
-        }
-
-        return CommonResult.success(result);
+        ObjectNode geoJSON = convertCamInfoToGeoJSON(camInfoList);
+        return CommonResult.success(geoJSON);
     }
 
     @ResponseBody
@@ -75,7 +63,7 @@ public class CamTrajectoryController {
                 trajectoryDtoByCamsAndTimeRange.getStartTime(),
                 trajectoryDtoByCamsAndTimeRange.getEndTime(),
                 trajectoryDtoByCamsAndTimeRange.getCamIds());
-        ObjectNode geoJSON = convertToGeoJSON(carTrajectories);
+        ObjectNode geoJSON = convertCarTrajectoryToGeoJSON(carTrajectories);
         return CommonResult.success(geoJSON);
     }
 
@@ -86,7 +74,7 @@ public class CamTrajectoryController {
                 vehicleAppearanceByCarDto.getCarNumbers(),
                 vehicleAppearanceByCarDto.getStartTime(),
                 vehicleAppearanceByCarDto.getEndTime());
-        ObjectNode geoJSON = convertToGeoJSON(carTrajectories);
+        ObjectNode geoJSON = convertCarTrajectoryToGeoJSON(carTrajectories);
         return CommonResult.success(geoJSON);
     }
 
@@ -97,7 +85,7 @@ public class CamTrajectoryController {
         List<CarTrajectory> carTrajectories = camTrajectoryService.listByTrajectoryDto(trajectoryDto);
         if (carTrajectories.isEmpty())
             return CommonResult.error();
-        ObjectNode geoJSON = convertToGeoJSON(carTrajectories);
+        ObjectNode geoJSON = convertCarTrajectoryToGeoJSON(carTrajectories);
 
         return CommonResult.success(geoJSON);
     }
@@ -197,8 +185,36 @@ public class CamTrajectoryController {
         return feature;
     }
 
+    public ObjectNode convertToGeoJSONFeature(CamInfo camInfo) {
+        // 创建 ObjectMapper 实例
+        ObjectMapper objectMapper = new ObjectMapper();
 
-    public ObjectNode convertToGeoJSON(List<CarTrajectory> carTrajectories) {
+        // 创建特征对象
+        ObjectNode feature = JsonNodeFactory.instance.objectNode();
+        feature.put("type", "Feature");
+
+        // 创建属性节点
+        ObjectNode properties = feature.putObject("properties");
+        properties.put("camId", camInfo.getCamId());
+        properties.put("camAddress", camInfo.getCamAddress());
+
+        // 创建几何节点
+        ObjectNode geometry = feature.putObject("geometry");
+        geometry.put("type", "Point");
+
+        // 创建坐标数组节点
+        ArrayNode coordinates = geometry.putArray("coordinates");
+
+        // 添加坐标点
+        coordinates.add(camInfo.getCamLon());
+        coordinates.add(camInfo.getCamLat());
+
+        return feature;
+    }
+
+
+
+    public ObjectNode convertCarTrajectoryToGeoJSON(List<CarTrajectory> carTrajectories) {
         // 创建 ObjectMapper 实例
         ObjectMapper objectMapper = new ObjectMapper();
 
@@ -219,5 +235,30 @@ public class CamTrajectoryController {
 
         return root;
     }
+
+    public ObjectNode convertCamInfoToGeoJSON(List<CamInfo> camInfoList) {
+        // 创建 ObjectMapper 实例
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        // 创建根节点
+        ObjectNode root = JsonNodeFactory.instance.objectNode();
+
+        // 设置类型为 "FeatureCollection"
+        root.put("type", "FeatureCollection");
+
+        // 创建 features 数组节点
+        ArrayNode features = root.putArray("features");
+
+        // 添加每个 CamInfo 的特征对象到 features 数组中
+        for (CamInfo camInfo : camInfoList) {
+            ObjectNode feature = convertToGeoJSONFeature(camInfo);
+            features.add(feature);
+        }
+
+        return root;
+    }
+
+
+
 
 }
