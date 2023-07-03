@@ -6,11 +6,11 @@ import java.io.Serializable;
 import java.util.List;
 
 @Data
-public class ForeignVehicleStats implements Serializable{
+public class CompareVehicleStats implements Serializable {
     private String camId;
-    private List<SliceCamTrajectoryForeign> sliceCamTrajectories;
+    private List<SliceCamTrajectoryCompare> sliceCamTrajectories;
 
-    public ForeignVehicleStats(String s, List<SliceCamTrajectoryForeign> dividedLists) {
+    public CompareVehicleStats(String s, List<SliceCamTrajectoryCompare> dividedLists) {
         this.camId =s;
         this.sliceCamTrajectories = dividedLists;
     }

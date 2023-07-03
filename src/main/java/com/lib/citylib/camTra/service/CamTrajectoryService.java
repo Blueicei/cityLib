@@ -21,7 +21,6 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
@@ -254,6 +253,28 @@ public class CamTrajectoryService {
 
     }
 
+    public List<CompareVehicleStats> compareVehiclesStats(ForeignVehicleStatsDto foreignVehicleStatsDto){
+        List<String> camids = foreignVehicleStatsDto.getCamIds();
+        Date startTime = foreignVehicleStatsDto.getStartTime();
+        Date endTime = foreignVehicleStatsDto.getEndTime();
+        List<CompareVehicleStats> compareVehicleStatsList = new ArrayList<>();
+        int granularity = foreignVehicleStatsDto.getGranularity();
+        for (int i = 0; i < camids.size(); i++) {
+
+            List<CamTrajectory> camTrajectories = camTrajectoryMapper.compareVehiclesStats(camids.get(i),startTime,endTime);
+
+            List<SliceCamTrajectoryCompare> dividedLists = splitCompare(camTrajectories, startTime, endTime, granularity);
+            for (SliceCamTrajectoryCompare timeSlice : dividedLists) {
+                timeSlice.setCount(timeSlice.getTrajectories().size());
+            }
+            compareVehicleStatsList.add(new CompareVehicleStats(camids.get(i),dividedLists));
+            System.out.println(new CompareVehicleStats(camids.get(i),dividedLists));
+        }
+
+        return compareVehicleStatsList;
+
+    }
+
     public List<ForeignVehicleStats> foreignVehiclesStats(ForeignVehicleStatsDto foreignVehicleStatsDto){
         List<String> camids = foreignVehicleStatsDto.getCamIds();
         Date startTime = foreignVehicleStatsDto.getStartTime();
@@ -264,11 +285,11 @@ public class CamTrajectoryService {
 
             List<CamTrajectory> camTrajectories = camTrajectoryMapper.foreignVehiclesStats(camids.get(i),startTime,endTime);
 
-            List<SliceCamTrajectory> dividedLists = split(camTrajectories, startTime, endTime, granularity);
+            List<SliceCamTrajectoryForeign> dividedLists = splitForeign(camTrajectories, startTime, endTime, granularity);
             int provincialCount = 0;
             int nonProvincialCount = 0;
 
-            for (SliceCamTrajectory timeSlice : dividedLists) {
+            for (SliceCamTrajectoryForeign timeSlice : dividedLists) {
                 for (CamTrajectory trajectory : timeSlice.getTrajectories()) {
                     String carNumber = trajectory.getCarNumber();
                     if (carNumber != null && carNumber.startsWith("鲁")) {
@@ -429,7 +450,7 @@ public class CamTrajectoryService {
             return carTrajectory.mergePoint(t1);
         }
     }
-    public static List<SliceCamTrajectory> split(List<CamTrajectory> camTrajectories, Date startTime, Date endTime, int granularity) {
+    public static List<SliceCamTrajectoryForeign> splitForeign(List<CamTrajectory> camTrajectories, Date startTime, Date endTime, int granularity) {
         // 计算时间段的总毫秒数
         long totalTimeRange = endTime.getTime() - startTime.getTime();
 
@@ -440,13 +461,13 @@ public class CamTrajectoryService {
         int numSlices = (int) Math.ceil((double) totalTimeRange / timeSlice);
 
         // 创建用于存储分割后部分的列表
-        List<SliceCamTrajectory> dividedLists = new ArrayList<>(numSlices);
+        List<SliceCamTrajectoryForeign> dividedLists = new ArrayList<>(numSlices);
 
         // 初始化分割后部分的列表
         for (int i = 0; i < numSlices; i++) {
             Date sliceStartTime = new Date(startTime.getTime() + i * timeSlice);
             Date sliceEndTime = new Date(sliceStartTime.getTime() + timeSlice);
-            SliceCamTrajectory timeSliceObj = new SliceCamTrajectory(sliceStartTime, sliceEndTime);
+            SliceCamTrajectoryForeign timeSliceObj = new SliceCamTrajectoryForeign(sliceStartTime, sliceEndTime);
             dividedLists.add(timeSliceObj);
         }
 
@@ -458,12 +479,49 @@ public class CamTrajectoryService {
             int sliceIndex = (int) ((photoTime.getTime() - startTime.getTime()) / timeSlice);
 
             // 将轨迹点添加到相应的时间片段列表
-            SliceCamTrajectory timeSliceObj = dividedLists.get(sliceIndex);
+            SliceCamTrajectoryForeign timeSliceObj = dividedLists.get(sliceIndex);
             timeSliceObj.getTrajectories().add(trajectory);
         }
 
         return dividedLists;
     }
+
+    public static List<SliceCamTrajectoryCompare> splitCompare(List<CamTrajectory> camTrajectories, Date startTime, Date endTime, int granularity) {
+        // 计算时间段的总毫秒数
+        long totalTimeRange = endTime.getTime() - startTime.getTime();
+
+        // 计算每个时间片段的毫秒数
+        long timeSlice = granularity * 60 * 1000; // 将粒度转换为毫秒
+
+        // 计算时间片段数量
+        int numSlices = (int) Math.ceil((double) totalTimeRange / timeSlice);
+
+        // 创建用于存储分割后部分的列表
+        List<SliceCamTrajectoryCompare> dividedLists = new ArrayList<>(numSlices);
+
+        // 初始化分割后部分的列表
+        for (int i = 0; i < numSlices; i++) {
+            Date sliceStartTime = new Date(startTime.getTime() + i * timeSlice);
+            Date sliceEndTime = new Date(sliceStartTime.getTime() + timeSlice);
+            SliceCamTrajectoryCompare timeSliceObj = new SliceCamTrajectoryCompare(sliceStartTime, sliceEndTime);
+            dividedLists.add(timeSliceObj);
+        }
+
+        // 遍历每个轨迹点，将其分配到相应的时间片段列表
+        for (CamTrajectory trajectory : camTrajectories) {
+            Date photoTime = trajectory.getPhotoTime();
+
+            // 计算轨迹点在时间片段中的索引
+            int sliceIndex = (int) ((photoTime.getTime() - startTime.getTime()) / timeSlice);
+
+            // 将轨迹点添加到相应的时间片段列表
+            SliceCamTrajectoryCompare timeSliceObj = dividedLists.get(sliceIndex);
+            timeSliceObj.getTrajectories().add(trajectory);
+        }
+
+        return dividedLists;
+    }
+
     private static double EARTH_RADIUS = 6371000;//赤道半径(单位m)
 
     /**

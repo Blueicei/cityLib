@@ -35,6 +35,9 @@ public interface CamTrajectoryMapper extends BaseMapper<CamTrajectory> {
     List<CityFlowStats> cityFlowStats(@Param("camid") String camid, @Param("startTime") Date startTime, @Param("endTime") Date endTime);
 
     List<CamTrajectory> foreignVehiclesStats(@Param("camid") String camid, @Param("startTime") Date startTime, @Param("endTime") Date endTime);
+
+    List<CamTrajectory> compareVehiclesStats(@Param("camid") String camid, @Param("startTime") Date startTime, @Param("endTime") Date endTime);
+
 }
 
 
