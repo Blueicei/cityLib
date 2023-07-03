@@ -85,9 +85,9 @@ public class CamTrajectoryController {
         List<CarTrajectory> carTrajectories = camTrajectoryService.listByTrajectoryDto(trajectoryDto);
         if (carTrajectories.isEmpty())
             return CommonResult.error();
-        ObjectNode geoJSON = convertCarTrajectoryToGeoJSON(carTrajectories);
+//        ObjectNode geoJSON = convertCarTrajectoryToGeoJSON(carTrajectories);
 
-        return CommonResult.success(geoJSON);
+        return CommonResult.success(carTrajectories);
     }
 
     @ResponseBody
@@ -128,6 +128,16 @@ public class CamTrajectoryController {
         if (foreignVehicleStats.isEmpty())
             return CommonResult.error();
         return CommonResult.success(foreignVehicleStats);
+    }
+
+    @ResponseBody
+    @PostMapping("/multiRegionAnalysis")
+    public CommonResult multiRegionAnalysis(@RequestBody RegionDto regionDto) throws Exception {
+//        System.out.println(vehicleCountByCamDto);
+        List<CarTrajectory> carTrajectories = camTrajectoryService.multiRegionAnalysis(regionDto);
+        if (carTrajectories.isEmpty())
+            return CommonResult.error();
+        return CommonResult.success(carTrajectories);
     }
 
     @ResponseBody

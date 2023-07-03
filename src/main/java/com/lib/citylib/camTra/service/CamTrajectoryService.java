@@ -22,6 +22,7 @@ import javax.annotation.Resource;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class CamTrajectoryService {
@@ -54,7 +55,9 @@ public class CamTrajectoryService {
                         map(new PointListMap()).
                         reduce(new MergePoints()).
                         flatMap(new CutPointsToTrajectory(30)).
-                        filter((List<CamTrajectory> l1) -> {return l1.size() > 3;}).
+                        filter((List<CamTrajectory> l1) -> {
+                            return l1.size() > 3;
+                        }).
                         map(new PointListToTraMap()).
                         name("points-to-trajectory");
 
@@ -84,7 +87,9 @@ public class CamTrajectoryService {
                     map(new PointListMap()).
                     reduce(new MergePoints()).
                     flatMap(new CutPointsToTrajectory(30)).
-                    filter((List<CamTrajectory> l1) -> {return l1.size() > 3;}).
+                    filter((List<CamTrajectory> l1) -> {
+                        return l1.size() > 3;
+                    }).
                     map(new PointListToTraMap()).
                     filter((CarTrajectory c) -> {
                         for (CamTrajectory point : c.getPoints()) {
@@ -106,8 +111,8 @@ public class CamTrajectoryService {
         List<String> allcamId = vehicleCountByCamDto.getCamIds();
         List<QueryVehicleCountByCam> queryVehicleCountByCams = new ArrayList<>();
         for (int i = 0; i < allcamId.size(); i++) {
-            if (i == 0){
-                List<String> carNumbers = camTrajectoryMapper.vehicleCountByCam(allcamId.get(i),vehicleCountByCamDto.getStartTime(),vehicleCountByCamDto.getEndTime());
+            if (i == 0) {
+                List<String> carNumbers = camTrajectoryMapper.vehicleCountByCam(allcamId.get(i), vehicleCountByCamDto.getStartTime(), vehicleCountByCamDto.getEndTime());
 //                System.out.println(carNumbers);
                 Map<String, Integer> occurrences = new HashMap<>();
                 for (String element : carNumbers) {
@@ -116,11 +121,10 @@ public class CamTrajectoryService {
                 for (Map.Entry<String, Integer> entry : occurrences.entrySet()) {
                     String element = entry.getKey();
                     int count = entry.getValue();
-                    queryVehicleCountByCams.add(new QueryVehicleCountByCam(element,allcamId.get(i),count));
+                    queryVehicleCountByCams.add(new QueryVehicleCountByCam(element, allcamId.get(i), count));
                 }
-            }
-            else {
-                List<String> carNumbers = camTrajectoryMapper.vehicleCountByCam(allcamId.get(i),vehicleCountByCamDto.getStartTime(),vehicleCountByCamDto.getEndTime());
+            } else {
+                List<String> carNumbers = camTrajectoryMapper.vehicleCountByCam(allcamId.get(i), vehicleCountByCamDto.getStartTime(), vehicleCountByCamDto.getEndTime());
                 Map<String, Integer> occurrences = new HashMap<>();
                 for (String element : carNumbers) {
                     occurrences.put(element, occurrences.getOrDefault(element, 0) + 1);
@@ -130,15 +134,15 @@ public class CamTrajectoryService {
                     int count = entry.getValue();
                     int flag = 0;
                     for (int j = 0; j < queryVehicleCountByCams.size(); j++) {
-                        if (queryVehicleCountByCams.get(j).getCarNumber().equals(element)){
+                        if (queryVehicleCountByCams.get(j).getCarNumber().equals(element)) {
                             queryVehicleCountByCams.get(j).addCount(count);
                             queryVehicleCountByCams.get(j).addCam(allcamId.get(i));
                             flag = 1;
                             break;
                         }
                     }
-                    if (flag == 0){
-                        queryVehicleCountByCams.add(new QueryVehicleCountByCam(element,allcamId.get(i),count));
+                    if (flag == 0) {
+                        queryVehicleCountByCams.add(new QueryVehicleCountByCam(element, allcamId.get(i), count));
                     }
                 }
             }
@@ -156,7 +160,7 @@ public class CamTrajectoryService {
         for (int i = 0; i < allCarNumbers.size(); i++) {
             List<CamTrajectory> camTraList = camTrajectoryMapper.searchAllByCarNumberOrderInTimeRange(allCarNumbers.get(i), startTime, endTime);
             int count = camTraList.size();
-            queryVehicleAppearanceByCars.add(new QueryVehicleAppearanceByCar(allCarNumbers.get(i),count));
+            queryVehicleAppearanceByCars.add(new QueryVehicleAppearanceByCar(allCarNumbers.get(i), count));
         }
         return queryVehicleAppearanceByCars;
     }
@@ -164,15 +168,16 @@ public class CamTrajectoryService {
 
     /**
      * 6.25
+     *
      * @param camCountByCarDto
      * @return List<QueryCamCountByCar>
      * @throws Exception
      */
 
 
-    public List<QueryCamCountByCar> listCamCountByCar(CamCountByCarDto camCountByCarDto){
+    public List<QueryCamCountByCar> listCamCountByCar(CamCountByCarDto camCountByCarDto) {
         String carNumber = camCountByCarDto.getCarNumber();
-        List<QueryCamCountByCar> list = camTrajectoryMapper.listCamCountByCar(carNumber,camCountByCarDto.getStartTime(),camCountByCarDto.getEndTime());
+        List<QueryCamCountByCar> list = camTrajectoryMapper.listCamCountByCar(carNumber, camCountByCarDto.getStartTime(), camCountByCarDto.getEndTime());
         return list;
     }
 
@@ -183,56 +188,58 @@ public class CamTrajectoryService {
             return new ArrayList<CarTrajectory>();
         List<CarTrajectory> carTrajectories = new ArrayList<>();
 //        for (int i = 0; i < trajectoryDto.getCarNumbers().size(); i++) {
-            for (int j = 0; j < trajectoryDto.getCarNumbers().size(); j++) {
-                List<CamTrajectory> camTrajectories = camTrajectoryMapper.listByTrajectoryDto(
-                        trajectoryDto.getCarNumbers().get(j),
+        for (int j = 0; j < trajectoryDto.getCarNumbers().size(); j++) {
+            List<CamTrajectory> camTrajectories = camTrajectoryMapper.listByTrajectoryDto(
+                    trajectoryDto.getCarNumbers().get(j),
 //                        trajectoryDto.getCarTypes().get(j),
-                        trajectoryDto.getStartTime(),
-                        trajectoryDto.getEndTime()
-                );
+                    trajectoryDto.getStartTime(),
+                    trajectoryDto.getEndTime()
+            );
 
-                if (camTrajectories.size() > 0) {
-                    String carType = camTrajectories.get(0).getCarType();
-                    String carNumber = camTrajectories.get(0).getCarNumber();
-                    CarTrajectory carTrajectory = new CarTrajectory(carNumber, carType, camTrajectories);
+            if (camTrajectories.size() > 0) {
+                String carType = camTrajectories.get(0).getCarType();
+                String carNumber = camTrajectories.get(0).getCarNumber();
+                CarTrajectory carTrajectory = new CarTrajectory(carNumber, carType, camTrajectories);
 //                    System.out.println(carTrajectory.getPoints().get(0).getCamId());
 //                    System.out.println(carTrajectory.getPoints());
 
-                    ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
-                    DataSet<CamTrajectory> points = env.fromCollection(carTrajectory.getPoints()).name("row-camtra-points");
+                ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
+                DataSet<CamTrajectory> points = env.fromCollection(carTrajectory.getPoints()).name("row-camtra-points");
 
-                    //carTrajectories.add(carTrajectory);
-                    DataSet<CarTrajectory> newPoints = points.
-                            filter((CamTrajectory c) -> trajectoryDto.getCarTypes().contains(c.getCarType())).
-                            filter(new LonLatNotNullFilter()).
-                            sortPartition(CamTrajectory::getPhotoTime, Order.ASCENDING).
-                            map(new PointListMap()).
-                            reduce(new MergePoints()).
-                            flatMap(new CutPointsToTrajectory(trajectoryDto.getTrajectoryCut())).
-                            filter((List<CamTrajectory> l1) -> {return l1.size() > 3;}).
-                            map(new PointListToTraMap()).
-                            filter((CarTrajectory c) -> {
-                                for (CamTrajectory point : c.getPoints()) {
-                                    if (trajectoryDto.getCamIds().contains(point.getCamId())) {
-                                        return true;
-                                    }
+                //carTrajectories.add(carTrajectory);
+                DataSet<CarTrajectory> newPoints = points.
+                        filter((CamTrajectory c) -> trajectoryDto.getCarTypes().contains(c.getCarType())).
+                        filter(new LonLatNotNullFilter()).
+                        sortPartition(CamTrajectory::getPhotoTime, Order.ASCENDING).
+                        map(new PointListMap()).
+                        reduce(new MergePoints()).
+                        flatMap(new CutPointsToTrajectory(trajectoryDto.getTrajectoryCut())).
+                        filter((List<CamTrajectory> l1) -> {
+                            return l1.size() > 3;
+                        }).
+                        map(new PointListToTraMap()).
+                        filter((CarTrajectory c) -> {
+                            for (CamTrajectory point : c.getPoints()) {
+                                if (trajectoryDto.getCamIds().contains(point.getCamId())) {
+                                    return true;
                                 }
-                                return false;
-                            }).
-                            name("points-to-trajectory");
+                            }
+                            return false;
+                        }).
+                        name("points-to-trajectory");
 
-                    List<CarTrajectory> newTraList = newPoints.collect();
-                    System.out.printf(newTraList.toString());
-                    carTrajectories.addAll(newTraList);
-                }
-
+                List<CarTrajectory> newTraList = newPoints.collect();
+                System.out.printf(newTraList.toString());
+                carTrajectories.addAll(newTraList);
             }
+
+        }
 
 
         return carTrajectories;
     }
 
-    public List<QueryCityFlowStats> cityFlowStats(VehicleCountByCamDto vehicleCountByCamDto){
+    public List<QueryCityFlowStats> cityFlowStats(VehicleCountByCamDto vehicleCountByCamDto) {
         List<String> camids = vehicleCountByCamDto.getCamIds();
         Date startTime = vehicleCountByCamDto.getStartTime();
         Date endTime = vehicleCountByCamDto.getEndTime();
@@ -253,7 +260,7 @@ public class CamTrajectoryService {
 
     }
 
-    public List<CompareVehicleStats> compareVehiclesStats(ForeignVehicleStatsDto foreignVehicleStatsDto){
+    public List<CompareVehicleStats> compareVehiclesStats(ForeignVehicleStatsDto foreignVehicleStatsDto) {
         List<String> camids = foreignVehicleStatsDto.getCamIds();
         Date startTime = foreignVehicleStatsDto.getStartTime();
         Date endTime = foreignVehicleStatsDto.getEndTime();
@@ -261,21 +268,21 @@ public class CamTrajectoryService {
         int granularity = foreignVehicleStatsDto.getGranularity();
         for (int i = 0; i < camids.size(); i++) {
 
-            List<CamTrajectory> camTrajectories = camTrajectoryMapper.compareVehiclesStats(camids.get(i),startTime,endTime);
+            List<CamTrajectory> camTrajectories = camTrajectoryMapper.compareVehiclesStats(camids.get(i), startTime, endTime);
 
             List<SliceCamTrajectoryCompare> dividedLists = splitCompare(camTrajectories, startTime, endTime, granularity);
             for (SliceCamTrajectoryCompare timeSlice : dividedLists) {
                 timeSlice.setCount(timeSlice.getTrajectories().size());
             }
-            compareVehicleStatsList.add(new CompareVehicleStats(camids.get(i),dividedLists));
-            System.out.println(new CompareVehicleStats(camids.get(i),dividedLists));
+            compareVehicleStatsList.add(new CompareVehicleStats(camids.get(i), dividedLists));
+            System.out.println(new CompareVehicleStats(camids.get(i), dividedLists));
         }
 
         return compareVehicleStatsList;
 
     }
 
-    public List<ForeignVehicleStats> foreignVehiclesStats(ForeignVehicleStatsDto foreignVehicleStatsDto){
+    public List<ForeignVehicleStats> foreignVehiclesStats(ForeignVehicleStatsDto foreignVehicleStatsDto) {
         List<String> camids = foreignVehicleStatsDto.getCamIds();
         Date startTime = foreignVehicleStatsDto.getStartTime();
         Date endTime = foreignVehicleStatsDto.getEndTime();
@@ -283,7 +290,7 @@ public class CamTrajectoryService {
         int granularity = foreignVehicleStatsDto.getGranularity();
         for (int i = 0; i < camids.size(); i++) {
 
-            List<CamTrajectory> camTrajectories = camTrajectoryMapper.foreignVehiclesStats(camids.get(i),startTime,endTime);
+            List<CamTrajectory> camTrajectories = camTrajectoryMapper.foreignVehiclesStats(camids.get(i), startTime, endTime);
 
             List<SliceCamTrajectoryForeign> dividedLists = splitForeign(camTrajectories, startTime, endTime, granularity);
             int provincialCount = 0;
@@ -301,11 +308,36 @@ public class CamTrajectoryService {
                 timeSlice.setProvincialCount(provincialCount);
                 timeSlice.setNonProvincialCount(nonProvincialCount);
             }
-            foreignVehicleStatsList.add(new ForeignVehicleStats(camids.get(i),dividedLists));
-            System.out.println(new ForeignVehicleStats(camids.get(i),dividedLists));
+            foreignVehicleStatsList.add(new ForeignVehicleStats(camids.get(i), dividedLists));
         }
 
         return foreignVehicleStatsList;
+
+    }
+
+    public List<CarTrajectory> multiRegionAnalysis(RegionDto regionDto) throws Exception {
+        List<CamTrajectory> camTrajectories = camTrajectoryMapper.multiRegionAnalysis(
+                regionDto.getLeft(), regionDto.getRight(),
+                regionDto.getUp(), regionDto.getDown(),
+                regionDto.getStartTime(), regionDto.getEndTime());
+
+        List<CarTrajectory> carTrajectoryList = new ArrayList<>();
+        if (camTrajectories.size() > 0) {
+            Map<String, List<CamTrajectory>> groupedMap = camTrajectories.stream()
+                    .collect(Collectors.groupingBy(CamTrajectory::getCarNumber));
+
+            for (Map.Entry<String, List<CamTrajectory>> entry : groupedMap.entrySet()) {
+                String carNumber = entry.getKey();
+                List<CamTrajectory> trajectoryList = entry.getValue();
+                if (trajectoryList.size() > 6){
+                    String carType = trajectoryList.get(0).getCarType(); // 假设所有车辆的类型一致
+                    CarTrajectory carTrajectory = new CarTrajectory(carNumber, carType, trajectoryList);
+                    carTrajectoryList.add(carTrajectory);
+                }
+            }
+        }
+
+        return carTrajectoryList;
 
     }
 
@@ -341,6 +373,7 @@ public class CamTrajectoryService {
             }
         }
     }
+
     public static class LonLatNotNullFilter implements FilterFunction<CamTrajectory> {
 
         @Override
@@ -348,6 +381,7 @@ public class CamTrajectoryService {
             return camTrajectory.getCamLon() != null && camTrajectory.getCamLat() != null;
         }
     }
+
     public static class PointListToTraMap implements MapFunction<List<CamTrajectory>, CarTrajectory> {
 
         @Override
@@ -355,17 +389,18 @@ public class CamTrajectoryService {
             String carNumber = camTrajectories.get(0).getCarNumber();
             String carType = camTrajectories.get(0).getCarType();
             Double distance = 0.0d;
-            for (int i = 1; i < camTrajectories.size(); i++){
-                CamTrajectory beforePoint = camTrajectories.get(i-1);
+            for (int i = 1; i < camTrajectories.size(); i++) {
+                CamTrajectory beforePoint = camTrajectories.get(i - 1);
                 CamTrajectory afterPoint = camTrajectories.get(i);
                 distance += GetDistance(beforePoint.getCamLon(), beforePoint.getCamLat(), afterPoint.getCamLon(), afterPoint.getCamLat());
             }
             Date startTime = camTrajectories.get(0).getPhotoTime();
-            Date endTime = camTrajectories.get(camTrajectories.size()-1).getPhotoTime();
+            Date endTime = camTrajectories.get(camTrajectories.size() - 1).getPhotoTime();
             Long timeInterval = (endTime.getTime() - startTime.getTime()) / 1000;
-            return new CarTrajectory(carNumber, carType, camTrajectories,distance, startTime, endTime, timeInterval);
+            return new CarTrajectory(carNumber, carType, camTrajectories, distance, startTime, endTime, timeInterval);
         }
     }
+
     public static class PointListMap implements MapFunction<CamTrajectory, List<CamTrajectory>> {
 
         @Override
@@ -384,19 +419,21 @@ public class CamTrajectoryService {
             return camTrajectories;
         }
     }
+
     public static class CutPointsToTrajectory implements FlatMapFunction<List<CamTrajectory>, List<CamTrajectory>> {
         private int trajectoryCut = 0; // 自定义间隔时间（单位：毫秒）
 
         public CutPointsToTrajectory(int trajectoryCut) {
             this.trajectoryCut = trajectoryCut;
         }
+
         @Override
         public void flatMap(List<CamTrajectory> camTrajectories, Collector<List<CamTrajectory>> collector) throws Exception {
 //            System.out.println(this.trajectoryCut);
             List<CamTrajectory> tempPoints = new ArrayList<>();
             CamTrajectory beforePoint = camTrajectories.get(0);
             tempPoints.add(beforePoint);
-            for (int i = 1; i < camTrajectories.size(); i++){
+            for (int i = 1; i < camTrajectories.size(); i++) {
                 CamTrajectory afterPoint = camTrajectories.get(i);
 //                System.out.println(afterPoint.getPhotoTime().getTime());
 //                System.out.println(beforePoint.getPhotoTime().getTime());
@@ -405,8 +442,7 @@ public class CamTrajectoryService {
                     collector.collect(tempPoints);
                     tempPoints.clear();
                     tempPoints.add(afterPoint);
-                }
-                else {
+                } else {
                     tempPoints.add(afterPoint);
                 }
                 beforePoint = afterPoint;
@@ -415,6 +451,7 @@ public class CamTrajectoryService {
         }
 
     }
+
     public static <T> void FileWriteList(String path, List<T> list) {
         try {
             BufferedWriter bufferedWriter = new BufferedWriter(
@@ -444,12 +481,14 @@ public class CamTrajectoryService {
             return new CarTrajectory(camTrajectory.getCarNumber(), camTrajectory);
         }
     }
+
     public static class AggregatePoints implements ReduceFunction<CarTrajectory> {
         @Override
         public CarTrajectory reduce(CarTrajectory carTrajectory, CarTrajectory t1) throws Exception {
             return carTrajectory.mergePoint(t1);
         }
     }
+
     public static List<SliceCamTrajectoryForeign> splitForeign(List<CamTrajectory> camTrajectories, Date startTime, Date endTime, int granularity) {
         // 计算时间段的总毫秒数
         long totalTimeRange = endTime.getTime() - startTime.getTime();
@@ -526,19 +565,19 @@ public class CamTrajectoryService {
 
     /**
      * 转化为弧度(rad)
-     * */
-    private static double rad(double d)
-    {
+     */
+    private static double rad(double d) {
         return d * Math.PI / 180.0;
     }
+
     /**
      * @param lon1 第一点的精度
      * @param lat1 第一点的纬度
      * @param lon2 第二点的精度
      * @param lat2 第二点的纬度
      * @return 返回的距离，单位m
-     * */
-    public static double GetDistance(double lon1,double lat1,double lon2, double lat2) {
+     */
+    public static double GetDistance(double lon1, double lat1, double lon2, double lat2) {
         double radLat1 = rad(lat1);
         double radLat2 = rad(lat2);
         double a = radLat1 - radLat2;

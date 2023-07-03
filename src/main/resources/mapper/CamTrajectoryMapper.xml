@@ -98,5 +98,15 @@
           and photo_time between #{param2} and #{param3}
         group by cam_id
     </select>
+    <select id="multiRegionAnalysis" resultType="com.lib.citylib.camTra.model.CamTrajectory">
+        SELECT *
+        FROM camtrajectory
+        WHERE cam_lon &gt;= #{left}
+        AND cam_lon &lt;= #{right}
+        AND cam_lat &gt;= #{down}
+        AND cam_lat &lt;= #{up}
+        AND photo_time BETWEEN #{startTime} AND #{endTime}
+        ORDER BY photo_time ASC
+    </select>
 
 </mapper>
