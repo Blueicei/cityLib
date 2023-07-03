@@ -14,6 +14,12 @@
             <result property="camLat" column="cam_lat"/>
     </resultMap>
 
+    <resultMap id="carFlowResultMap" type="com.lib.citylib.camTra.model.ForeignVehicleStats">
+        <id property="date" column="time_interval" />
+        <result property="provincial" column="provincial" />
+        <result property="nonProvincial" column="non_provincial" />
+    </resultMap>
+
     <sql id="Base_Column_List">
         car_number,car_type,cam_id,direction,
         photo_time,cam_lon,cam_lat
@@ -24,6 +30,11 @@
         from camtrajectory
         where
         car_number = #{carNumber,jdbcType=VARCHAR} order by photo_time
+    </select>
+    <select id="getAllCamInfo" resultType="com.lib.citylib.camTra.model.CamInfo">
+        select *
+        from camdict
+        order by cam_id
     </select>
     <select id="listByTrajectoryDto" resultMap="BaseResultMap">
         select
@@ -57,14 +68,31 @@
         car_number = #{param1} and photo_time between #{param2} and #{param3}
         order by photo_time
     </select>
-
-
+    <select id="cityFlowStats" resultType="com.lib.citylib.camTra.model.CityFlowStats">
+        SELECT direction,car_type,COUNT(*) AS flow
+        FROM camtrajectory
+        WHERE cam_id = #{camid}
+        AND photo_time between #{startTime} and #{endTime}
+        GROUP BY cam_id, direction,car_type;
+    </select>
+    <select id="foreignVehiclesStats" resultType="com.lib.citylib.camTra.model.CamTrajectory">
+        SELECT *
+        FROM
+            camtrajectory
+        WHERE
+        photo_time between #{startTime} AND #{endTime}
+        AND cam_id = #{camid}
+    </select>
     <select id="listCamCountByCar" resultType="com.lib.citylib.camTra.Query.QueryCamCountByCar">
         select cam_id,COUNT(*) as count, MAX(photo_time) as lastTime
         from camtrajectory
         where car_number = #{param1}
           and photo_time between #{param2} and #{param3}
         group by cam_id
+    </select>
+    <select id="getAllCarTypes" resultType="String">
+        select distinct car_type
+        from camtrajectory
     </select>
 
 </mapper>

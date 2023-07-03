@@ -3,9 +3,9 @@ import java.util.Date;
 import java.util.List;
 
 import com.lib.citylib.camTra.Query.QueryCamCountByCar;
-import com.lib.citylib.camTra.Query.QueryVehicleCountByCam;
-import com.lib.citylib.camTra.model.CarNuminCam;
-import org.apache.ibatis.annotations.Mapper;
+import com.lib.citylib.camTra.model.CamInfo;
+import com.lib.citylib.camTra.model.CityFlowStats;
+import com.lib.citylib.camTra.model.ForeignVehicleStats;
 import org.apache.ibatis.annotations.Param;
 
 import com.lib.citylib.camTra.model.CamTrajectory;
@@ -20,6 +20,8 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 public interface CamTrajectoryMapper extends BaseMapper<CamTrajectory> {
     List<CamTrajectory> selectAllByCarNumber(@Param("carNumber") String carNumber);
 
+    List<CamInfo> getAllCamInfo();
+
     List<CamTrajectory> searchAllByCarNumberOrderInTimeRange(@Param("carNumber") String carNumber, @Param("startTime") Date startTime, @Param("endTime") Date endTime);
 
     List<CamTrajectory> listByTrajectoryDto(@Param("carNumber") String carNumber, @Param("startTime") Date startTime, @Param("endTime") Date endTime);
@@ -30,6 +32,11 @@ public interface CamTrajectoryMapper extends BaseMapper<CamTrajectory> {
 
     List<QueryCamCountByCar> listCamCountByCar(@Param("carNumber") String carNumber, @Param("startTime") Date startTime, @Param("endTime") Date endTime);
 
+    List<CityFlowStats> cityFlowStats(@Param("camid") String camid, @Param("startTime") Date startTime, @Param("endTime") Date endTime);
+
+    List<CamTrajectory> foreignVehiclesStats(@Param("camid") String camid, @Param("startTime") Date startTime, @Param("endTime") Date endTime);
+
+    List<String> getAllCarTypes();
 }
 
 

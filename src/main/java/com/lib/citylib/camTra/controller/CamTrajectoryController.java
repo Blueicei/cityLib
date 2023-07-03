@@ -101,7 +101,7 @@ public class CamTrajectoryController {
     @PostMapping("/camCountByCar")
     public CommonResult camCountByCar(@RequestBody CamCountByCarDto camCountByCarDto) throws Exception {
 //        System.out.println(vehicleCountByCamDto);
-        if(camCountByCarDto.getCarNumber().isEmpty()||camCountByCarDto.getCarNumber().equals("")) {
+        if(camCountByCarDto.getCarNumber().isEmpty()||camCountByCarDto.getCarNumber().equals("")){
             return CommonResult.error("未返回车牌号");
         }
         List<QueryCamCountByCar> queryCamCountByCars = camTrajectoryService.listCamCountByCar(camCountByCarDto);
@@ -114,6 +114,14 @@ public class CamTrajectoryController {
     @GetMapping("/insert")
     public void insert() throws IOException {
         camTrajectoryService.insert();
+    }
+
+    @ResponseBody
+    @PostMapping("getAllCarTypes")
+    public CommonResult getAllCarTypes() throws Exception {
+//        System.out.println(vehicleCountByCamDto);
+       List<String> carTypes = camTrajectoryService.getAllcarTypes();
+       return CommonResult.success(carTypes);
     }
 
     public ObjectNode convertToGeoJSONFeature(CarTrajectory carTrajectory) {

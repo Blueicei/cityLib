@@ -1,18 +1,13 @@
 package com.lib.citylib.camTra.service;
 
 import com.lib.citylib.camTra.Query.QueryCamCountByCar;
+import com.lib.citylib.camTra.Query.QueryCityFlowStats;
+import com.lib.citylib.camTra.dto.*;
+import com.lib.citylib.camTra.model.*;
 import com.lib.citylib.camTra.Query.QueryVehicleAppearanceByCar;
 import com.lib.citylib.camTra.Query.QueryVehicleCountByCam;
-import com.lib.citylib.camTra.dto.CamCountByCarDto;
-import com.lib.citylib.camTra.dto.TrajectoryDto;
-import com.lib.citylib.camTra.dto.VehicleAppearanceByCarDto;
-import com.lib.citylib.camTra.dto.VehicleCountByCamDto;
 import com.lib.citylib.camTra.mapper.CamTrajectoryMapper;
-import com.lib.citylib.camTra.model.CamTrajectory;
-import com.lib.citylib.camTra.model.CarNuminCam;
-import com.lib.citylib.camTra.model.CarTrajectory;
 import com.opencsv.CSVReader;
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.flink.api.common.functions.FilterFunction;
 import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.api.common.functions.MapFunction;
@@ -26,10 +21,8 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 public class CamTrajectoryService {
@@ -38,6 +31,10 @@ public class CamTrajectoryService {
 
     public List<CamTrajectory> listByCarNumber(String carNumber) {
         return camTrajectoryMapper.selectAllByCarNumber(carNumber);
+    }
+
+    public List<CamInfo> getAllCamInfo() {
+        return camTrajectoryMapper.getAllCamInfo();
     }
 
     public List<CarTrajectory> listByCarNumberOrderInTimeRange(List<String> carNumber, Date startTime, Date endtTime) throws Exception {
@@ -236,7 +233,60 @@ public class CamTrajectoryService {
         return carTrajectories;
     }
 
+    public List<QueryCityFlowStats> cityFlowStats(VehicleCountByCamDto vehicleCountByCamDto){
+        List<String> camids = vehicleCountByCamDto.getCamIds();
+        Date startTime = vehicleCountByCamDto.getStartTime();
+        Date endTime = vehicleCountByCamDto.getEndTime();
+        List<QueryCityFlowStats> queryCityFlowStatsList = new ArrayList<>();
+        for (int i = 0; i < camids.size(); i++) {
+            QueryCityFlowStats queryCityFlowStats = new QueryCityFlowStats();
+            queryCityFlowStats.setCamId(camids.get(i));
+            List<CityFlowStats> list = camTrajectoryMapper.cityFlowStats(camids.get(i), startTime, endTime);
+            int totalFlow = 0;
+            for (CityFlowStats stat : list) {
+                totalFlow += stat.getFlow();
+            }
+            queryCityFlowStats.setTotalFlow(totalFlow);
+            queryCityFlowStats.setCityFlowStats(list);
+            queryCityFlowStatsList.add(queryCityFlowStats);
+        }
+        return queryCityFlowStatsList;
 
+    }
+
+    public List<ForeignVehicleStats> foreignVehiclesStats(ForeignVehicleStatsDto foreignVehicleStatsDto){
+        List<String> camids = foreignVehicleStatsDto.getCamIds();
+        Date startTime = foreignVehicleStatsDto.getStartTime();
+        Date endTime = foreignVehicleStatsDto.getEndTime();
+        List<ForeignVehicleStats> foreignVehicleStatsList = new ArrayList<>();
+        int granularity = foreignVehicleStatsDto.getGranularity();
+        for (int i = 0; i < camids.size(); i++) {
+
+            List<CamTrajectory> camTrajectories = camTrajectoryMapper.foreignVehiclesStats(camids.get(i),startTime,endTime);
+
+            List<SliceCamTrajectory> dividedLists = split(camTrajectories, startTime, endTime, granularity);
+            int provincialCount = 0;
+            int nonProvincialCount = 0;
+
+            for (SliceCamTrajectory timeSlice : dividedLists) {
+                for (CamTrajectory trajectory : timeSlice.getTrajectories()) {
+                    String carNumber = trajectory.getCarNumber();
+                    if (carNumber != null && carNumber.startsWith("鲁")) {
+                        provincialCount++;
+                    } else {
+                        nonProvincialCount++;
+                    }
+                }
+                timeSlice.setProvincialCount(provincialCount);
+                timeSlice.setNonProvincialCount(nonProvincialCount);
+            }
+            foreignVehicleStatsList.add(new ForeignVehicleStats(camids.get(i),dividedLists));
+            System.out.println(new ForeignVehicleStats(camids.get(i),dividedLists));
+        }
+
+        return foreignVehicleStatsList;
+
+    }
 
     public void insert() throws IOException {
         File dir = new File("D:\\workspace_py\\TrajMatchV1\\data\\202102");
@@ -270,6 +320,12 @@ public class CamTrajectoryService {
             }
         }
     }
+
+    public List<String> getAllcarTypes() {
+        List<String> carTypes = camTrajectoryMapper.getAllCarTypes();
+        return carTypes;
+    }
+
     public static class LonLatNotNullFilter implements FilterFunction<CamTrajectory> {
 
         @Override
@@ -378,6 +434,41 @@ public class CamTrajectoryService {
         public CarTrajectory reduce(CarTrajectory carTrajectory, CarTrajectory t1) throws Exception {
             return carTrajectory.mergePoint(t1);
         }
+    }
+    public static List<SliceCamTrajectory> split(List<CamTrajectory> camTrajectories, Date startTime, Date endTime, int granularity) {
+        // 计算时间段的总毫秒数
+        long totalTimeRange = endTime.getTime() - startTime.getTime();
+
+        // 计算每个时间片段的毫秒数
+        long timeSlice = granularity * 60 * 1000; // 将粒度转换为毫秒
+
+        // 计算时间片段数量
+        int numSlices = (int) Math.ceil((double) totalTimeRange / timeSlice);
+
+        // 创建用于存储分割后部分的列表
+        List<SliceCamTrajectory> dividedLists = new ArrayList<>(numSlices);
+
+        // 初始化分割后部分的列表
+        for (int i = 0; i < numSlices; i++) {
+            Date sliceStartTime = new Date(startTime.getTime() + i * timeSlice);
+            Date sliceEndTime = new Date(sliceStartTime.getTime() + timeSlice);
+            SliceCamTrajectory timeSliceObj = new SliceCamTrajectory(sliceStartTime, sliceEndTime);
+            dividedLists.add(timeSliceObj);
+        }
+
+        // 遍历每个轨迹点，将其分配到相应的时间片段列表
+        for (CamTrajectory trajectory : camTrajectories) {
+            Date photoTime = trajectory.getPhotoTime();
+
+            // 计算轨迹点在时间片段中的索引
+            int sliceIndex = (int) ((photoTime.getTime() - startTime.getTime()) / timeSlice);
+
+            // 将轨迹点添加到相应的时间片段列表
+            SliceCamTrajectory timeSliceObj = dividedLists.get(sliceIndex);
+            timeSliceObj.getTrajectories().add(trajectory);
+        }
+
+        return dividedLists;
     }
     private static double EARTH_RADIUS = 6371000;//赤道半径(单位m)
 
