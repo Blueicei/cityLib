@@ -1,10 +1,13 @@
 package com.lib.citylib;
 
 
+import com.lib.citylib.camTra.dto.CityFlowDto;
 import com.lib.citylib.camTra.mapper.CamTrajectoryMapper;
-import com.lib.citylib.camTra.model.CamTrajectory;
-import com.lib.citylib.camTra.model.CarTrajectory;
+import com.lib.citylib.camTra.model.*;
+import com.lib.citylib.camTra.query.QueryCamFLow;
 import com.lib.citylib.camTra.service.CamTrajectoryService;
+import com.lib.citylib.camTra.utils.DirectoryStructure;
+import com.lib.citylib.camTra.utils.ReplaceTableInterceptor;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.flink.api.common.functions.FilterFunction;
 import org.apache.flink.api.common.functions.FlatMapFunction;
@@ -18,14 +21,14 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.util.Collector;
 import org.junit.jupiter.api.Test;
 
+import com.alibaba.fastjson.JSONObject;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import javax.annotation.Resource;
 import java.io.*;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 @SpringBootTest
 class CityLibApplicationTests {
@@ -34,6 +37,64 @@ class CityLibApplicationTests {
     private CamTrajectoryMapper camTrajectoryMapper;
     @Resource
     private CamTrajectoryService camTrajectoryService;
+    @Resource
+    private ReplaceTableInterceptor replaceTableInterceptor;
+
+    @Test
+    void test1() {
+        List<CamInfo> tables = camTrajectoryService.getAllCamInfo();
+        for(CamInfo table : tables) {
+            System.out.println(table);
+        }
+    }
+
+
+    @Test
+    void test2() {
+        replaceTableInterceptor.setTableName("camtrajectory");
+        List<CarInfo> tables = camTrajectoryMapper.getCarNumberList();
+        for(CarInfo table : tables) {
+            System.out.println(table);
+        }
+    }
+
+    @Test
+    void testFile() {
+        HashMap<String, Object> stringObjectHashMap = new HashMap<>();
+        DirectoryStructure d = new DirectoryStructure();
+        d.scan("D:\\CodeSearchNet");
+        stringObjectHashMap.put("res", "[" + d.getBuf() + "]");
+        System.out.println(stringObjectHashMap.toString());
+        JSONObject jsonObject =  JSONObject.parseObject(d.getBuf().toString());
+        System.out.println(jsonObject.toString());
+    }
+    @Test
+    void testCarType() {
+//        replaceTableInterceptor.setTableName("camtrajectory_copy");
+//        List<String> tables = camTrajectoryService.getCarTypeList();
+//        for(String table : tables) {
+//            System.out.println(table);
+//        }
+//
+        replaceTableInterceptor.setTableName("camtrajectory");
+        List<String> tables1 = camTrajectoryService.getCarTypeList();
+        for(String table : tables1) {
+            System.out.println(table);
+        }
+    }
+
+    @Test
+    void testTableName() {
+        List<TableInfo> tables = camTrajectoryMapper.getTableNameList(null);
+        for(TableInfo table : tables) {
+            replaceTableInterceptor.setTableName(table.getTableName());
+            TableInfo tempTable = camTrajectoryMapper.getTableInfo();
+            tempTable.setTableName(table.getTableName());
+            tempTable.setLastModifyTime(table.getLastModifyTime());
+            System.out.println(tempTable);
+        }
+
+    }
 
     @Test
     void testCamTra() throws IOException {
@@ -47,6 +108,24 @@ class CityLibApplicationTests {
         List<CamTrajectory> camTraList = camTrajectoryMapper.selectAllByCarNumber("鲁AS599D-小型汽车号牌");
         for(CamTrajectory canTra : camTraList) {
             System.out.printf(canTra.toString());
+        }
+    }
+    @Test
+    void testCityFlow() throws ParseException {
+        CityFlowDto cityFlowDto = new CityFlowDto();
+        List<String> camIds = new ArrayList<>();
+        camIds.add("3701126493");
+        camIds.add("3701126286");
+        cityFlowDto.setCamIds(camIds);
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        Date startTime = sdf.parse("2021-2-1 0:00:00");
+        Date endTime = sdf.parse("2021-2-1 20:00:00");
+        cityFlowDto.setStartTime(startTime);
+        cityFlowDto.setEndTime(endTime);
+        cityFlowDto.setTimeGranularity(new Long(30));
+        List<QueryCamFLow> queryCamFLowList = camTrajectoryService.countCityFlow(cityFlowDto);
+        for(QueryCamFLow queryCamFLow : queryCamFLowList) {
+            System.out.println(queryCamFLow.toString());
         }
     }
 

@@ -14,6 +14,15 @@
             <result property="camLat" column="cam_lat"/>
     </resultMap>
 
+    <resultMap id="TableResultMap" type="com.lib.citylib.camTra.model.TableInfo">
+        <result property="tableName" column="name"/>
+        <result property="lastModifyTime" column="metadata_modification_time"/>
+        <result property="rowNumber" column="row_number"/>
+        <result property="carNumber" column="car_number"/>
+        <result property="firstPointTime" column="first_time"/>
+        <result property="lastPointTime" column="last_time"/>
+    </resultMap>
+
     <sql id="Base_Column_List">
         car_number,car_type,cam_id,direction,
         photo_time,cam_lon,cam_lat
@@ -40,5 +49,40 @@
         where
         car_number = #{param1} and photo_time between #{param2} and #{param3}
         order by photo_time
+    </select>
+
+    <select id="countCityFlow" resultType="Long">
+        select count(*)
+        from camtrajectory
+        where cam_id = #{param1}
+        and photo_time between #{param2} and #{param3}
+    </select>
+
+    <select id="getAllCamInfo" resultType="com.lib.citylib.camTra.model.CamInfo">
+        select cam_id as camId, cam_lon as camLon, cam_lat as camLat, cam_address as camAddress
+        from camdict
+        order by cam_id
+    </select>
+
+    <select id="getTableNameList" resultMap="TableResultMap">
+        SELECT name, name,metadata_modification_time FROM system.tables WHERE database = 'default' AND name NOT LIKE '%camdict%'
+        <if test="tableNameList !=null and tableNameList.size() > 0">
+            and name in
+            <foreach collection="tableNameList" item="item" separator="," open="(" close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+
+    <select id="getCarTypeList" resultType="java.lang.String">
+        SELECT DISTINCT car_type FROM camtrajectory
+    </select>
+
+    <select id="getTableInfo" resultMap="TableResultMap">
+        SELECT count(*) as row_number,count(DISTINCT car_number) as car_number,min(photo_time) as first_time, max(photo_time) as last_time FROM camtrajectory
+    </select>
+
+    <select id="getCarNumberList" resultType="com.lib.citylib.camTra.model.CarInfo">
+        SELECT DISTINCT car_number as carNumber, car_type as carType FROM camtrajectory
     </select>
 </mapper>

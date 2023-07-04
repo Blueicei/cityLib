@@ -12,8 +12,10 @@
         <setting name="lazyLoadingEnabled" value="true" />
         <setting name="aggressiveLazyLoading" value="false" />
         <setting name="mapUnderscoreToCamelCase" value="false" />
-
     </settings>
+<!--    <plugins>-->
+<!--        <plugin interceptor="com.lib.citylib.camTra.utils.ReplaceTableInterceptor"/>-->
+<!--    </plugins>-->
     <mappers>
         <package name="com.lib.citylib.camTra.mapper"/>
     </mappers>
