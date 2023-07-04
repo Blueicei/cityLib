@@ -7,7 +7,7 @@ import org.springframework.context.annotation.ComponentScan;
 
 @SpringBootApplication
 @ComponentScan(basePackages = {"com.lib.citylib.**"})
-@MapperScan(basePackages = {"com.lib,citylib.**"})
+@MapperScan(basePackages = {"com.lib.citylib.camTra.mapper"})
 public class CityLibApplication {
     public static void main(String[] args) {
         SpringApplication.run(CityLibApplication.class, args);
