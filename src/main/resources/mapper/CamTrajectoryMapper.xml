@@ -98,9 +98,5 @@
           and photo_time between #{param2} and #{param3}
         group by cam_id
     </select>
-    <select id="getAllCarTypes" resultType="String">
-        select distinct car_type
-        from camtrajectory
-    </select>
 
 </mapper>

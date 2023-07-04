@@ -41,6 +41,7 @@ public interface CamTrajectoryMapper extends BaseMapper<CamTrajectory> {
 
     List<CamTrajectory> compareVehiclesStats(@Param("camid") String camid, @Param("startTime") Date startTime, @Param("endTime") Date endTime);
 
+    List<CamTrajectory> multiRegionAnalysis(@Param("left") double left, @Param("right") double right, @Param("up") double up, @Param("down") double down, @Param("startTime") Date startTime,@Param("endTime") Date endTime);
 }
 
 
