@@ -1,11 +1,11 @@
 package com.lib.citylib.camTra.controller;
 
 import com.lib.citylib.camTra.Query.QueryCamCountByCar;
+import com.lib.citylib.camTra.Query.QueryCityFlowStats;
+import com.lib.citylib.camTra.model.*;
 import com.lib.citylib.camTra.Query.QueryVehicleAppearanceByCar;
 import com.lib.citylib.camTra.Query.QueryVehicleCountByCam;
 import com.lib.citylib.camTra.dto.*;
-import com.lib.citylib.camTra.model.CamTrajectory;
-import com.lib.citylib.camTra.model.CarTrajectory;
 import com.lib.citylib.camTra.service.CamTrajectoryService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -21,7 +21,10 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/camTra")
@@ -40,6 +43,28 @@ public class CamTrajectoryController {
     @GetMapping("/listByCarNum1")
     public CarTrajectory carTraList1(String carNumber){
         return new CarTrajectory(carNumber, camTrajectoryService.listByCarNumber(carNumber));
+    }
+
+    @ResponseBody
+    @PostMapping("/getAllCamInfo")
+    public CommonResult getAllCamInfo(){
+        List<CamInfo> camInfoList = camTrajectoryService.getAllCamInfo();
+        if (camInfoList.isEmpty())
+            return CommonResult.error();
+
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (CamInfo camInfo : camInfoList) {
+            Map<String, Object> info = new HashMap<>();
+            List<String> lnglat = new ArrayList<>();
+            lnglat.add(String.valueOf(camInfo.getCamLon()));
+            lnglat.add(String.valueOf(camInfo.getCamLat()));
+            info.put("lnglat", lnglat);
+            info.put("camId", camInfo.getCamId());
+            info.put("camAddress", camInfo.getCamAddress());
+            result.add(info);
+        }
+
+        return CommonResult.success(result);
     }
 
     @ResponseBody
@@ -65,6 +90,7 @@ public class CamTrajectoryController {
         return CommonResult.success(geoJSON);
     }
 
+
     @ResponseBody
     @PostMapping("/searchCarTrajectory")
     public CommonResult searchCarTrajectory(@RequestBody TrajectoryDto trajectoryDto) throws Exception {
@@ -76,15 +102,34 @@ public class CamTrajectoryController {
 
         return CommonResult.success(geoJSON);
     }
-
     @ResponseBody
-    @PostMapping("/vehicleCountByCam")
-    public CommonResult vehicleCountByCam(@RequestBody VehicleCountByCamDto vehicleCountByCamDto) throws Exception {
+    @PostMapping("/vehicleCamStats")
+    public CommonResult vehicleCamStats(@RequestBody VehicleCountByCamDto vehicleCountByCamDto) throws Exception {
 //        System.out.println(vehicleCountByCamDto);
         List<QueryVehicleCountByCam> vehicleCountByCams = camTrajectoryService.vehicleCountByCam(vehicleCountByCamDto);
         if (vehicleCountByCams.isEmpty())
             return CommonResult.error();
         return CommonResult.success(vehicleCountByCams);
+    }
+
+    @ResponseBody
+    @PostMapping("/cityFlowStats")
+    public CommonResult cityFlowStats(@RequestBody VehicleCountByCamDto vehicleCountByCamDto) throws Exception {
+//        System.out.println(vehicleCountByCamDto);
+        List<QueryCityFlowStats> cityFlowStats = camTrajectoryService.cityFlowStats(vehicleCountByCamDto);
+        if (cityFlowStats.isEmpty())
+            return CommonResult.error();
+        return CommonResult.success(cityFlowStats);
+    }
+
+    @ResponseBody
+    @PostMapping("/foreignVehiclesStats")
+    public CommonResult foreignVehiclesStats(@RequestBody ForeignVehicleStatsDto foreignVehicleStatsDto) throws Exception {
+//        System.out.println(vehicleCountByCamDto);
+        List<ForeignVehicleStats> foreignVehicleStats = camTrajectoryService.foreignVehiclesStats(foreignVehicleStatsDto);
+        if (foreignVehicleStats.isEmpty())
+            return CommonResult.error();
+        return CommonResult.success(foreignVehicleStats);
     }
 
     @ResponseBody
@@ -101,7 +146,7 @@ public class CamTrajectoryController {
     @PostMapping("/camCountByCar")
     public CommonResult camCountByCar(@RequestBody CamCountByCarDto camCountByCarDto) throws Exception {
 //        System.out.println(vehicleCountByCamDto);
-        if(camCountByCarDto.getCarNumber().isEmpty()||camCountByCarDto.getCarNumber().equals("")){
+        if(camCountByCarDto.getCarNumber().isEmpty()){
             return CommonResult.error("未返回车牌号");
         }
         List<QueryCamCountByCar> queryCamCountByCars = camTrajectoryService.listCamCountByCar(camCountByCarDto);
@@ -116,13 +161,11 @@ public class CamTrajectoryController {
         camTrajectoryService.insert();
     }
 
-    @ResponseBody
-    @PostMapping("getAllCarTypes")
-    public CommonResult getAllCarTypes() throws Exception {
-//        System.out.println(vehicleCountByCamDto);
-       List<String> carTypes = camTrajectoryService.getAllcarTypes();
-       return CommonResult.success(carTypes);
-    }
+//    @ResponseBody
+//    @PostMapping("/carTrajectoryAnalysis")
+//    public CommonResult carTrajectoryAnalysis(@RequestBody CarTrajectoryAnalysisDto carTrajectoryAnalysisDto) throws Exception{
+//        List<>
+//    }
 
     public ObjectNode convertToGeoJSONFeature(CarTrajectory carTrajectory) {
         // 创建 ObjectMapper 实例

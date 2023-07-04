@@ -8,23 +8,19 @@ import java.util.Date;
 import java.util.List;
 
 @Data
-public class SliceCamTrajectory {
+public class SliceCamTrajectoryCompare {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss",timezone="GMT+8")
     private Date startTime;
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss",timezone="GMT+8")
     private Date endTime;
 
-    private int provincialCount;
-
-    private int nonProvincialCount;
+    private int count;
 
     private List<CamTrajectory> trajectories;
 
-    public SliceCamTrajectory(Date startTime, Date endTime) {
+    public SliceCamTrajectoryCompare(Date startTime, Date endTime) {
         this.startTime = startTime;
         this.endTime = endTime;
         this.trajectories = new ArrayList<>();
-        this.provincialCount = 0;
-        this.nonProvincialCount = 0;
     }
 }

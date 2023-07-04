@@ -83,6 +83,14 @@
         photo_time between #{startTime} AND #{endTime}
         AND cam_id = #{camid}
     </select>
+    <select id="compareVehiclesStats" resultType="com.lib.citylib.camTra.model.CamTrajectory">
+        SELECT *
+        FROM
+            camtrajectory
+        WHERE
+            photo_time between #{startTime} AND #{endTime}
+          AND cam_id = #{camid}
+    </select>
     <select id="listCamCountByCar" resultType="com.lib.citylib.camTra.Query.QueryCamCountByCar">
         select cam_id,COUNT(*) as count, MAX(photo_time) as lastTime
         from camtrajectory

@@ -36,7 +36,11 @@ public interface CamTrajectoryMapper extends BaseMapper<CamTrajectory> {
 
     List<CamTrajectory> foreignVehiclesStats(@Param("camid") String camid, @Param("startTime") Date startTime, @Param("endTime") Date endTime);
 
+
     List<String> getAllCarTypes();
+
+    List<CamTrajectory> compareVehiclesStats(@Param("camid") String camid, @Param("startTime") Date startTime, @Param("endTime") Date endTime);
+
 }
 
 
