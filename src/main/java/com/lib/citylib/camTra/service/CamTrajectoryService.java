@@ -361,7 +361,7 @@ public class CamTrajectoryService {
                     CarTrajectory carTrajectory = new CarTrajectory(carNumber, carType, camTrajectoryList);
                     CarTrajectoryWithTerminal carTrajectoryWithTerminal = new CarTrajectoryWithTerminal(carTrajectory,
                             new Point(camTrajectoryList.get(0).getCamLon(),camTrajectoryList.get(0).getCamLat()),
-                            new Point(camTrajectoryList.get(size-1).getCamLon(),camTrajectoryList.get(size-1).getCamLat()));
+                            new Point(camTrajectoryList.get(size-1).getCamLon(),camTrajectoryList.get(size-1).getCamLat()),carNumber);
 
                     carTrajectoryWithTerminals.add(carTrajectoryWithTerminal);
                 }
