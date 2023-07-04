@@ -10,9 +10,12 @@ public class CarTrajectoryWithTerminal {
 
     private Point end;
 
-    public CarTrajectoryWithTerminal(CarTrajectory carTrajectory, Point start, Point end) {
+    private String carNumber;
+
+    public CarTrajectoryWithTerminal(CarTrajectory carTrajectory, Point start, Point end,String carNumber) {
         this.carTrajectory = carTrajectory;
         this.start = start;
         this.end = end;
+        this.carNumber = carNumber;
     }
 }
