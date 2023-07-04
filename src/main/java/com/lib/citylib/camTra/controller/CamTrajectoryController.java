@@ -85,9 +85,9 @@ public class CamTrajectoryController {
         List<CarTrajectory> carTrajectories = camTrajectoryService.listByTrajectoryDto(trajectoryDto);
         if (carTrajectories.isEmpty())
             return CommonResult.error();
-//        ObjectNode geoJSON = convertCarTrajectoryToGeoJSON(carTrajectories);
+        ObjectNode geoJSON = convertCarTrajectoryToGeoJSON(carTrajectories);
 
-        return CommonResult.success(carTrajectories);
+        return CommonResult.success(geoJSON);
     }
 
     @ResponseBody
@@ -141,8 +141,18 @@ public class CamTrajectoryController {
     }
 
     @ResponseBody
-    @PostMapping("/vehicleAppearanceByCar")
-    public CommonResult vehicleAppearanceByCar(@RequestBody VehicleAppearanceByCarDto vehicleAppearanceByCarDto) throws Exception {
+    @PostMapping("/regionDestinationAnalysis")
+    public CommonResult regionDestinationAnalysis(@RequestBody RegionDto regionDto) throws Exception {
+//        System.out.println(vehicleCountByCamDto);
+        List<CarTrajectoryWithTerminal> carTrajectoryWithTerminals = camTrajectoryService.regionDestinationAnalysis(regionDto);
+        if (carTrajectoryWithTerminals.isEmpty())
+            return CommonResult.error();
+        return CommonResult.success(carTrajectoryWithTerminals);
+    }
+
+    @ResponseBody
+    @PostMapping("/vehicleAppearanceByCarStats")
+    public CommonResult vehicleAppearanceByCarStats(@RequestBody VehicleAppearanceByCarDto vehicleAppearanceByCarDto) throws Exception {
 //        System.out.println(vehicleCountByCamDto);
         List<QueryVehicleAppearanceByCar> vehicleAppearanceByCars = camTrajectoryService.vehicleAppearanceByCar(vehicleAppearanceByCarDto);
         if (vehicleAppearanceByCars.isEmpty())

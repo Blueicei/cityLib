@@ -54,10 +54,10 @@ public class CamTrajectoryService {
                         sortPartition(CamTrajectory::getPhotoTime, Order.ASCENDING).
                         map(new PointListMap()).
                         reduce(new MergePoints()).
-                        flatMap(new CutPointsToTrajectory(30)).
-                        filter((List<CamTrajectory> l1) -> {
-                            return l1.size() > 3;
-                        }).
+//                        flatMap(new CutPointsToTrajectory(30)).
+//                        filter((List<CamTrajectory> l1) -> {
+//                            return l1.size() > 3;
+//                        }).
                         map(new PointListToTraMap()).
                         name("points-to-trajectory");
 
@@ -338,6 +338,37 @@ public class CamTrajectoryService {
         }
 
         return carTrajectoryList;
+
+    }
+
+    public List<CarTrajectoryWithTerminal> regionDestinationAnalysis(RegionDto regionDto) throws Exception {
+        List<CamTrajectory> camTrajectories = camTrajectoryMapper.multiRegionAnalysis(
+                regionDto.getLeft(), regionDto.getRight(),
+                regionDto.getUp(), regionDto.getDown(),
+                regionDto.getStartTime(), regionDto.getEndTime());
+
+        List<CarTrajectoryWithTerminal> carTrajectoryWithTerminals = new ArrayList<>();
+        if (camTrajectories.size() > 0) {
+            Map<String, List<CamTrajectory>> groupedMap = camTrajectories.stream()
+                    .collect(Collectors.groupingBy(CamTrajectory::getCarNumber));
+
+            for (Map.Entry<String, List<CamTrajectory>> entry : groupedMap.entrySet()) {
+                String carNumber = entry.getKey();
+                List<CamTrajectory> camTrajectoryList = entry.getValue();
+                if (camTrajectoryList.size() > 6){
+                    int size = camTrajectoryList.size();
+                    String carType = camTrajectoryList.get(0).getCarType(); // 假设所有车辆的类型一致
+                    CarTrajectory carTrajectory = new CarTrajectory(carNumber, carType, camTrajectoryList);
+                    CarTrajectoryWithTerminal carTrajectoryWithTerminal = new CarTrajectoryWithTerminal(carTrajectory,
+                            new Point(camTrajectoryList.get(0).getCamLon(),camTrajectoryList.get(0).getCamLat()),
+                            new Point(camTrajectoryList.get(size-1).getCamLon(),camTrajectoryList.get(size-1).getCamLat()));
+
+                    carTrajectoryWithTerminals.add(carTrajectoryWithTerminal);
+                }
+            }
+        }
+
+        return carTrajectoryWithTerminals;
 
     }
 

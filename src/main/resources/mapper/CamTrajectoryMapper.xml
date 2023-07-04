@@ -50,7 +50,7 @@
         from camtrajectory
         where cam_id = #{param1}
         and photo_time between #{param2} and #{param3}
-        order by photo_time DEC
+        order by photo_time DESC
     </select>
     <insert id="insertAll">
         insert into camtrajectory
