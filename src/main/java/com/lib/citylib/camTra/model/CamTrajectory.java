@@ -102,4 +102,8 @@ public class CamTrajectory implements Serializable {
         sb.append("]");
         return sb.toString();
     }
+
+    public String getCamId() {
+        return camId;
+    }
 }

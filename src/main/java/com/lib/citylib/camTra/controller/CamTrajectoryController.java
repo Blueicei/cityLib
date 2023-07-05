@@ -181,11 +181,15 @@ public class CamTrajectoryController {
         camTrajectoryService.insert();
     }
 
-//    @ResponseBody
-//    @PostMapping("/carTrajectoryAnalysis")
-//    public CommonResult carTrajectoryAnalysis(@RequestBody CarTrajectoryAnalysisDto carTrajectoryAnalysisDto) throws Exception{
-//        List<>
-//    }
+    @ResponseBody
+    @PostMapping("/carTrajectoryAnalysis")
+    public CommonResult carTrajectoryAnalysis(@RequestBody CarTrajectoryAnalysisDto carTrajectoryAnalysisDto) throws Exception{
+        List<CarTrajectoryWithTerminal> list = camTrajectoryService.carTrajectoryAnalysis(carTrajectoryAnalysisDto);
+        if(list.isEmpty()){
+            return CommonResult.error("暂无数据");
+        }
+        return CommonResult.success(list);
+    }
 
     public ObjectNode convertToGeoJSONFeature(CarTrajectory carTrajectory) {
         // 创建 ObjectMapper 实例

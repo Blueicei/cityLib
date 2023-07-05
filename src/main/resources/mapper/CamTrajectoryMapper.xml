@@ -98,5 +98,11 @@
           and photo_time between #{param2} and #{param3}
         group by cam_id
     </select>
+    <select id="findFirstTime" resultType="Date">
+        select min(photo_time)
+        from camtrajectory
+        where car_number = #{param1}
+        and photo_time between #{param2} and #{param3}
+    </select>
 
 </mapper>

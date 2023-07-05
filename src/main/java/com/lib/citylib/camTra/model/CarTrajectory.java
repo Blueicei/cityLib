@@ -61,6 +61,10 @@ public class CarTrajectory {
         return this;
     }
 
+    public List<CamTrajectory> getPoints() {
+        return points;
+    }
+
     @Override
     public String toString() {
         String row = carNumber + "-" + carType + "#";

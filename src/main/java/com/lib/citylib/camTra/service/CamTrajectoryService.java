@@ -21,6 +21,8 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -405,14 +407,62 @@ public class CamTrajectoryService {
         }
     }
 
-<<<<<<< HEAD
+
     public List<String> getAllcarTypes() {
         List<String> carTypes = camTrajectoryMapper.getAllCarTypes();
         return carTypes;
     }
 
-=======
->>>>>>> 62a6b0a1ef5eb01944449b2ecbcad136a1dc6df5
+    public List<CarTrajectoryWithTerminal> carTrajectoryAnalysis(CarTrajectoryAnalysisDto carTrajectoryAnalysis) {
+        String dateString = "Thu Jan 01 08:00:00 CST 1970";
+        SimpleDateFormat format = new SimpleDateFormat("EEE MMM dd HH:mm:ss zzz yyyy", Locale.US);
+        try {
+            Date date1 = format.parse(dateString);
+            System.out.println(carTrajectoryAnalysis.getCutTime());
+            List<CarTrajectoryWithTerminal> list = new ArrayList<>();
+            Date currentDate = camTrajectoryMapper.findFirstTime(carTrajectoryAnalysis.getCarNumber(),carTrajectoryAnalysis.getStartTime(),carTrajectoryAnalysis.getEndTime());
+            if (currentDate.equals(date1)){
+                return list;
+            }
+            while((currentDate.compareTo(carTrajectoryAnalysis.getEndTime())) < 0){
+                System.out.println("currentTime"+currentDate);
+                Calendar rightNow = Calendar.getInstance();
+                rightNow.setTime(currentDate);
+                rightNow.add(Calendar.MINUTE,carTrajectoryAnalysis.getCutTime());
+                Date endTime = rightNow.getTime();
+                System.out.println("endTime:"+endTime);
+                if(endTime.compareTo(carTrajectoryAnalysis.getEndTime())<0){
+                    List<CamTrajectory> camTrajectoryList = camTrajectoryMapper.searchAllByCarNumberOrderInTimeRange(carTrajectoryAnalysis.getCarNumber(),currentDate,endTime);
+                    CarTrajectory carTrajectory = new CarTrajectory(carTrajectoryAnalysis.getCarNumber(),camTrajectoryList.get(0).getCarType(),camTrajectoryList);
+                    Point start = new Point(camTrajectoryList.get(0).getCamLon(),camTrajectoryList.get(0).getCamLat());
+                    Point end = new Point(camTrajectoryList.get(camTrajectoryList.size()-1).getCamLon(),camTrajectoryList.get(camTrajectoryList.size()-1).getCamLat());
+                    CarTrajectoryWithTerminal carTrajectoryWithTerminal = new CarTrajectoryWithTerminal(carTrajectory,start,end,carTrajectoryAnalysis.getCarNumber());
+
+                    list.add(carTrajectoryWithTerminal);
+
+                    currentDate = camTrajectoryMapper.findFirstTime(carTrajectoryAnalysis.getCarNumber(),endTime,carTrajectoryAnalysis.getEndTime());
+                    if (currentDate.equals(date1)){
+                        return list;
+                    }
+                }else {
+                    List<CamTrajectory> camTrajectoryList = camTrajectoryMapper.searchAllByCarNumberOrderInTimeRange(carTrajectoryAnalysis.getCarNumber(),currentDate,carTrajectoryAnalysis.getEndTime());
+                    CarTrajectory carTrajectory = new CarTrajectory(carTrajectoryAnalysis.getCarNumber(),camTrajectoryList.get(0).getCarType(),camTrajectoryList);
+                    Point start = new Point(camTrajectoryList.get(0).getCamLon(),camTrajectoryList.get(0).getCamLat());
+                    Point end = new Point(camTrajectoryList.get(camTrajectoryList.size()-1).getCamLon(),camTrajectoryList.get(camTrajectoryList.size()-1).getCamLat());
+                    CarTrajectoryWithTerminal carTrajectoryWithTerminal = new CarTrajectoryWithTerminal(carTrajectory,start,end,carTrajectoryAnalysis.getCarNumber());
+                    list.add(carTrajectoryWithTerminal);
+
+                    return list;
+                }
+            }
+            return list;
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
     public static class LonLatNotNullFilter implements FilterFunction<CamTrajectory> {
 
         @Override
