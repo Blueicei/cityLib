@@ -33,12 +33,11 @@ public class CamTrajectoryController {
     private CamTrajectoryService camTrajectoryService;
 
     @ResponseBody
-    @GetMapping("/listAllCarNumberAndCarTypeByCount")
+    @PostMapping("/listAllCarNumberAndCarTypeByCount")
     public CommonResult listAllCarNumberAndCarTypeByCount(){
         return CommonResult.success(camTrajectoryService.listAllCarNumberAndCarTypeByCount());
     }
-
-
+    
     @ApiOperation(value = "查询车辆轨迹",notes = "根据车牌号查询车辆轨迹")
     @GetMapping("/listByCarNum")
     public List<CamTrajectory> camTraList(String carNumber){
@@ -197,15 +196,15 @@ public class CamTrajectoryController {
         return CommonResult.success(list);
     }
 
-    @ResponseBody
-    @PostMapping("/getHotMap")
-    public CommonResult getHotMap(@RequestBody CarTrajectory carTrajectory) throws Exception{
-        List<HotMap> list = camTrajectoryService.getHotMap(carTrajectory);
-        if(list.isEmpty()){
-            return CommonResult.error("暂无数据");
-        }
-        return CommonResult.success(list);
-    }
+//    @ResponseBody
+//    @PostMapping("/getHotMap")
+//    public CommonResult getHotMap(@RequestBody CarTrajectory carTrajectory) throws Exception{
+//        List<HotMap> list = camTrajectoryService.getHotMap(carTrajectory);
+//        if(list.isEmpty()){
+//            return CommonResult.error("暂无数据");
+//        }
+//        return CommonResult.success(list);
+//    }
 
 
     public ObjectNode convertToGeoJSONFeature(CarTrajectory carTrajectory) {

@@ -113,6 +113,6 @@
         select car_number,car_type,COUNT(*) as count
         from camtrajectory
         group by car_number,car_type
-        order by count
+        order by count desc
     </select>
 </mapper>
