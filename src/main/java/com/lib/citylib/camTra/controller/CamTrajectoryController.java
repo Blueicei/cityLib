@@ -150,7 +150,8 @@ public class CamTrajectoryController {
         List<CarTrajectory> carTrajectories = camTrajectoryService.multiRegionAnalysis(regionDto);
         if (carTrajectories.isEmpty())
             return CommonResult.error();
-        return CommonResult.success(carTrajectories);
+        ObjectNode geoJSON = convertToGeoJSON(carTrajectories);
+        return CommonResult.success(geoJSON);
     }
 
     @ResponseBody
