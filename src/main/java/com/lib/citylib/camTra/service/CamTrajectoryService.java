@@ -413,54 +413,123 @@ public class CamTrajectoryService {
         return carTypes;
     }
 
-    public List<CarTrajectoryWithTerminal> carTrajectoryAnalysis(CarTrajectoryAnalysisDto carTrajectoryAnalysis) {
-        String dateString = "Thu Jan 01 08:00:00 CST 1970";
-        SimpleDateFormat format = new SimpleDateFormat("EEE MMM dd HH:mm:ss zzz yyyy", Locale.US);
-        try {
-            Date date1 = format.parse(dateString);
-            System.out.println(carTrajectoryAnalysis.getCutTime());
-            List<CarTrajectoryWithTerminal> list = new ArrayList<>();
-            Date currentDate = camTrajectoryMapper.findFirstTime(carTrajectoryAnalysis.getCarNumber(),carTrajectoryAnalysis.getStartTime(),carTrajectoryAnalysis.getEndTime());
-            if (currentDate.equals(date1)){
-                return list;
+//    public List<CarTrajectoryWithTerminal> carTrajectoryAnalysis(CarTrajectoryAnalysisDto carTrajectoryAnalysis) {
+//        String dateString = "Thu Jan 01 08:00:00 CST 1970";
+//        SimpleDateFormat format = new SimpleDateFormat("EEE MMM dd HH:mm:ss zzz yyyy", Locale.US);
+//        try {
+//            Date date1 = format.parse(dateString);
+//            System.out.println(carTrajectoryAnalysis.getCutTime());
+//            List<CarTrajectoryWithTerminal> list = new ArrayList<>();
+//            Date currentDate = camTrajectoryMapper.findFirstTime(carTrajectoryAnalysis.getCarNumber(),carTrajectoryAnalysis.getStartTime(),carTrajectoryAnalysis.getEndTime());
+//            if (currentDate.equals(date1)){
+//                return list;
+//            }
+//            while((currentDate.compareTo(carTrajectoryAnalysis.getEndTime())) < 0){
+//                System.out.println("currentTime"+currentDate);
+//                Calendar rightNow = Calendar.getInstance();
+//                rightNow.setTime(currentDate);
+//                rightNow.add(Calendar.MINUTE,carTrajectoryAnalysis.getCutTime());
+//                Date endTime = rightNow.getTime();
+//                System.out.println("endTime:"+endTime);
+//                if(endTime.compareTo(carTrajectoryAnalysis.getEndTime())<0){
+//                    List<CamTrajectory> camTrajectoryList = camTrajectoryMapper.searchAllByCarNumberOrderInTimeRange(carTrajectoryAnalysis.getCarNumber(),currentDate,endTime);
+//                    CarTrajectory carTrajectory = new CarTrajectory(carTrajectoryAnalysis.getCarNumber(),camTrajectoryList.get(0).getCarType(),camTrajectoryList);
+//                    Point start = new Point(camTrajectoryList.get(0).getCamLon(),camTrajectoryList.get(0).getCamLat());
+//                    Point end = new Point(camTrajectoryList.get(camTrajectoryList.size()-1).getCamLon(),camTrajectoryList.get(camTrajectoryList.size()-1).getCamLat());
+//                    CarTrajectoryWithTerminal carTrajectoryWithTerminal = new CarTrajectoryWithTerminal(carTrajectory,start,end,carTrajectoryAnalysis.getCarNumber());
+//
+//                    list.add(carTrajectoryWithTerminal);
+//
+//                    currentDate = camTrajectoryMapper.findFirstTime(carTrajectoryAnalysis.getCarNumber(),endTime,carTrajectoryAnalysis.getEndTime());
+//                    if (currentDate.equals(date1)){
+//                        return list;
+//                    }
+//                }else {
+//                    List<CamTrajectory> camTrajectoryList = camTrajectoryMapper.searchAllByCarNumberOrderInTimeRange(carTrajectoryAnalysis.getCarNumber(),currentDate,carTrajectoryAnalysis.getEndTime());
+//                    CarTrajectory carTrajectory = new CarTrajectory(carTrajectoryAnalysis.getCarNumber(),camTrajectoryList.get(0).getCarType(),camTrajectoryList);
+//                    Point start = new Point(camTrajectoryList.get(0).getCamLon(),camTrajectoryList.get(0).getCamLat());
+//                    Point end = new Point(camTrajectoryList.get(camTrajectoryList.size()-1).getCamLon(),camTrajectoryList.get(camTrajectoryList.size()-1).getCamLat());
+//                    CarTrajectoryWithTerminal carTrajectoryWithTerminal = new CarTrajectoryWithTerminal(carTrajectory,start,end,carTrajectoryAnalysis.getCarNumber());
+//                    list.add(carTrajectoryWithTerminal);
+//
+//                    return list;
+//                }
+//            }
+//            return list;
+//        } catch (ParseException e) {
+//            e.printStackTrace();
+//        }
+//
+//        return null;
+//    }
+
+    public List<CarTrajectoryWithTerminal> carTrajectoryAnalysis(CarTrajectoryAnalysisDto carTrajectoryAnalysis) throws Exception {
+        List<CarTrajectoryWithTerminal> carTrajectoryWithTerminals = new ArrayList<>();
+        List<CamTrajectory> camTrajectoryList = camTrajectoryMapper.searchAllByCarNumberOrderInTimeRange(carTrajectoryAnalysis.getCarNumber(), carTrajectoryAnalysis.getStartTime(), carTrajectoryAnalysis.getEndTime());
+        if (camTrajectoryList.size() > 0) {
+            String carType = camTrajectoryList.get(0).getCarType();
+            String carNumber = camTrajectoryList.get(0).getCarNumber();
+            CarTrajectory carTrajectory = new CarTrajectory(carNumber, carType, camTrajectoryList);
+//                    System.out.println(carTrajectory.getPoints().get(0).getCamId());
+//                    System.out.println(carTrajectory.getPoints());
+
+            ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
+            DataSet<CamTrajectory> points = env.fromCollection(carTrajectory.getPoints()).name("row-camtra-points");
+
+            //carTrajectories.add(carTrajectory);
+            DataSet<CarTrajectory> newPoints = points.
+                    filter(new LonLatNotNullFilter()).
+                    sortPartition(CamTrajectory::getPhotoTime, Order.ASCENDING).
+                    map(new PointListMap()).
+                    reduce(new MergePoints()).
+                    flatMap(new CutPointsToTrajectory(carTrajectoryAnalysis.getCutTime())).
+//                    filter((List<CamTrajectory> l1) -> {
+//                        return l1.size() > 2;
+//                    }).
+                    map(new PointListToTraMap()).
+//                    filter((CarTrajectory c) -> {
+//                        for (CamTrajectory point : c.getPoints()) {
+//                            if (trajectoryDto.getCamIds().contains(point.getCamId())) {
+//                                return true;
+//                            }
+//                        }
+//                        return false;
+//                    }).
+                    name("points-to-trajectory");
+
+            List<CarTrajectory> newTraList = newPoints.collect();
+            for(CarTrajectory carTra:newTraList){
+                CarTrajectoryWithTerminal carTrajectoryWithTerminal = new CarTrajectoryWithTerminal(carTra,carTrajectoryAnalysis.getCarNumber());
+                carTrajectoryWithTerminals.add(carTrajectoryWithTerminal);
             }
-            while((currentDate.compareTo(carTrajectoryAnalysis.getEndTime())) < 0){
-                System.out.println("currentTime"+currentDate);
-                Calendar rightNow = Calendar.getInstance();
-                rightNow.setTime(currentDate);
-                rightNow.add(Calendar.MINUTE,carTrajectoryAnalysis.getCutTime());
-                Date endTime = rightNow.getTime();
-                System.out.println("endTime:"+endTime);
-                if(endTime.compareTo(carTrajectoryAnalysis.getEndTime())<0){
-                    List<CamTrajectory> camTrajectoryList = camTrajectoryMapper.searchAllByCarNumberOrderInTimeRange(carTrajectoryAnalysis.getCarNumber(),currentDate,endTime);
-                    CarTrajectory carTrajectory = new CarTrajectory(carTrajectoryAnalysis.getCarNumber(),camTrajectoryList.get(0).getCarType(),camTrajectoryList);
-                    Point start = new Point(camTrajectoryList.get(0).getCamLon(),camTrajectoryList.get(0).getCamLat());
-                    Point end = new Point(camTrajectoryList.get(camTrajectoryList.size()-1).getCamLon(),camTrajectoryList.get(camTrajectoryList.size()-1).getCamLat());
-                    CarTrajectoryWithTerminal carTrajectoryWithTerminal = new CarTrajectoryWithTerminal(carTrajectory,start,end,carTrajectoryAnalysis.getCarNumber());
-
-                    list.add(carTrajectoryWithTerminal);
-
-                    currentDate = camTrajectoryMapper.findFirstTime(carTrajectoryAnalysis.getCarNumber(),endTime,carTrajectoryAnalysis.getEndTime());
-                    if (currentDate.equals(date1)){
-                        return list;
-                    }
-                }else {
-                    List<CamTrajectory> camTrajectoryList = camTrajectoryMapper.searchAllByCarNumberOrderInTimeRange(carTrajectoryAnalysis.getCarNumber(),currentDate,carTrajectoryAnalysis.getEndTime());
-                    CarTrajectory carTrajectory = new CarTrajectory(carTrajectoryAnalysis.getCarNumber(),camTrajectoryList.get(0).getCarType(),camTrajectoryList);
-                    Point start = new Point(camTrajectoryList.get(0).getCamLon(),camTrajectoryList.get(0).getCamLat());
-                    Point end = new Point(camTrajectoryList.get(camTrajectoryList.size()-1).getCamLon(),camTrajectoryList.get(camTrajectoryList.size()-1).getCamLat());
-                    CarTrajectoryWithTerminal carTrajectoryWithTerminal = new CarTrajectoryWithTerminal(carTrajectory,start,end,carTrajectoryAnalysis.getCarNumber());
-                    list.add(carTrajectoryWithTerminal);
-
-                    return list;
-                }
-            }
-            return list;
-        } catch (ParseException e) {
-            e.printStackTrace();
         }
+        return carTrajectoryWithTerminals;
+    }
 
-        return null;
+    public List<HotMap> getHotMap(CarTrajectory carTrajectory) {
+        Map<String, Integer> camCount = new HashMap<>();
+        for (CamTrajectory camTrajectory : carTrajectory.getPoints()) {
+            String camId = camTrajectory.getCamId();
+            if (camCount.containsKey(camId)) {
+                camCount.put(camId, camCount.get(camId) + 1);
+            } else {
+                camCount.put(camId, 1);
+            }
+        }
+        int max = 0;
+        for (Map.Entry<String, Integer> entry : camCount.entrySet()) {
+            if(entry.getValue()>max){
+                max = entry.getValue();
+            }
+        }
+        List<HotMap> hotMaps = new ArrayList<>();
+        for (Map.Entry<String, Integer> entry : camCount.entrySet()) {
+            int count = (int)(100*Math.log(entry.getValue()+1) / Math.log(max+1));
+            Point point = camTrajectoryMapper.getPoint(entry.getKey());
+            HotMap hotMap = new HotMap(point, count);
+            hotMaps.add(hotMap);
+        }
+        return hotMaps;
     }
 
     public static class LonLatNotNullFilter implements FilterFunction<CamTrajectory> {

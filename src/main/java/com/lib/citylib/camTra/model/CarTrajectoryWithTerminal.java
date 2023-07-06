@@ -25,6 +25,15 @@ public class CarTrajectoryWithTerminal {
         this.endCamId = this.carTrajectory.getPoints().get(this.carTrajectory.getPoints().size()-1).getCamId();
     }
 
+    public CarTrajectoryWithTerminal(CarTrajectory carTrajectory,String carNumber) {
+        this.carTrajectory = carTrajectory;
+        this.start = new Point(this.carTrajectory.getPoints().get(0).getCamLon(),this.carTrajectory.getPoints().get(0).getCamLat());
+        this.end = new Point(this.carTrajectory.getPoints().get(this.carTrajectory.getPoints().size()-1).getCamLon(),this.carTrajectory.getPoints().get(this.carTrajectory.getPoints().size()-1).getCamLat());
+        this.carNumber = carNumber;
+        this.startCamId = this.carTrajectory.getPoints().get(0).getCamId();
+        this.endCamId = this.carTrajectory.getPoints().get(this.carTrajectory.getPoints().size()-1).getCamId();
+    }
+
     public String getStartCamId() {
         return startCamId;
     }

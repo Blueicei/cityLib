@@ -3,12 +3,9 @@ import java.util.Date;
 import java.util.List;
 
 import com.lib.citylib.camTra.Query.QueryCamCountByCar;
-import com.lib.citylib.camTra.model.CamInfo;
-import com.lib.citylib.camTra.model.CityFlowStats;
-import com.lib.citylib.camTra.model.ForeignVehicleStats;
+import com.lib.citylib.camTra.model.*;
 import org.apache.ibatis.annotations.Param;
 
-import com.lib.citylib.camTra.model.CamTrajectory;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 /**
@@ -43,6 +40,9 @@ public interface CamTrajectoryMapper extends BaseMapper<CamTrajectory> {
     List<CamTrajectory> multiRegionAnalysis(@Param("left") double left, @Param("right") double right, @Param("up") double up, @Param("down") double down, @Param("startTime") Date startTime,@Param("endTime") Date endTime);
 
     Date findFirstTime(@Param("carNumber") String carNumber, @Param("startTime") Date startTime,@Param("endTime") Date endTime);
+
+
+    Point getPoint(@Param("camId") String camId);
 }
 
 

@@ -104,5 +104,10 @@
         where car_number = #{param1}
         and photo_time between #{param2} and #{param3}
     </select>
+    <select id="getPoint" resultType="com.lib.citylib.camTra.model.Point">
+        select distinct cam_lon, cam_lat
+        from camtrajectory
+        where cam_id = #{param1}
+    </select>
 
 </mapper>
