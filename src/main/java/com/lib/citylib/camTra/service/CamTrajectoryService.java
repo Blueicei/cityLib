@@ -31,6 +31,10 @@ public class CamTrajectoryService {
     @Resource
     private CamTrajectoryMapper camTrajectoryMapper;
 
+    public List<CarNumberAndCarTypeByCount> listAllCarNumberAndCarTypeByCount(){
+        return camTrajectoryMapper.listAllCarNumberAndCarTypeByCount();
+    }
+
     public List<CamTrajectory> listByCarNumber(String carNumber) {
         return camTrajectoryMapper.selectAllByCarNumber(carNumber);
     }
