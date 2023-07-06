@@ -7,6 +7,7 @@ import com.lib.citylib.camTra.model.*;
 import com.lib.citylib.camTra.Query.QueryVehicleAppearanceByCar;
 import com.lib.citylib.camTra.Query.QueryVehicleCountByCam;
 import com.lib.citylib.camTra.mapper.CamTrajectoryMapper;
+import com.lib.citylib.camTra.utils.GPSUtil;
 import com.opencsv.CSVReader;
 import org.apache.flink.api.common.functions.FilterFunction;
 import org.apache.flink.api.common.functions.FlatMapFunction;
@@ -503,6 +504,12 @@ public class CamTrajectoryService {
 
             List<CarTrajectory> newTraList = newPoints.collect();
             for(CarTrajectory carTra:newTraList){
+                for(CamTrajectory camTrajectory:carTra.getPoints()){
+                    double[] p = new double[2];
+                    p = GPSUtil.gps84_To_Gcj02(camTrajectory.getCamLat(), camTrajectory.getCamLon());
+                    camTrajectory.setCamLat(p[0]);
+                    camTrajectory.setCamLat(p[1]);
+                }
                 CarTrajectoryWithTerminal carTrajectoryWithTerminal = new CarTrajectoryWithTerminal(carTra,carTrajectoryAnalysis.getCarNumber());
                 carTrajectoryWithTerminals.add(carTrajectoryWithTerminal);
             }
@@ -530,6 +537,10 @@ public class CamTrajectoryService {
         for (Map.Entry<String, Integer> entry : camCount.entrySet()) {
             int count = (int)(100*Math.log(entry.getValue()+1) / Math.log(max+1));
             Point point = camTrajectoryMapper.getPoint(entry.getKey());
+            double[] points = new double[2];
+            points = GPSUtil.gps84_To_Gcj02(point.getLat(), point.getLon());
+            point.setLat(points[0]);
+            point.setLon(points[1]);
             HotMap hotMap = new HotMap(point, count);
             hotMaps.add(hotMap);
         }
