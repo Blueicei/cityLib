@@ -1,16 +1,21 @@
 package com.lib.citylib.camTra.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.annotations.ApiModel;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 @ApiModel(value = "CarTrajectory",description = "这个类定义了轨迹的所有属性")
+@NoArgsConstructor
 @Data
-public class CarTrajectory {
+public class CarTrajectory implements Serializable {
     private String carNumber;
     private String carType;
     private List<CamTrajectory> points;
@@ -61,6 +66,10 @@ public class CarTrajectory {
         return this;
     }
 
+    public List<CamTrajectory> getPoints() {
+        return points;
+    }
+
     @Override
     public String toString() {
         String row = carNumber + "-" + carType + "#";
@@ -73,4 +82,6 @@ public class CarTrajectory {
         row = row.substring(0,row.length()-1);
         return row;
     }
+
+
 }
