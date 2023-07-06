@@ -510,31 +510,31 @@ public class CamTrajectoryService {
         return carTrajectoryWithTerminals;
     }
 
-//    public List<HotMap> getHotMap(CarTrajectory carTrajectory) {
-//        Map<String, Integer> camCount = new HashMap<>();
-//        for (CamTrajectory camTrajectory : carTrajectory.getPoints()) {
-//            String camId = camTrajectory.getCamId();
-//            if (camCount.containsKey(camId)) {
-//                camCount.put(camId, camCount.get(camId) + 1);
-//            } else {
-//                camCount.put(camId, 1);
-//            }
-//        }
-//        int max = 0;
-//        for (Map.Entry<String, Integer> entry : camCount.entrySet()) {
-//            if(entry.getValue()>max){
-//                max = entry.getValue();
-//            }
-//        }
-//        List<HotMap> hotMaps = new ArrayList<>();
-//        for (Map.Entry<String, Integer> entry : camCount.entrySet()) {
-//            int count = (int)(100*Math.log(entry.getValue()+1) / Math.log(max+1));
-//            Point point = camTrajectoryMapper.getPoint(entry.getKey());
-//            HotMap hotMap = new HotMap(point, count);
-//            hotMaps.add(hotMap);
-//        }
-//        return hotMaps;
-//    }
+    public List<HotMap> getHotMap(CarTrajectory carTrajectory) {
+        Map<String, Integer> camCount = new HashMap<>();
+        for (CamTrajectory camTrajectory : carTrajectory.getPoints()) {
+            String camId = camTrajectory.getCamId();
+            if (camCount.containsKey(camId)) {
+                camCount.put(camId, camCount.get(camId) + 1);
+            } else {
+                camCount.put(camId, 1);
+            }
+        }
+        int max = 0;
+        for (Map.Entry<String, Integer> entry : camCount.entrySet()) {
+            if(entry.getValue()>max){
+                max = entry.getValue();
+            }
+        }
+        List<HotMap> hotMaps = new ArrayList<>();
+        for (Map.Entry<String, Integer> entry : camCount.entrySet()) {
+            int count = (int)(100*Math.log(entry.getValue()+1) / Math.log(max+1));
+            Point point = camTrajectoryMapper.getPoint(entry.getKey());
+            HotMap hotMap = new HotMap(point, count);
+            hotMaps.add(hotMap);
+        }
+        return hotMaps;
+    }
 
     public static class LonLatNotNullFilter implements FilterFunction<CamTrajectory> {
 

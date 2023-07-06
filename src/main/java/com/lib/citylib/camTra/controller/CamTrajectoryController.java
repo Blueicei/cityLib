@@ -196,15 +196,15 @@ public class CamTrajectoryController {
         return CommonResult.success(list);
     }
 
-//    @ResponseBody
-//    @PostMapping("/getHotMap")
-//    public CommonResult getHotMap(@RequestBody CarTrajectory carTrajectory) throws Exception{
-//        List<HotMap> list = camTrajectoryService.getHotMap(carTrajectory);
-//        if(list.isEmpty()){
-//            return CommonResult.error("暂无数据");
-//        }
-//        return CommonResult.success(list);
-//    }
+    @ResponseBody
+    @PostMapping("/getHotMap")
+    public CommonResult getHotMap(@RequestBody CarTrajectory carTrajectory) throws Exception{
+        List<HotMap> list = camTrajectoryService.getHotMap(carTrajectory);
+        if(list.isEmpty()){
+            return CommonResult.error("暂无数据");
+        }
+        return CommonResult.success(list);
+    }
 
 
     public ObjectNode convertToGeoJSONFeature(CarTrajectory carTrajectory) {
