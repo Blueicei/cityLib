@@ -66,9 +66,9 @@ public class CamTrajectoryController {
         for (CamInfo camInfo : camInfoList) {
             Map<String, Object> info = new HashMap<>();
             List<String> lnglat = new ArrayList<>();
-            double[] doubles = GPSUtil.gps84_To_Gcj02(camInfo.getCamLon(),camInfo.getCamLat());
-            lnglat.add(String.valueOf(doubles[0]));
+            double[] doubles = GPSUtil.gps84_To_Gcj02(camInfo.getCamLat(),camInfo.getCamLon());
             lnglat.add(String.valueOf(doubles[1]));
+            lnglat.add(String.valueOf(doubles[0]));
             info.put("lnglat", lnglat);
             info.put("camId", camInfo.getCamId());
             info.put("camAddress", camInfo.getCamAddress());
@@ -241,8 +241,9 @@ public class CamTrajectoryController {
         // 添加坐标点
         for (CamTrajectory point : carTrajectory.getPoints()) {
             ArrayNode coordinate = JsonNodeFactory.instance.arrayNode();
-            coordinate.add(point.getCamLon());
-            coordinate.add(point.getCamLat());
+            double[] doubles = GPSUtil.gps84_To_Gcj02(point.getCamLat(),point.getCamLon());
+            coordinate.add(doubles[1]);
+            coordinate.add(doubles[0]);
             coordinates.add(coordinate);
         }
 
