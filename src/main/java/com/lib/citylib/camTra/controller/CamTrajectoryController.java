@@ -32,6 +32,12 @@ public class CamTrajectoryController {
     @Resource
     private CamTrajectoryService camTrajectoryService;
 
+    @ResponseBody
+    @GetMapping("/listAllCarNumberAndCarTypeByCount")
+    public CarTrajectory listAllCarNumberAndCarTypeByCount(String carNumber){
+        return new CarTrajectory(carNumber, camTrajectoryService.listByCarNumber(carNumber));
+    }
+
 
     @ApiOperation(value = "查询车辆轨迹",notes = "根据车牌号查询车辆轨迹")
     @GetMapping("/listByCarNum")
