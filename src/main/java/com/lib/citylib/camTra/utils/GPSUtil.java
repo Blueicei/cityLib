@@ -1,4 +1,4 @@
-package com.lib.citylib.camTra.model;
+package com.lib.citylib.camTra.utils;
 
 /**
  *

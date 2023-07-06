@@ -15,6 +15,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 
 import com.lib.citylib.camTra.utils.CommonResult;
+import com.lib.citylib.camTra.utils.GPSUtil;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.web.bind.annotation.*;
 
@@ -32,6 +33,10 @@ public class CamTrajectoryController {
     @Resource
     private CamTrajectoryService camTrajectoryService;
 
+    /**
+     * 返回车牌号，车型和出现次数（系统首页用）
+     * @return
+     */
     @ResponseBody
     @PostMapping("/listAllCarNumberAndCarTypeByCount")
     public CommonResult listAllCarNumberAndCarTypeByCount(){
@@ -61,8 +66,9 @@ public class CamTrajectoryController {
         for (CamInfo camInfo : camInfoList) {
             Map<String, Object> info = new HashMap<>();
             List<String> lnglat = new ArrayList<>();
-            lnglat.add(String.valueOf(camInfo.getCamLon()));
-            lnglat.add(String.valueOf(camInfo.getCamLat()));
+            double[] doubles = GPSUtil.gps84_To_Gcj02(camInfo.getCamLon(),camInfo.getCamLat());
+            lnglat.add(String.valueOf(doubles[0]));
+            lnglat.add(String.valueOf(doubles[1]));
             info.put("lnglat", lnglat);
             info.put("camId", camInfo.getCamId());
             info.put("camAddress", camInfo.getCamAddress());
