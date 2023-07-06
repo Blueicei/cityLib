@@ -24,6 +24,7 @@ public class RegionDto {
     private int trajectoryCut;
 
     public RegionDto(double left, double right, double up, double down, Date startTime, Date endTime, int trajectoryCut) {
+
         this.left = left;
         this.right = right;
         this.up = up;

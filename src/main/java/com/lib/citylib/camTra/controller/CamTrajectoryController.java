@@ -21,11 +21,9 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.io.IOException;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @RestController
 @RequestMapping("/camTra")
@@ -41,6 +39,56 @@ public class CamTrajectoryController {
     @PostMapping("/listAllCarNumberAndCarTypeByCount")
     public CommonResult listAllCarNumberAndCarTypeByCount(){
         return CommonResult.success(camTrajectoryService.listAllCarNumberAndCarTypeByCount());
+    }
+
+    /**
+     * 获取所有基本信息（首页）
+     * @return
+     */
+    @ResponseBody
+    @PostMapping("/listAllInfo")
+    public CommonResult listAllInfo() throws ParseException {
+        int allCarCount = camTrajectoryService.allCarCount();
+        int allCamCount = camTrajectoryService.allCamCount();
+        int localCarCount = camTrajectoryService.localCarCount();
+        int flow = camTrajectoryService.flow();
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        Date startTime = format.parse("2021-02-01 00:00:00");
+        Date endTime = format.parse("2021-02-01 23:59:59");
+        Map<String, Integer> camTrajectories = camTrajectoryService.highestFlowTime(startTime,endTime);
+        String targethour = String.valueOf(camTrajectories.get("hour"));
+        System.out.println(targethour);
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(startTime);
+        Date start = new Date();
+        Date end = new Date();
+//        String start = "";
+//        String end = "";
+        while (calendar.getTime().before(endTime) || calendar.getTime().equals(endTime)) {
+            int hour = calendar.get(Calendar.HOUR_OF_DAY);
+
+            if (hour == Integer.parseInt(targethour)) {
+                // 找到hour等于17的时间段
+                Date hourStartTime = calendar.getTime();
+
+                // 增加1小时
+                calendar.add(Calendar.HOUR_OF_DAY, 1);
+
+                // 获取hour17结束时间
+                Date hourEndTime = calendar.getTime();
+
+
+                start = hourStartTime;
+                end = hourEndTime;
+
+                break;
+            }
+
+            // 增加1小时
+            calendar.add(Calendar.HOUR_OF_DAY, 1);
+        }
+        AllInfo allInfo = new AllInfo(allCarCount,flow,flow-localCarCount,localCarCount,allCamCount,start,end);
+        return CommonResult.success(allInfo);
     }
     
     @ApiOperation(value = "查询车辆轨迹",notes = "根据车牌号查询车辆轨迹")
@@ -143,6 +191,12 @@ public class CamTrajectoryController {
         return CommonResult.success(foreignVehicleStats);
     }
 
+    /**
+     * 未改
+     * @param regionDto
+     * @return
+     * @throws Exception
+     */
     @ResponseBody
     @PostMapping("/multiRegionAnalysis")
     public CommonResult multiRegionAnalysis(@RequestBody RegionDto regionDto) throws Exception {

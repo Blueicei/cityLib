@@ -115,4 +115,24 @@
         group by car_number,car_type
         order by count desc
     </select>
+    <select id="getAllCarCount" resultType="int">
+        SELECT COUNT(DISTINCT car_number) FROM camtrajectory
+    </select>
+    <select id="getAllCamCount" resultType="int">
+        SELECT COUNT(DISTINCT cam_id) FROM camtrajectory
+    </select>
+    <select id="getLocalCarCount" resultType="int">
+        SELECT COUNT(*) FROM camtrajectory WHERE car_number LIKE '鲁%'
+    </select>
+    <select id="getFlow" resultType="int">
+        SELECT COUNT(*) FROM camtrajectory
+    </select>
+    <select id="getAllCamTrajectory" resultType="java.util.Map">
+        SELECT HOUR(photo_time) AS hour, COUNT(*) AS count
+        FROM camtrajectory
+        WHERE photo_time BETWEEN #{startTime} AND #{endTime}
+        GROUP BY hour
+        ORDER BY count DESC
+            LIMIT 1
+    </select>
 </mapper>

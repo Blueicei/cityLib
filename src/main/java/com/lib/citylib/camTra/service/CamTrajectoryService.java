@@ -17,6 +17,7 @@ import org.apache.flink.api.common.operators.Order;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.util.Collector;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -34,6 +35,40 @@ public class CamTrajectoryService {
 
     public List<CarNumberAndCarTypeByCount> listAllCarNumberAndCarTypeByCount(){
         return camTrajectoryMapper.listAllCarNumberAndCarTypeByCount();
+    }
+
+    public int allCarCount(){
+        return camTrajectoryMapper.getAllCarCount();
+    }
+
+    public int allCamCount(){
+        return camTrajectoryMapper.getAllCamCount();
+    }
+
+    public int localCarCount(){
+        return camTrajectoryMapper.getLocalCarCount();
+    }
+
+    public int flow(){
+        return camTrajectoryMapper.getFlow();
+    }
+
+    public Map<String, Integer> highestFlowTime(Date startTime, Date endTime) throws ParseException {
+        Map<String, Integer> camTrajectories = camTrajectoryMapper.getAllCamTrajectory(startTime,endTime);
+//        System.out.println(camTrajectories);
+//        String dateString = "2021-02-01 00:00:00";
+//        String dateString1 = "2021-02-01 23:59:59";
+//        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+//        Date startTime = format.parse(dateString);
+//        Date endTime = format.parse(dateString1);
+//        List<SliceCamTrajectoryCompare> dividedLists = splitCompare(camTrajectories, startTime, endTime, 60);
+//        SliceCamTrajectoryCompare sliceCamTrajectoryCompare = new SliceCamTrajectoryCompare();
+//        int count = 0;
+//        for (SliceCamTrajectoryCompare timeSlice : dividedLists) {
+//            if (timeSlice.getTrajectories().size() > count)
+//                sliceCamTrajectoryCompare = timeSlice;
+//        }
+        return camTrajectories;
     }
 
     public List<CamTrajectory> listByCarNumber(String carNumber) {
