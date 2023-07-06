@@ -34,8 +34,8 @@ public class CamTrajectoryController {
 
     @ResponseBody
     @GetMapping("/listAllCarNumberAndCarTypeByCount")
-    public CarTrajectory listAllCarNumberAndCarTypeByCount(String carNumber){
-        return new CarTrajectory(carNumber, camTrajectoryService.listByCarNumber(carNumber));
+    public CommonResult listAllCarNumberAndCarTypeByCount(){
+        return CommonResult.success(camTrajectoryService.listAllCarNumberAndCarTypeByCount());
     }
 
 
