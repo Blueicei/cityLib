@@ -45,6 +45,13 @@ public interface CamTrajectoryMapper extends BaseMapper<CamTrajectory> {
     Point getPoint(@Param("camId") String camId);
 
     List<CarNumberAndCarTypeByCount> listAllCarNumberAndCarTypeByCount();
+
+//    List<CamInfo> listCamIdAndInfo(@Param("startTime") Date startTime, @Param("endTime") Date endTime);
+    List<CamInfo> listCamIdAndInfo(@Param("startTime") Date startTime, @Param("endTime") Date endTime);
+
+    int searchCountByCamIdAndTime(@Param("camId")String camId,@Param("startTime") Date startTime, @Param("endTime") Date endTime);
+
+    List<CamInfoCount> searchCamInfoCount(@Param("startTime") Date startTime, @Param("endTime") Date endTime);
 }
 
 

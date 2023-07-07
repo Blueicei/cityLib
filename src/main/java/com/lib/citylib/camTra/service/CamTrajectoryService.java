@@ -533,19 +533,145 @@ public class CamTrajectoryService {
                 max = entry.getValue();
             }
         }
+        System.out.println(max);
         List<HotMap> hotMaps = new ArrayList<>();
         for (Map.Entry<String, Integer> entry : camCount.entrySet()) {
-            int count = (int)(100*Math.log(entry.getValue()+1) / Math.log(max+1));
+            double count = 100.0*Math.log(entry.getValue()+1) / Math.log(max+1);
+            int c = (int)count;
             Point point = camTrajectoryMapper.getPoint(entry.getKey());
             double[] points = new double[2];
             points = GPSUtil.gps84_To_Gcj02(point.getLat(), point.getLon());
             point.setLat(points[0]);
             point.setLon(points[1]);
-            HotMap hotMap = new HotMap(point, count);
+            HotMap hotMap = new HotMap(point, c);
             hotMaps.add(hotMap);
         }
         return hotMaps;
     }
+
+//    public List<HotMap> getHotMapInfoByTime(StartToEndTime startToEndTime) {
+//        long time1 = System.currentTimeMillis();
+//        System.out.println("-------------------------");
+//        List<CamInfo> list = camTrajectoryMapper.listCamIdAndInfo(startToEndTime.getStartTime(),startToEndTime.getEndTime());
+//        System.out.println(list.size());
+//        int max = 0;
+//        Map<String, Integer> camCount = new HashMap<>();
+//        Map<String, Double> camLon = new HashMap<>();
+//        Map<String, Double> camLat = new HashMap<>();
+//        for (CamInfo camInfo : list) {
+//            if (camCount.containsKey(camInfo.getCamId())) {
+//                camCount.put(camInfo.getCamId(), camCount.get(camInfo.getCamId()) + 1);
+//            } else {
+//                camCount.put(camInfo.getCamId(), 1);
+//            }
+//            if (!camLon.containsKey(camInfo.getCamId())) {
+//                camLon.put(camInfo.getCamId(), camInfo.getCamLon());
+//            }
+//            if (!camLat.containsKey(camInfo.getCamId())) {
+//                camLat.put(camInfo.getCamId(), camInfo.getCamLat());
+//            }
+//        }
+//        System.out.println(camCount.size());
+//
+//        long time2 = System.currentTimeMillis();
+//        System.out.println(time2-time1);
+//        for (Map.Entry<String, Integer> entry : camCount.entrySet()) {
+//            if(entry.getValue()>max){
+//                max = entry.getValue();
+//            }
+//        }
+//        long time3 = System.currentTimeMillis();
+//        System.out.println(time3-time2);
+//        List<HotMap> hotMaps = new ArrayList<>();
+//        for (Map.Entry<String, Integer> entry : camCount.entrySet()) {
+//            String camId = entry.getKey();
+//            double count = 100.0*Math.log(entry.getValue()+1) / Math.log(max+1);
+//            int c = (int)count;
+//            double lon = camLon.get(camId);
+//            double lat = camLat.get(camId);
+//            double[] points = new double[2];
+//            points = GPSUtil.gps84_To_Gcj02(lat, lon);
+//            HotMap hotMap = new HotMap(points[1],points[0], c);
+//            hotMaps.add(hotMap);
+//        }
+//        long time4 = System.currentTimeMillis();
+//        System.out.println(time4-time3);
+//
+//        return hotMaps;
+//    }
+//public List<HotMap> getHotMapInfoByTime(StartToEndTime startToEndTime) {
+//
+//    System.out.println("-------------------------");
+//    List<CamInfo> list = camTrajectoryMapper.listCamIdAndInfo(startToEndTime.getStartTime(),startToEndTime.getEndTime());
+//    System.out.println(list.size());
+//    int max = 0;
+//    Map<String, Integer> camCount = new HashMap<>();
+//    Map<String, Double> camLon = new HashMap<>();
+//    Map<String, Double> camLat = new HashMap<>();
+//    for (CamInfo camInfo : list) {
+//        long time1 = System.currentTimeMillis();
+//        if (!camCount.containsKey(camInfo.getCamId())) {
+//            int count = camTrajectoryMapper.searchCountByCamIdAndTime(camInfo.getCamId(),startToEndTime.getStartTime(),startToEndTime.getEndTime());
+//            camCount.put(camInfo.getCamId(), count);
+//        }
+//        if (!camLon.containsKey(camInfo.getCamId())) {
+//            camLon.put(camInfo.getCamId(), camInfo.getCamLon());
+//        }
+//        if (!camLat.containsKey(camInfo.getCamId())) {
+//            camLat.put(camInfo.getCamId(), camInfo.getCamLat());
+//        }
+//        long time2 = System.currentTimeMillis();
+//        System.out.println(time2-time1);
+//    }
+//
+//    for (Map.Entry<String, Integer> entry : camCount.entrySet()) {
+//        if(entry.getValue()>max){
+//            max = entry.getValue();
+//        }
+//    }
+//
+//    List<HotMap> hotMaps = new ArrayList<>();
+//    for (Map.Entry<String, Integer> entry : camCount.entrySet()) {
+//        String camId = entry.getKey();
+//        double count = 100.0*Math.log(entry.getValue()+1) / Math.log(max+1);
+//        int c = (int)count;
+//        double lon = camLon.get(camId);
+//        double lat = camLat.get(camId);
+//        double[] points = new double[2];
+//        points = GPSUtil.gps84_To_Gcj02(lat, lon);
+//        HotMap hotMap = new HotMap(points[1],points[0], c);
+//        hotMaps.add(hotMap);
+//    }
+//
+//    return hotMaps;
+//}
+public List<HotMap> getHotMapInfoByTime(StartToEndTime startToEndTime) {
+
+    System.out.println("-------------------------");
+    long time1 = System.currentTimeMillis();
+    List<CamInfoCount> list = camTrajectoryMapper.searchCamInfoCount(startToEndTime.getStartTime(),startToEndTime.getEndTime());
+    long time2 = System.currentTimeMillis();
+    System.out.println(time2-time1);
+    int max = 0;
+    for(CamInfoCount count:list){
+        if(count.getCount()>max){
+            max = count.getCount();
+        }
+    }
+    List<HotMap> hotMaps = new ArrayList<>();
+    for(CamInfoCount count:list){
+        double c = 100.0*Math.log(count.getCount()+1) / Math.log(max+1);
+        int c_1 = (int)c;
+        double lon = count.getCamLon();
+        double lat = count.getCamLat();
+        double[] points = new double[2];
+        points = GPSUtil.gps84_To_Gcj02(lat, lon);
+        HotMap hotMap = new HotMap(points[1],points[0], c_1);
+        hotMaps.add(hotMap);
+    }
+
+    return hotMaps;
+}
 
     public static class LonLatNotNullFilter implements FilterFunction<CamTrajectory> {
 
