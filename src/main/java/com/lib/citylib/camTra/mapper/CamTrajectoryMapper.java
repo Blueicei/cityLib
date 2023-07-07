@@ -1,6 +1,7 @@
 package com.lib.citylib.camTra.mapper;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import com.lib.citylib.camTra.Query.QueryCamCountByCar;
 import com.lib.citylib.camTra.model.*;
@@ -18,6 +19,18 @@ public interface CamTrajectoryMapper extends BaseMapper<CamTrajectory> {
     List<CamTrajectory> selectAllByCarNumber(@Param("carNumber") String carNumber);
 
     List<CamInfo> getAllCamInfo();
+
+    int getAllCarCount();
+
+    int getAllCamCount();
+
+    int getLocalCarCount();
+
+    int getFlow();
+
+    List<String> getAllCarNumber();
+
+    Map<String, Integer> getAllCamTrajectory(@Param("startTime") Date startTime, @Param("endTime") Date endTime);
 
     List<CamTrajectory> searchAllByCarNumberOrderInTimeRange(@Param("carNumber") String carNumber, @Param("startTime") Date startTime, @Param("endTime") Date endTime);
 

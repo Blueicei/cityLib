@@ -115,27 +115,4 @@
         group by car_number,car_type
         order by count desc
     </select>
-    <select id="listCamIdAndInfo"  fetchSize="100000" resultType="com.lib.citylib.camTra.model.CamInfo">
-        select distinct cam_id,cam_lon,cam_lat
-        from camtrajectory
-        where photo_time between #{param1} and #{param2}
-        and cam_lon is not null
-        and cam_lat is not null
-    </select>
-
-    <select id="searchCountByCamIdAndTime" fetchSize="1000" resultType="int">
-        select count(*) as count
-        from camtrajectory
-        where photo_time between #{param2} and #{param3}
-        and cam_id = #{param1}
-    </select>
-
-    <select id="searchCamInfoCount" fetchSize="1000" resultType="com.lib.citylib.camTra.model.CamInfoCount">
-        select cam_id,cam_lon,cam_lat,count(cam_id) as count
-        from camtrajectory
-        where photo_time between #{param1} and #{param2}
-        and cam_lon is not null
-        and cam_lat is not null
-        group by cam_id,cam_lon,cam_lat
-    </select>
 </mapper>

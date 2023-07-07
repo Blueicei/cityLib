@@ -66,7 +66,7 @@ public class CamTrajectoryController {
         for (CamInfo camInfo : camInfoList) {
             Map<String, Object> info = new HashMap<>();
             List<String> lnglat = new ArrayList<>();
-            double[] doubles = GPSUtil.gps84_To_Gcj02(camInfo.getCamLat(),camInfo.getCamLon());
+            double[] doubles = GPSUtil.gps84_To_Gcj02(camInfo.getCamLon(),camInfo.getCamLat());
             lnglat.add(String.valueOf(doubles[0]));
             lnglat.add(String.valueOf(doubles[1]));
             info.put("lnglat", lnglat);
@@ -76,21 +76,6 @@ public class CamTrajectoryController {
         }
 
         return CommonResult.success(result);
-    }
-
-    /**
-     * 根据时间段,返回对应的点经纬度坐标以及热力图参数count
-     * @param startToEndTime
-     * @return
-     */
-    @ResponseBody
-    @PostMapping("/getHotMapInfoByTime")
-    public CommonResult getHotMapInfoByTime(@RequestBody StartToEndTime startToEndTime){
-        List<HotMap> list = camTrajectoryService.getHotMapInfoByTime(startToEndTime);
-        if(list.isEmpty()){
-            return CommonResult.error("暂无数据");
-        }
-        return CommonResult.success(list);
     }
 
     @ResponseBody
