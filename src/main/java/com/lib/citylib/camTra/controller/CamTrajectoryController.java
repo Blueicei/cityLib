@@ -90,6 +90,16 @@ public class CamTrajectoryController {
         AllInfo allInfo = new AllInfo(allCarCount,flow,flow-localCarCount,localCarCount,allCamCount,start,end);
         return CommonResult.success(allInfo);
     }
+
+    /**
+     * 返回所有车牌号
+     * @return
+     */
+    @ResponseBody
+    @PostMapping("/getAllCarNumber")
+    public CommonResult getAllCarNumber(){
+        return CommonResult.success(camTrajectoryService.getAllCarNumber());
+    }
     
     @ApiOperation(value = "查询车辆轨迹",notes = "根据车牌号查询车辆轨迹")
     @GetMapping("/listByCarNum")

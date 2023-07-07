@@ -53,6 +53,10 @@ public class CamTrajectoryService {
         return camTrajectoryMapper.getFlow();
     }
 
+    public List<String> getAllCarNumber(){
+        return camTrajectoryMapper.getAllCarNumber();
+    }
+
     public Map<String, Integer> highestFlowTime(Date startTime, Date endTime) throws ParseException {
         Map<String, Integer> camTrajectories = camTrajectoryMapper.getAllCamTrajectory(startTime,endTime);
 //        System.out.println(camTrajectories);

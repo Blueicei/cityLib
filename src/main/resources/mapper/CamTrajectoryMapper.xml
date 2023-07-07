@@ -135,4 +135,8 @@
         ORDER BY count DESC
             LIMIT 1
     </select>
+    <select id="getAllCarNumber" resultType="String">
+        select distinct car_number
+        from camtrajectory
+    </select>
 </mapper>
