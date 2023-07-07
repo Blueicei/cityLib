@@ -212,6 +212,16 @@ public class CamTrajectoryController {
         return CommonResult.success(list);
     }
 
+    @ResponseBody
+    @PostMapping("/getHotMapInfoByTime")
+    public CommonResult getHotMapInfoByTime(@RequestBody StartToEndTime startToEndTime) throws Exception{
+        List<HotMap> list = camTrajectoryService.getHotMapInfoByTime(startToEndTime);
+        if(list.isEmpty()){
+            return CommonResult.error("暂无数据");
+        }
+        return CommonResult.success(list);
+    }
+
 
     public ObjectNode convertToGeoJSONFeature(CarTrajectory carTrajectory) {
         // 创建 ObjectMapper 实例

@@ -686,11 +686,7 @@ public class CamTrajectoryService {
 //}
 public List<HotMap> getHotMapInfoByTime(StartToEndTime startToEndTime) {
 
-    System.out.println("-------------------------");
-    long time1 = System.currentTimeMillis();
     List<CamInfoCount> list = camTrajectoryMapper.searchCamInfoCount(startToEndTime.getStartTime(),startToEndTime.getEndTime());
-    long time2 = System.currentTimeMillis();
-    System.out.println(time2-time1);
     int max = 0;
     for(CamInfoCount count:list){
         if(count.getCount()>max){
