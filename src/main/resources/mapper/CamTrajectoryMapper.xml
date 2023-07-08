@@ -125,4 +125,14 @@
         and cam_lat is not null
         group by cam_id,cam_lon,cam_lat
     </select>
+    <select id="searchCamInfoCount" resultType="com.lib.citylib.camTra.model.CamInfoCount">
+        select cam_id,cam_lon,cam_lat,count(cam_id) as count
+        FROM
+            camtrajectory
+        WHERE
+            photo_time between #{startTime} AND #{endTime}
+          AND cam_lon is not null
+          and cam_lat is not null
+        group by cam_id,cam_lon,cam_lat
+    </select>
 </mapper>

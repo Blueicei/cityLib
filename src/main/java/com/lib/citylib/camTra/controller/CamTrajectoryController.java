@@ -21,11 +21,9 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.io.IOException;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @RestController
 @RequestMapping("/camTra")
@@ -41,6 +39,82 @@ public class CamTrajectoryController {
     @PostMapping("/listAllCarNumberAndCarTypeByCount")
     public CommonResult listAllCarNumberAndCarTypeByCount(){
         return CommonResult.success(camTrajectoryService.listAllCarNumberAndCarTypeByCount());
+    }
+
+    /**
+     * 获取所有基本信息（首页）
+     * @return
+     */
+    @ResponseBody
+    @PostMapping("/listAllInfo")
+    public CommonResult listAllInfo() throws ParseException {
+        int allCarCount = camTrajectoryService.allCarCount();
+        int allCamCount = camTrajectoryService.allCamCount();
+        int localCarCount = camTrajectoryService.localCarCount();
+        int flow = camTrajectoryService.flow();
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        Date startTime = format.parse("2021-02-01 00:00:00");
+        Date endTime = format.parse("2021-02-01 23:59:59");
+        Map<String, Integer> camTrajectories = camTrajectoryService.highestFlowTime(startTime,endTime);
+        String targethour = String.valueOf(camTrajectories.get("hour"));
+        System.out.println(targethour);
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(startTime);
+        Date start = new Date();
+        Date end = new Date();
+//        String start = "";
+//        String end = "";
+        while (calendar.getTime().before(endTime) || calendar.getTime().equals(endTime)) {
+            int hour = calendar.get(Calendar.HOUR_OF_DAY);
+
+            if (hour == Integer.parseInt(targethour)) {
+                // 找到hour等于17的时间段
+                Date hourStartTime = calendar.getTime();
+
+                // 增加1小时
+                calendar.add(Calendar.HOUR_OF_DAY, 1);
+
+                // 获取hour17结束时间
+                Date hourEndTime = calendar.getTime();
+
+
+                start = hourStartTime;
+                end = hourEndTime;
+
+                break;
+            }
+
+            // 增加1小时
+            calendar.add(Calendar.HOUR_OF_DAY, 1);
+        }
+        AllInfo allInfo = new AllInfo(allCarCount,flow,flow-localCarCount,localCarCount,allCamCount,start,end);
+        return CommonResult.success(allInfo);
+    }
+
+    /**
+     * 返回所有车牌号
+     * @return
+     */
+    @ResponseBody
+    @PostMapping("/getAllCarNumber")
+    public CommonResult getAllCarNumber(){
+        return CommonResult.success(camTrajectoryService.getAllCarNumber());
+    }
+
+    /**
+     * 根据时间段返回热力图信息
+     * @param startToEndTime
+     * @return
+     * @throws Exception
+     */
+    @ResponseBody
+    @PostMapping("/getHotMapInfoByTime")
+    public CommonResult getHotMapInfoByTime(@RequestBody StartToEndTime startToEndTime) throws Exception{
+        List<HotMap> list = camTrajectoryService.getHotMapInfoByTime(startToEndTime);
+        if(list.isEmpty()){
+            return CommonResult.error("暂无数据");
+        }
+        return CommonResult.success(list);
     }
     
     @ApiOperation(value = "查询车辆轨迹",notes = "根据车牌号查询车辆轨迹")
@@ -66,9 +140,9 @@ public class CamTrajectoryController {
         for (CamInfo camInfo : camInfoList) {
             Map<String, Object> info = new HashMap<>();
             List<String> lnglat = new ArrayList<>();
-            double[] doubles = GPSUtil.gps84_To_Gcj02(camInfo.getCamLon(),camInfo.getCamLat());
-            lnglat.add(String.valueOf(doubles[0]));
+            double[] doubles = GPSUtil.gps84_To_Gcj02(camInfo.getCamLat(),camInfo.getCamLon());
             lnglat.add(String.valueOf(doubles[1]));
+            lnglat.add(String.valueOf(doubles[0]));
             info.put("lnglat", lnglat);
             info.put("camId", camInfo.getCamId());
             info.put("camAddress", camInfo.getCamAddress());
@@ -143,6 +217,12 @@ public class CamTrajectoryController {
         return CommonResult.success(foreignVehicleStats);
     }
 
+    /**
+     * 未改
+     * @param regionDto
+     * @return
+     * @throws Exception
+     */
     @ResponseBody
     @PostMapping("/multiRegionAnalysis")
     public CommonResult multiRegionAnalysis(@RequestBody RegionDto regionDto) throws Exception {
@@ -150,7 +230,8 @@ public class CamTrajectoryController {
         List<CarTrajectory> carTrajectories = camTrajectoryService.multiRegionAnalysis(regionDto);
         if (carTrajectories.isEmpty())
             return CommonResult.error();
-        return CommonResult.success(carTrajectories);
+        ObjectNode geoJSON = convertToGeoJSON(carTrajectories);
+        return CommonResult.success(geoJSON);
     }
 
     @ResponseBody
@@ -212,16 +293,6 @@ public class CamTrajectoryController {
         return CommonResult.success(list);
     }
 
-    @ResponseBody
-    @PostMapping("/getHotMapInfoByTime")
-    public CommonResult getHotMapInfoByTime(@RequestBody StartToEndTime startToEndTime) throws Exception{
-        List<HotMap> list = camTrajectoryService.getHotMapInfoByTime(startToEndTime);
-        if(list.isEmpty()){
-            return CommonResult.error("暂无数据");
-        }
-        return CommonResult.success(list);
-    }
-
 
     public ObjectNode convertToGeoJSONFeature(CarTrajectory carTrajectory) {
         // 创建 ObjectMapper 实例
@@ -251,8 +322,9 @@ public class CamTrajectoryController {
         // 添加坐标点
         for (CamTrajectory point : carTrajectory.getPoints()) {
             ArrayNode coordinate = JsonNodeFactory.instance.arrayNode();
-            coordinate.add(point.getCamLon());
-            coordinate.add(point.getCamLat());
+            double[] doubles = GPSUtil.gps84_To_Gcj02(point.getCamLat(),point.getCamLon());
+            coordinate.add(doubles[1]);
+            coordinate.add(doubles[0]);
             coordinates.add(coordinate);
         }
 

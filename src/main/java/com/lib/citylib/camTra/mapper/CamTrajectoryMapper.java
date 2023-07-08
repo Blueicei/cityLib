@@ -28,6 +28,8 @@ public interface CamTrajectoryMapper extends BaseMapper<CamTrajectory> {
 
     int getFlow();
 
+    List<CamInfoCount> searchCamInfoCount(@Param("startTime") Date startTime, @Param("endTime") Date endTime);
+
     List<String> getAllCarNumber();
 
     Map<String, Integer> getAllCamTrajectory(@Param("startTime") Date startTime, @Param("endTime") Date endTime);
