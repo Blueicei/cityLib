@@ -102,6 +102,16 @@ public class CamTrajectoryController {
     }
 
     /**
+     * 分时间段的流量汇总信息
+     * @return
+     */
+    @ResponseBody
+    @PostMapping("/getAllFlowStats")
+    public CommonResult getAllFlowStats(){
+        return CommonResult.success(camTrajectoryService.getAllFlowStats());
+    }
+
+    /**
      * 根据时间段返回热力图信息
      * @param startToEndTime
      * @return
@@ -129,6 +139,10 @@ public class CamTrajectoryController {
         return new CarTrajectory(carNumber, camTrajectoryService.listByCarNumber(carNumber));
     }
 
+    /**
+     * 获取所有卡口信息
+     * @return
+     */
     @ResponseBody
     @PostMapping("/getAllCamInfo")
     public CommonResult getAllCamInfo(){
@@ -175,7 +189,12 @@ public class CamTrajectoryController {
         return CommonResult.success(geoJSON);
     }
 
-
+    /**
+     * 搜索车辆轨迹
+     * @param trajectoryDto
+     * @return
+     * @throws Exception
+     */
     @ResponseBody
     @PostMapping("/searchCarTrajectory")
     public CommonResult searchCarTrajectory(@RequestBody TrajectoryDto trajectoryDto) throws Exception {
