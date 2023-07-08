@@ -36,6 +36,7 @@
         from camdict
         order by cam_id
     </select>
+
     <select id="listByTrajectoryDto" resultMap="BaseResultMap">
         select
         <include refid="Base_Column_List"/>
@@ -115,15 +116,29 @@
         group by car_number,car_type
         order by count desc
     </select>
-    <select id="searchCamInfoCount" resultType="com.lib.citylib.camTra.model.CamInfoCount">
-        select cam_id,cam_lon,cam_lat,count(cam_id) as count
-        FROM
-            camtrajectory
-        WHERE
-            photo_time between #{startTime} AND #{endTime}
-          AND cam_lon is not null
-        and cam_lat is not null
-        group by cam_id,cam_lon,cam_lat
+    <select id="getAllCarCount" resultType="int">
+        SELECT COUNT(DISTINCT car_number) FROM camtrajectory
+    </select>
+    <select id="getAllCamCount" resultType="int">
+        SELECT COUNT(DISTINCT cam_id) FROM camtrajectory
+    </select>
+    <select id="getLocalCarCount" resultType="int">
+        SELECT COUNT(*) FROM camtrajectory WHERE car_number LIKE '鲁%'
+    </select>
+    <select id="getFlow" resultType="int">
+        SELECT COUNT(*) FROM camtrajectory
+    </select>
+    <select id="getAllCamTrajectory" resultType="java.util.Map">
+        SELECT HOUR(photo_time) AS hour, COUNT(*) AS count
+        FROM camtrajectory
+        WHERE photo_time BETWEEN #{startTime} AND #{endTime}
+        GROUP BY hour
+        ORDER BY count DESC
+            LIMIT 1
+    </select>
+    <select id="getAllCarNumber" resultType="String">
+        select distinct car_number
+        from camtrajectory
     </select>
     <select id="searchCamInfoCount" resultType="com.lib.citylib.camTra.model.CamInfoCount">
         select cam_id,cam_lon,cam_lat,count(cam_id) as count
@@ -134,5 +149,10 @@
           AND cam_lon is not null
           and cam_lat is not null
         group by cam_id,cam_lon,cam_lat
+    </select>
+    <select id="getAllFlowStats" resultType="java.util.Map">
+        SELECT HOUR(photo_time) AS hour, COUNT(*) AS count
+        FROM camtrajectory
+        GROUP BY hour
     </select>
 </mapper>

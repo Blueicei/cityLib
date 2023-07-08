@@ -102,6 +102,16 @@ public class CamTrajectoryController {
     }
 
     /**
+     * 分时间段的流量汇总信息
+     * @return
+     */
+    @ResponseBody
+    @PostMapping("/getAllFlowStats")
+    public CommonResult getAllFlowStats(){
+        return CommonResult.success(camTrajectoryService.getAllFlowStats());
+    }
+
+    /**
      * 根据时间段返回热力图信息
      * @param startToEndTime
      * @return
