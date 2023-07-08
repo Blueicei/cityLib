@@ -36,7 +36,6 @@
         from camdict
         order by cam_id
     </select>
-
     <select id="listByTrajectoryDto" resultMap="BaseResultMap">
         select
         <include refid="Base_Column_List"/>
@@ -149,10 +148,5 @@
           AND cam_lon is not null
           and cam_lat is not null
         group by cam_id,cam_lon,cam_lat
-    </select>
-    <select id="getAllFlowStats" resultType="java.util.Map">
-        SELECT HOUR(photo_time) AS hour, COUNT(*) AS count
-        FROM camtrajectory
-        GROUP BY hour
     </select>
 </mapper>

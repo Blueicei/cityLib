@@ -139,6 +139,10 @@ public class CamTrajectoryController {
         return new CarTrajectory(carNumber, camTrajectoryService.listByCarNumber(carNumber));
     }
 
+    /**
+     * 获取所有卡口信息
+     * @return
+     */
     @ResponseBody
     @PostMapping("/getAllCamInfo")
     public CommonResult getAllCamInfo(){
@@ -185,7 +189,12 @@ public class CamTrajectoryController {
         return CommonResult.success(geoJSON);
     }
 
-
+    /**
+     * 搜索车辆轨迹
+     * @param trajectoryDto
+     * @return
+     * @throws Exception
+     */
     @ResponseBody
     @PostMapping("/searchCarTrajectory")
     public CommonResult searchCarTrajectory(@RequestBody TrajectoryDto trajectoryDto) throws Exception {
