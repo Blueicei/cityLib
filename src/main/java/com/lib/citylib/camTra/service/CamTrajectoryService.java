@@ -53,6 +53,8 @@ public class CamTrajectoryService {
         return camTrajectoryMapper.getFlow();
     }
 
+
+
     public List<String> getAllCarNumber(){
         return camTrajectoryMapper.getAllCarNumber();
     }
@@ -73,6 +75,30 @@ public class CamTrajectoryService {
 //                sliceCamTrajectoryCompare = timeSlice;
 //        }
         return camTrajectories;
+    }
+
+    public List<HotMap> getHotMapInfoByTime(StartToEndTime startToEndTime) {
+
+        List<CamInfoCount> list = camTrajectoryMapper.searchCamInfoCount(startToEndTime.getStartTime(),startToEndTime.getEndTime());
+        int max = 0;
+        for(CamInfoCount count:list){
+            if(count.getCount()>max){
+                max = count.getCount();
+            }
+        }
+        List<HotMap> hotMaps = new ArrayList<>();
+        for(CamInfoCount count:list){
+            double c = 100.0*Math.log(count.getCount()+1) / Math.log(max+1);
+            int c_1 = (int)c;
+            double lon = count.getCamLon();
+            double lat = count.getCamLat();
+            double[] points = new double[2];
+            points = GPSUtil.gps84_To_Gcj02(lat, lon);
+            HotMap hotMap = new HotMap(points[1],points[0], c_1);
+            hotMaps.add(hotMap);
+        }
+
+        return hotMaps;
     }
 
     public List<CamTrajectory> listByCarNumber(String carNumber) {

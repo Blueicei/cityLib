@@ -100,6 +100,22 @@ public class CamTrajectoryController {
     public CommonResult getAllCarNumber(){
         return CommonResult.success(camTrajectoryService.getAllCarNumber());
     }
+
+    /**
+     * 根据时间段返回热力图信息
+     * @param startToEndTime
+     * @return
+     * @throws Exception
+     */
+    @ResponseBody
+    @PostMapping("/getHotMapInfoByTime")
+    public CommonResult getHotMapInfoByTime(@RequestBody StartToEndTime startToEndTime) throws Exception{
+        List<HotMap> list = camTrajectoryService.getHotMapInfoByTime(startToEndTime);
+        if(list.isEmpty()){
+            return CommonResult.error("暂无数据");
+        }
+        return CommonResult.success(list);
+    }
     
     @ApiOperation(value = "查询车辆轨迹",notes = "根据车牌号查询车辆轨迹")
     @GetMapping("/listByCarNum")
