@@ -38,6 +38,8 @@ public class CamTrajectoryController {
     @ResponseBody
     @PostMapping("/listAllCarNumberAndCarTypeByCount")
     public CommonResult listAllCarNumberAndCarTypeByCount(){
+//        List<CarNumberAndCarTypeByCount> carNumberAndCarTypeByCounts = camTrajectoryService.listAllCarNumberAndCarTypeByCount();
+
         return CommonResult.success(camTrajectoryService.listAllCarNumberAndCarTypeByCount());
     }
 

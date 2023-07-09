@@ -120,6 +120,7 @@
         from camtrajectory
         group by car_number,car_type
         order by count desc
+        LIMIT 1000
     </select>
     <select id="getAllCarCount" resultType="int">
         SELECT COUNT(DISTINCT car_number) FROM camtrajectory

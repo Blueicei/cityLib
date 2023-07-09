@@ -12,7 +12,7 @@
         <setting name="lazyLoadingEnabled" value="true" />
         <setting name="aggressiveLazyLoading" value="false" />
         <setting name="mapUnderscoreToCamelCase" value="false" />
-
+        <setting name="fetchSize" value="10000" />
     </settings>
     <mappers>
         <package name="com.lib.citylib.camTra.mapper"/>
