@@ -58,6 +58,7 @@ public class CamTrajectoryController {
         Date startTime = format.parse("2021-02-01 00:00:00");
         Date endTime = format.parse("2021-02-01 23:59:59");
         Map<String, Integer> camTrajectories = camTrajectoryService.highestFlowTime(startTime,endTime);
+        System.out.println(camTrajectories);
         String targethour = String.valueOf(camTrajectories.get("hour"));
         System.out.println(targethour);
         Calendar calendar = Calendar.getInstance();
@@ -70,7 +71,7 @@ public class CamTrajectoryController {
             int hour = calendar.get(Calendar.HOUR_OF_DAY);
 
             if (hour == Integer.parseInt(targethour)) {
-                // 找到hour等于17的时间段
+
                 Date hourStartTime = calendar.getTime();
 
                 // 增加1小时
