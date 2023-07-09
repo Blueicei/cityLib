@@ -13,6 +13,11 @@
             <result property="camLon" column="cam_lon"/>
             <result property="camLat" column="cam_lat"/>
     </resultMap>
+    <resultMap id="FlowStatsResultMap" type="com.lib.citylib.camTra.model.FlowStats">
+        <id property="startTime" column="startTime"/>
+        <result property="endTime" column="endTime"/>
+        <result property="flowCount" column="flowCount"/>
+    </resultMap>
 
     <resultMap id="carFlowResultMap" type="com.lib.citylib.camTra.model.ForeignVehicleStats">
         <id property="date" column="time_interval" />
@@ -36,6 +41,7 @@
         from camdict
         order by cam_id
     </select>
+
     <select id="listByTrajectoryDto" resultMap="BaseResultMap">
         select
         <include refid="Base_Column_List"/>
@@ -127,7 +133,7 @@
     <select id="getFlow" resultType="int">
         SELECT COUNT(*) FROM camtrajectory
     </select>
-    <select id="getAllCamTrajectory" resultType="java.util.Map">
+    <select id="getAllCamTrajectory" resultType="com.lib.citylib.camTra.model.FlowStats">
         SELECT HOUR(photo_time) AS hour, COUNT(*) AS count
         FROM camtrajectory
         WHERE photo_time BETWEEN #{startTime} AND #{endTime}
@@ -148,5 +154,13 @@
           AND cam_lon is not null
           and cam_lat is not null
         group by cam_id,cam_lon,cam_lat
+    </select>
+    <select id="getAllFlowStats" resultMap="FlowStatsResultMap">
+        SELECT
+            MIN(photo_time) AS startTime,
+            MAX(photo_time) AS endTime,
+            COUNT(*) AS flowCount
+        FROM camtrajectory
+        GROUP BY HOUR(photo_time)
     </select>
 </mapper>
