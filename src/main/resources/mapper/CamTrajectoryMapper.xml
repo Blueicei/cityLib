@@ -120,6 +120,7 @@
         from camtrajectory
         group by car_number,car_type
         order by count desc
+        LIMIT 1000
     </select>
     <select id="getAllCarCount" resultType="int">
         SELECT COUNT(DISTINCT car_number) FROM camtrajectory
@@ -133,7 +134,7 @@
     <select id="getFlow" resultType="int">
         SELECT COUNT(*) FROM camtrajectory
     </select>
-    <select id="getAllCamTrajectory" resultType="com.lib.citylib.camTra.model.FlowStats">
+    <select id="getAllCamTrajectory" resultType="Map">
         SELECT HOUR(photo_time) AS hour, COUNT(*) AS count
         FROM camtrajectory
         WHERE photo_time BETWEEN #{startTime} AND #{endTime}

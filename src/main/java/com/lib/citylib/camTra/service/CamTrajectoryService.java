@@ -614,6 +614,78 @@ public class CamTrajectoryService {
         return hotMaps;
     }
 
+//    public List<List<HotMap>> getHotMapByCutTime(StartToEndTimeWithTimeCut startToEndTime) {
+//        Date currentDate = startToEndTime.getStartTime();
+//        Date endDate = startToEndTime.getEndTime();
+//        List<List<HotMap>> lists = new ArrayList<>();
+//        while(currentDate.compareTo(endDate)<0){
+//            Calendar rightNow = Calendar.getInstance();
+//            rightNow.setTime(currentDate);
+//            rightNow.add(Calendar.HOUR, startToEndTime.getCutTime());
+//            Date nextDate = rightNow.getTime();
+//            if(nextDate.compareTo(endDate)<0){
+//            StartToEndTime startToEndTime1 = new StartToEndTime(currentDate,nextDate);
+//            List<HotMap> list = this.getHotMapInfoByTime(startToEndTime1);
+//            lists.add(list);
+//            }else {
+//                StartToEndTime startToEndTime1 = new StartToEndTime(currentDate,endDate);
+//                List<HotMap> list = this.getHotMapInfoByTime(startToEndTime1);
+//                lists.add(list);
+//                return lists;
+//            }
+//            currentDate = nextDate;
+//        }
+//        return lists;
+//    }
+
+    public List<List<HotMap>> getHotMapByCutTime(StartToEndTimeWithTimeCut startToEndTime) {
+        Date currentDate = startToEndTime.getStartTime();
+        Date endDate = startToEndTime.getEndTime();
+        List<List<CamInfoCount>> camInfoCountList = new ArrayList<>();
+        while(currentDate.compareTo(endDate)<0){
+            Calendar rightNow = Calendar.getInstance();
+            rightNow.setTime(currentDate);
+            rightNow.add(Calendar.HOUR, startToEndTime.getCutTime());
+            Date nextDate = rightNow.getTime();
+            if(nextDate.compareTo(endDate)<0){
+                StartToEndTime startToEndTime1 = new StartToEndTime(currentDate,nextDate);
+                List<CamInfoCount> camInfoCounts = camTrajectoryMapper.searchCamInfoCount(currentDate,nextDate);
+                camInfoCountList.add(camInfoCounts);
+            }else {
+                List<CamInfoCount> camInfoCounts = camTrajectoryMapper.searchCamInfoCount(currentDate,endDate);
+                camInfoCountList.add(camInfoCounts);
+            }
+            currentDate = nextDate;
+        }
+        int max = 0;
+        for(List<CamInfoCount> camInfoCounts:camInfoCountList){
+            for(CamInfoCount count:camInfoCounts){
+                if(count.getCount()>=max){
+                    max = count.getCount();
+                }
+            }
+        }
+        List<List<HotMap>> lists = new ArrayList<>();
+        for(List<CamInfoCount> camInfoCounts:camInfoCountList){
+            List<HotMap> hotMaps = new ArrayList<>();
+            for(CamInfoCount count:camInfoCounts){
+                double c = 100.0*Math.log(count.getCount()+1) / Math.log(max+1);
+                int c_1 = (int)c;
+                double lon = count.getCamLon();
+                double lat = count.getCamLat();
+                double[] points = new double[2];
+                points = GPSUtil.gps84_To_Gcj02(lat, lon);
+                HotMap hotMap = new HotMap(points[1],points[0], c_1);
+                hotMaps.add(hotMap);
+            }
+            lists.add(hotMaps);
+        }
+
+        return lists;
+    }
+
+
+
     public static class LonLatNotNullFilter implements FilterFunction<CamTrajectory> {
 
         @Override
