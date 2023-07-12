@@ -130,6 +130,8 @@ public class CamTrajectoryController {
         }
         return CommonResult.success(list);
     }
+
+
     
     @ApiOperation(value = "查询车辆轨迹",notes = "根据车牌号查询车辆轨迹")
     @GetMapping("/listByCarNum")
