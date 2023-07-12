@@ -70,6 +70,8 @@ public interface CamTrajectoryMapper extends BaseMapper<CamTrajectory> {
     Point getPoint(@Param("camId") String camId);
 
     List<CarNumberAndCarTypeByCount> listAllCarNumberAndCarTypeByCount();
+
+    List<CarNumberAndCarTypeByCount> listAllCarNumberAndCarTypeByCountString(@Param("carNumber") String carNumber);
 }
 
 

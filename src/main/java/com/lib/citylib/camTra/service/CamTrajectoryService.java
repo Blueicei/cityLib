@@ -37,6 +37,10 @@ public class CamTrajectoryService {
         return camTrajectoryMapper.listAllCarNumberAndCarTypeByCount();
     }
 
+    public List<CarNumberAndCarTypeByCount> listAllCarNumberAndCarTypeByCountString(String carNumber){
+        return camTrajectoryMapper.listAllCarNumberAndCarTypeByCountString(carNumber);
+    }
+
     public int allCarCount(){
         return camTrajectoryMapper.getAllCarCount();
     }
@@ -185,6 +189,7 @@ public class CamTrajectoryService {
                         sortPartition(CamTrajectory::getPhotoTime, Order.ASCENDING).
                         map(new PointListMap()).
                         reduce(new MergePoints()).
+                        flatMap(new CutPointsToTrajectory(30)).
 //                        flatMap(new CutPointsToTrajectory(30)).
 //                        filter((List<CamTrajectory> l1) -> {
 //                            return l1.size() > 3;

@@ -1,7 +1,9 @@
 package com.lib.citylib.camTra.model;
 
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
+@NoArgsConstructor
 @Data
 public class CarNumberAndCarTypeByCount {
     private String carNumber;
