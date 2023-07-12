@@ -57,6 +57,15 @@ public class CamTrajectoryService {
         return camTrajectoryMapper.getAllFlowStats();
     }
 
+    public List<FlowStats> getLocalFlowStats(){
+        return camTrajectoryMapper.getLocalFlowStats();
+    }
+
+    public List<FlowStats> getForeignFlowStats(){
+        return camTrajectoryMapper.getForeignFlowStats();
+    }
+
+
     public List<String> getAllCarNumber(){
         return camTrajectoryMapper.getAllCarNumber();
     }

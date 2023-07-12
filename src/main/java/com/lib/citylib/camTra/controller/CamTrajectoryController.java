@@ -113,6 +113,24 @@ public class CamTrajectoryController {
     public CommonResult getAllFlowStats(){
         return CommonResult.success(camTrajectoryService.getAllFlowStats());
     }
+    /**
+     * 分时间段的本地流量汇总信息
+     * @return
+     */
+    @ResponseBody
+    @PostMapping("/getLocalFlowStats")
+    public CommonResult getLocalFlowStats(){
+        return CommonResult.success(camTrajectoryService.getLocalFlowStats());
+    }
+    /**
+     * 分时间段的外埠流量汇总信息
+     * @return
+     */
+    @ResponseBody
+    @PostMapping("/getForeignFlowStats")
+    public CommonResult getForeignFlowStats(){
+        return CommonResult.success(camTrajectoryService.getForeignFlowStats());
+    }
 
     /**
      * 根据时间段返回热力图信息

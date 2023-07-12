@@ -164,4 +164,22 @@
         FROM camtrajectory
         GROUP BY HOUR(photo_time)
     </select>
+    <select id="getLocalFlowStats" resultMap="FlowStatsResultMap">
+        SELECT
+            MIN(photo_time) AS startTime,
+            MAX(photo_time) AS endTime,
+            COUNT(*) AS flowCount
+        FROM camtrajectory
+        WHERE car_number LIKE '鲁%'
+        GROUP BY HOUR(photo_time)
+    </select>
+    <select id="getForeignFlowStats" resultMap="FlowStatsResultMap">
+        SELECT
+            MIN(photo_time) AS startTime,
+            MAX(photo_time) AS endTime,
+            COUNT(*) AS flowCount
+        FROM camtrajectory
+        WHERE car_number NOT LIKE '鲁%'
+        GROUP BY HOUR(photo_time)
+    </select>
 </mapper>
