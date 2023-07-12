@@ -30,6 +30,10 @@ public interface CamTrajectoryMapper extends BaseMapper<CamTrajectory> {
 
     List<CamInfoCount> searchCamInfoCount(@Param("startTime") Date startTime, @Param("endTime") Date endTime);
 
+    List<CamInfoCount> searchForeignCamInfoCount(@Param("startTime") Date startTime, @Param("endTime") Date endTime);
+
+    List<CamInfoCount> searchLocalCamInfoCount(@Param("startTime") Date startTime, @Param("endTime") Date endTime);
+
     List<FlowStats> getAllFlowStats();
 
     List<FlowStats> getLocalFlowStats();

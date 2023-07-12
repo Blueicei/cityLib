@@ -149,6 +149,28 @@ public class CamTrajectoryController {
         return CommonResult.success(list);
     }
 
+    @ResponseBody
+    @PostMapping("/getForeignHotMapInfoByTime")
+    public CommonResult getForeignHotMapInfoByTime(@RequestBody StartToEndTime startToEndTime) throws Exception{
+        List<HotMap> list = camTrajectoryService.getForeignHotMapInfoByTime(startToEndTime);
+        if(list.isEmpty()){
+
+            return CommonResult.error("暂无数据");
+        }
+        return CommonResult.success(list);
+    }
+
+    @ResponseBody
+    @PostMapping("/getLocalHotMapInfoByTime")
+    public CommonResult getLocalHotMapInfoByTime(@RequestBody StartToEndTime startToEndTime) throws Exception{
+        List<HotMap> list = camTrajectoryService.getLocalHotMapInfoByTime(startToEndTime);
+        if(list.isEmpty()){
+
+            return CommonResult.error("暂无数据");
+        }
+        return CommonResult.success(list);
+    }
+
 
     
     @ApiOperation(value = "查询车辆轨迹",notes = "根据车牌号查询车辆轨迹")
@@ -340,6 +362,26 @@ public class CamTrajectoryController {
     @PostMapping("/getHotMapByCutTime")
     public CommonResult getHotMapByCutTime(@RequestBody StartToEndTimeWithTimeCut startToEndTime) throws Exception{
         List<List<HotMap>> lists = camTrajectoryService.getHotMapByCutTime(startToEndTime);
+        if(lists.isEmpty()){
+            return CommonResult.error("暂无数据");
+        }
+        return CommonResult.success(lists);
+    }
+
+    @ResponseBody
+    @PostMapping("/getLocalHotMapByCutTime")
+    public CommonResult getLocalHotMapByCutTime(@RequestBody StartToEndTimeWithTimeCut startToEndTime) throws Exception{
+        List<List<HotMap>> lists = camTrajectoryService.getLocalHotMapByCutTime(startToEndTime);
+        if(lists.isEmpty()){
+            return CommonResult.error("暂无数据");
+        }
+        return CommonResult.success(lists);
+    }
+
+    @ResponseBody
+    @PostMapping("/getForeignHotMapByCutTime")
+    public CommonResult getForeignHotMapByCutTime(@RequestBody StartToEndTimeWithTimeCut startToEndTime) throws Exception{
+        List<List<HotMap>> lists = camTrajectoryService.getForeignHotMapByCutTime(startToEndTime);
         if(lists.isEmpty()){
             return CommonResult.error("暂无数据");
         }
