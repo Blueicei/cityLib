@@ -44,6 +44,17 @@ public class CamTrajectoryController {
     }
 
     /**
+     * 返回车牌号，车型和出现次数（系统首页用）模糊查询
+     * @return
+     */
+    @ResponseBody
+    @PostMapping("/listAllCarNumberAndCarTypeByCountString")
+    public CommonResult listAllCarNumberAndCarTypeByCountString(String carNumber){
+
+        return CommonResult.success(camTrajectoryService.listAllCarNumberAndCarTypeByCountString(carNumber));
+    }
+
+    /**
      * 获取所有基本信息（首页）
      * @return
      */

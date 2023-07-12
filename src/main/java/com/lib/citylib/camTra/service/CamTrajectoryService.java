@@ -37,6 +37,10 @@ public class CamTrajectoryService {
         return camTrajectoryMapper.listAllCarNumberAndCarTypeByCount();
     }
 
+    public List<CarNumberAndCarTypeByCount> listAllCarNumberAndCarTypeByCountString(String carNumber){
+        return camTrajectoryMapper.listAllCarNumberAndCarTypeByCountString(carNumber);
+    }
+
     public int allCarCount(){
         return camTrajectoryMapper.getAllCarCount();
     }
