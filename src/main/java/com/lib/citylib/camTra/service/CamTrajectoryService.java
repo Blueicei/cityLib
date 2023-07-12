@@ -141,6 +141,7 @@ public class CamTrajectoryService {
                         sortPartition(CamTrajectory::getPhotoTime, Order.ASCENDING).
                         map(new PointListMap()).
                         reduce(new MergePoints()).
+                        flatMap(new CutPointsToTrajectory(30)).
 //                        flatMap(new CutPointsToTrajectory(30)).
 //                        filter((List<CamTrajectory> l1) -> {
 //                            return l1.size() > 3;
