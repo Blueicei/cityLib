@@ -32,6 +32,10 @@ public interface CamTrajectoryMapper extends BaseMapper<CamTrajectory> {
 
     List<FlowStats> getAllFlowStats();
 
+    List<FlowStats> getLocalFlowStats();
+
+    List<FlowStats> getForeignFlowStats();
+
     List<String> getAllCarNumber();
 
     Map<String, Integer> getAllCamTrajectory(@Param("startTime") Date startTime, @Param("endTime") Date endTime);
