@@ -838,6 +838,87 @@ public class CamTrajectoryService {
         return lists;
     }
 
+    public List<HotMap> getHeatMapByCarNumber(CarWithTime carWithTime) {
+        List<CamInfoCount> camInfoCounts = camTrajectoryMapper.getHeatMapByCarNumber(carWithTime.getCarNumber(),carWithTime.getStartTime(),carWithTime.getEndTime());
+        int max = 0;
+        for(CamInfoCount count:camInfoCounts){
+            if(count.getCount()>max){
+                max = count.getCount();
+            }
+        }
+        List<HotMap> hotMaps = new ArrayList<>();
+        for(CamInfoCount count:camInfoCounts){
+            double c = 100.0*Math.log(count.getCount()+1) / Math.log(max+1);
+            int c_1 = (int)c;
+            double lon = count.getCamLon();
+            double lat = count.getCamLat();
+            double[] points = new double[2];
+            points = GPSUtil.gps84_To_Gcj02(lat, lon);
+            HotMap hotMap = new HotMap(points[1],points[0], c_1);
+            hotMaps.add(hotMap);
+        }
+
+        return hotMaps;
+    }
+
+    public List<POI> POISearch(String carNumber) {
+        String date1 = "2021-02-01 00:00:00";
+        String date2 = "2021-02-02 00:00:00";
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        List<String> list = new ArrayList<>();
+        list.add(carNumber);
+        try {
+            // 将日期字符串解析为Date对象
+            Date parsedDate1 = dateFormat.parse(date1);
+            Date parsedDate2 = dateFormat.parse(date2);
+            // 输出解析后的Date对象
+            HashMap<String,Integer> map1 = new HashMap<>();
+            HashMap<String,Integer> map2 = new HashMap<>();
+            CamLocation camLocation = new CamLocation();
+            List<CarTrajectory> carTrajectories = this.listByCarNumberOrderInTimeRange(list,parsedDate1,parsedDate2);
+            for(CarTrajectory carTrajectory:carTrajectories){
+//                for (CamTrajectory camTrajectory : carTrajectory.getPoints()) {
+//                    String camId = camTrajectory.getCamId();
+//                    if (camCount.containsKey(camId)) {
+//                        camCount.put(camId, camCount.get(camId) + 1);
+//                    } else {
+//                        camCount.put(camId, 1);
+//                    }
+//                }
+                List<CamTrajectory> camTrajectoryList = carTrajectory.getPoints();
+                String camId1 = camTrajectoryList.get(0).getCamId();
+                if(map1.containsKey(camId1)){
+                    map1.put(camId1, map1.get(camId1) + 1);
+                }else {
+                    map1.put(camId1,  1);
+                    camLocation.addToHashMap(camId1,new Point(camTrajectoryList.get(0).getCamLon(),camTrajectoryList.get(0).getCamLat()));
+                }
+                String camId2 = camTrajectoryList.get(camTrajectoryList.size()-1).getCamId();
+                if(map2.containsKey(camId2)){
+                    map2.put(camId2, map2.get(camId2) + 1);
+                }else {
+                    map2.put(camId2,  1);
+                    camLocation.addToHashMap(camId1,new Point(camTrajectoryList.get(camTrajectoryList.size()-1).getCamLon(),camTrajectoryList.get(camTrajectoryList.size()-1).getCamLat()));
+                }
+            }
+            List<POI>  pois= new ArrayList<>();
+            for(String camId:map1.keySet()){
+                POI poi = new POI(camLocation.getValueFromHashMap(camId),0);
+                pois.add(poi);
+            }
+            for(String camId:map2.keySet()){
+                POI poi = new POI(camLocation.getValueFromHashMap(camId),1);
+                pois.add(poi);
+            }
+            return pois;
+        } catch (ParseException e) {
+            // 解析失败时的异常处理
+            e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return new ArrayList<POI>();
+    }
 
 
     public static class LonLatNotNullFilter implements FilterFunction<CamTrajectory> {

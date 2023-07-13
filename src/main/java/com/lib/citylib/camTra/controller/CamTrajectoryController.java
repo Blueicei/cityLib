@@ -359,6 +359,39 @@ public class CamTrajectoryController {
         return CommonResult.success(list);
     }
 
+    /**
+     * 返回车辆经常活动的区域坐标点，进行POI分析
+     * @param carNumber
+     * @return
+     * @throws Exception
+     */
+    @ResponseBody
+    @PostMapping("/POISearch")
+    public CommonResult POISearch(@RequestBody  String carNumber) throws Exception{
+       List<POI> list = camTrajectoryService.POISearch(carNumber);
+        if(list.isEmpty()){
+            return CommonResult.error("暂无数据");
+        }
+        return CommonResult.success(list);
+    }
+
+
+    /**
+     * 根据车辆信息获取热力图信息
+     * @param carWithTime
+     * @return
+     * @throws Exception
+     */
+    @ResponseBody
+    @PostMapping("/getHeatMapByCarNumber")
+    public CommonResult getHeatMapByCarNumber(@RequestBody CarWithTime carWithTime) throws Exception{
+        List<HotMap> list = camTrajectoryService.getHeatMapByCarNumber(carWithTime);
+        if(list.isEmpty()){
+            return CommonResult.error("暂无数据");
+        }
+        return CommonResult.success(list);
+    }
+
     @ResponseBody
     @PostMapping("/getHotMap")
     public CommonResult getHotMap(@RequestBody CarTrajectory carTrajectory) throws Exception{

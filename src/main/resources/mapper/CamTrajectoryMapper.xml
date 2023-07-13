@@ -212,4 +212,15 @@
         WHERE car_number NOT LIKE '鲁%'
         GROUP BY HOUR(photo_time)
     </select>
+    <select id="getHeatMapByCarNumber" resultType="com.lib.citylib.camTra.model.CamInfoCount">
+        select cam_id,cam_lon,cam_lat,count(cam_id) as count
+        FROM
+            camtrajectory
+        WHERE
+            photo_time between #{startTime} AND #{endTime}
+          AND cam_lon is not null
+          and cam_lat is not null
+        and car_number = #{carNumber}
+        group by cam_id,cam_lon,cam_lat
+    </select>
 </mapper>
