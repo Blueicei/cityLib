@@ -220,7 +220,10 @@
             photo_time between #{startTime} AND #{endTime}
           AND cam_lon is not null
           and cam_lat is not null
-        and car_number = #{carNumber}
+        and car_number in
+        <foreach item="item" collection="carNumber" open="(" separator="," close=")">
+            #{item}
+        </foreach>
         group by cam_id,cam_lon,cam_lat
     </select>
 </mapper>

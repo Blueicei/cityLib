@@ -73,7 +73,7 @@ public interface CamTrajectoryMapper extends BaseMapper<CamTrajectory> {
 
     List<CarNumberAndCarTypeByCount> listAllCarNumberAndCarTypeByCountString(@Param("carNumber") String carNumber);
 
-    List<CamInfoCount> getHeatMapByCarNumber(@Param("carNumber")String carNumeber, @Param("startTime") Date startTime, @Param("endTime") Date endTime);
+    List<CamInfoCount> getHeatMapByCarNumber(@Param("carNumber")List<String> carNumber, @Param("startTime") Date startTime, @Param("endTime") Date endTime);
 }
 
 

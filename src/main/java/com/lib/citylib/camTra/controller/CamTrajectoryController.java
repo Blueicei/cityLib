@@ -367,7 +367,7 @@ public class CamTrajectoryController {
      */
     @ResponseBody
     @PostMapping("/POISearch")
-    public CommonResult POISearch(@RequestBody  String carNumber) throws Exception{
+    public CommonResult POISearch(String carNumber) throws Exception{
        List<POI> list = camTrajectoryService.POISearch(carNumber);
         if(list.isEmpty()){
             return CommonResult.error("暂无数据");

@@ -192,7 +192,7 @@ public class CamTrajectoryService {
                         flatMap(new CutPointsToTrajectory(30)).
 //                        flatMap(new CutPointsToTrajectory(30)).
 //                        filter((List<CamTrajectory> l1) -> {
-//                            return l1.size() > 3;
+//                            return l1.size() >= 2;
 //                        }).
                         map(new PointListToTraMap()).
                         name("points-to-trajectory");
@@ -839,13 +839,17 @@ public class CamTrajectoryService {
     }
 
     public List<HotMap> getHeatMapByCarNumber(CarWithTime carWithTime) {
-        List<CamInfoCount> camInfoCounts = camTrajectoryMapper.getHeatMapByCarNumber(carWithTime.getCarNumber(),carWithTime.getStartTime(),carWithTime.getEndTime());
-        int max = 0;
-        for(CamInfoCount count:camInfoCounts){
-            if(count.getCount()>max){
-                max = count.getCount();
+        List<String> list = new ArrayList<>();
+        list.add(carWithTime.getCarNumber());
+        List<CamInfoCount> camInfoCounts = camTrajectoryMapper.getHeatMapByCarNumber(list, carWithTime.getStartTime(), carWithTime.getEndTime());
+
+            int max = 0;
+            for (CamInfoCount count : camInfoCounts) {
+                if (count.getCount() > max) {
+                    max = count.getCount();
+                }
             }
-        }
+
         List<HotMap> hotMaps = new ArrayList<>();
         for(CamInfoCount count:camInfoCounts){
             double c = 100.0*Math.log(count.getCount()+1) / Math.log(max+1);
@@ -902,14 +906,37 @@ public class CamTrajectoryService {
                 }
             }
             List<POI>  pois= new ArrayList<>();
-            for(String camId:map1.keySet()){
+            List<Map.Entry<String, Integer>> list1 = new ArrayList<>(map1.entrySet());
+
+            // Sort the list in descending order based on the value using Comparator
+            Collections.sort(list1, (o1, o2) -> o2.getValue().compareTo(o1.getValue()));
+
+            List<Map.Entry<String, Integer>> list2 = new ArrayList<>(map1.entrySet());
+
+            // Sort the list in descending order based on the value using Comparator
+            Collections.sort(list2, (o1, o2) -> o2.getValue().compareTo(o1.getValue()));
+
+            int count = 0;
+            for(Map.Entry<String, Integer> entry : list1){
+                String camId = entry.getKey();
                 POI poi = new POI(camLocation.getValueFromHashMap(camId),0);
                 pois.add(poi);
+                count++;
+                if(count>=3){
+                    break;
+                }
             }
-            for(String camId:map2.keySet()){
+            count = 0;
+            for(Map.Entry<String, Integer> entry : list2){
+                String camId = entry.getKey();
                 POI poi = new POI(camLocation.getValueFromHashMap(camId),1);
                 pois.add(poi);
+                count++;
+                if(count>=3){
+                    break;
+                }
             }
+            System.out.println("------------------");
             return pois;
         } catch (ParseException e) {
             // 解析失败时的异常处理
