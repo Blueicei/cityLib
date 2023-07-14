@@ -360,6 +360,22 @@ public class CamTrajectoryController {
     }
 
     /**
+     * 根据前端网格的位置和粒度，返回各个小网格的流量
+     * @param gird
+     * @return
+     * @throws Exception
+     */
+    @ResponseBody
+    @PostMapping("/gridFlowCount")
+    public CommonResult gridFlowCount(@RequestBody Gird gird) throws Exception{
+        List<GirdFlow> list = camTrajectoryService.gridFlowCount(gird);
+        if(list.isEmpty()){
+            return CommonResult.error("暂无数据");
+        }
+        return CommonResult.success(list);
+    }
+
+    /**
      * 返回车辆经常活动的区域坐标点，进行POI分析
      * @param carNumber
      * @return

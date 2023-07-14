@@ -57,6 +57,7 @@
         where cam_id = #{param1}
         and photo_time between #{param2} and #{param3}
         order by photo_time DESC
+            LIMIT 50
     </select>
     <insert id="insertAll">
         insert into camtrajectory
@@ -225,5 +226,16 @@
             #{item}
         </foreach>
         group by cam_id,cam_lon,cam_lat
+    </select>
+    <select id="getGridFlow" resultType="int">
+        select count(*)
+        FROM
+        camtrajectory
+        WHERE
+            cam_lon between #{gridLeft} and #{gridRight}
+        and cam_lat between #{gridUp} and #{gridDown}
+        AND cam_lon is not null
+        and cam_lat is not null
+        and photo_time between #{startTime} AND #{endTime}
     </select>
 </mapper>

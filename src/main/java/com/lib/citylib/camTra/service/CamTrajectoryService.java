@@ -902,16 +902,16 @@ public class CamTrajectoryService {
                     map2.put(camId2, map2.get(camId2) + 1);
                 }else {
                     map2.put(camId2,  1);
-                    camLocation.addToHashMap(camId1,new Point(camTrajectoryList.get(camTrajectoryList.size()-1).getCamLon(),camTrajectoryList.get(camTrajectoryList.size()-1).getCamLat()));
+                    camLocation.addToHashMap(camId2,new Point(camTrajectoryList.get(camTrajectoryList.size()-1).getCamLon(),camTrajectoryList.get(camTrajectoryList.size()-1).getCamLat()));
                 }
             }
-            List<POI>  pois= new ArrayList<>();
+            List<POI>  pois = new ArrayList<>();
             List<Map.Entry<String, Integer>> list1 = new ArrayList<>(map1.entrySet());
 
             // Sort the list in descending order based on the value using Comparator
             Collections.sort(list1, (o1, o2) -> o2.getValue().compareTo(o1.getValue()));
 
-            List<Map.Entry<String, Integer>> list2 = new ArrayList<>(map1.entrySet());
+            List<Map.Entry<String, Integer>> list2 = new ArrayList<>(map2.entrySet());
 
             // Sort the list in descending order based on the value using Comparator
             Collections.sort(list2, (o1, o2) -> o2.getValue().compareTo(o1.getValue()));
@@ -945,6 +945,39 @@ public class CamTrajectoryService {
             e.printStackTrace();
         }
         return new ArrayList<POI>();
+    }
+
+    public List<GirdFlow> gridFlowCount(Gird gird) {
+        double[] leftup = GPSUtil.gcj02_To_Gps84(gird.getUp(), gird.getLeft());
+        double left = leftup[1];
+        double up = leftup[0];
+
+        double[] rightdown = GPSUtil.gcj02_To_Gps84(gird.getDown(), gird.getRight());
+        double right = rightdown[1];
+        double down = rightdown[0];
+
+        List<GirdFlow> list = new ArrayList<>();
+        for(int i=0;i<gird.getCut();i++){
+            for(int j=0;j<gird.getCut();j++){
+                GirdFlow gridFlow = new GirdFlow();
+                gridFlow.setGirdId("网格"+(i+1)+"-"+(j+1));
+                gridFlow.setRow(i+1);
+                gridFlow.setCol(j+1);
+                double r = left-right;
+                double gridR = r/4.0;
+                double gridLeft = left + i * gridR;
+                double gridRight = gridLeft+ gridR;
+                double gridUp = up - j * gridR;
+                double gridDown = gridUp -gridR;
+                gridFlow.setCount(camTrajectoryMapper.getGridFlow(gridLeft,gridRight,gridUp,gridDown,gird.getStartTime(),gird.getEndTime()));
+                double[] gcjCentralPoint = GPSUtil.gps84_To_Gcj02((gridUp+gridDown)/2.0, (gridLeft+gridRight)/2.0);
+                gridFlow.setCentralLon(gcjCentralPoint[1]);
+                gridFlow.setCentralLat(gcjCentralPoint[0]);
+                gridFlow.setPoi("");
+                list.add(gridFlow);
+            }
+        }
+        return list;
     }
 
 
