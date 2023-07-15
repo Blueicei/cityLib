@@ -284,6 +284,16 @@ public class CamTrajectoryController {
     }
 
     @ResponseBody
+    @PostMapping("/compareVehiclesStats")
+    public CommonResult compareVehiclesStats(@RequestBody ForeignVehicleStatsDto foreignVehicleStatsDto) throws Exception {
+//        System.out.println(vehicleCountByCamDto);
+        List<CompareVehicleStats> compareVehiclesStats = camTrajectoryService.compareVehiclesStats(foreignVehicleStatsDto);
+        if (compareVehiclesStats.isEmpty())
+            return CommonResult.error();
+        return CommonResult.success(compareVehiclesStats);
+    }
+
+    @ResponseBody
     @PostMapping("/foreignVehiclesStats")
     public CommonResult foreignVehiclesStats(@RequestBody ForeignVehicleStatsDto foreignVehicleStatsDto) throws Exception {
 //        System.out.println(vehicleCountByCamDto);

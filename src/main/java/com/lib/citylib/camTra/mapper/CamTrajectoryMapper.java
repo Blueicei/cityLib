@@ -18,7 +18,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 public interface CamTrajectoryMapper extends BaseMapper<CamTrajectory> {
     List<CamTrajectory> selectAllByCarNumber(@Param("carNumber") String carNumber);
 
-    int getGridFlow(@Param("gridLeft")double gridLeft,@Param("gridRight")double gridRight,@Param("gridLeft")double gridUp,@Param("gridLeft")double gridDown,@Param("startTime") Date startTime, @Param("endTime") Date endTime);
+    int getGridFlow(@Param("gridLeft")double gridLeft,@Param("gridRight")double gridRight,@Param("gridUp")double gridUp,@Param("gridDown")double gridDown,@Param("startTime") Date startTime, @Param("endTime") Date endTime);
 
     List<CamInfo> getAllCamInfo();
 

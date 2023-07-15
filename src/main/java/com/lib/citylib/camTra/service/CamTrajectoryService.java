@@ -963,20 +963,30 @@ public class CamTrajectoryService {
                 gridFlow.setGirdId("网格"+(i+1)+"-"+(j+1));
                 gridFlow.setRow(i+1);
                 gridFlow.setCol(j+1);
-                double r = left-right;
-                double gridR = r/4.0;
-                double gridLeft = left + i * gridR;
-                double gridRight = gridLeft+ gridR;
-                double gridUp = up - j * gridR;
-                double gridDown = gridUp -gridR;
+                double col = right-left;
+                double row = up-down;
+                double gridRow = row/4.0;
+                double gridcol = col/4.0;
+                double gridLeft = left + j * gridcol;
+                double gridRight = gridLeft+ gridcol;
+                double gridUp = up - i * gridRow;
+                double gridDown = gridUp -gridRow;
                 gridFlow.setCount(camTrajectoryMapper.getGridFlow(gridLeft,gridRight,gridUp,gridDown,gird.getStartTime(),gird.getEndTime()));
                 double[] gcjCentralPoint = GPSUtil.gps84_To_Gcj02((gridUp+gridDown)/2.0, (gridLeft+gridRight)/2.0);
+                double[] leftups = GPSUtil.gps84_To_Gcj02(gridUp,gridLeft);
+                double[] rightdowns = GPSUtil.gps84_To_Gcj02(gridDown,gridRight);
+                gridFlow.setLeft(leftups[1]);
+                gridFlow.setUp(leftups[0]);
+                gridFlow.setRight(rightdowns[1]);
+                gridFlow.setDown(rightdowns[0]);
                 gridFlow.setCentralLon(gcjCentralPoint[1]);
                 gridFlow.setCentralLat(gcjCentralPoint[0]);
                 gridFlow.setPoi("");
                 list.add(gridFlow);
             }
         }
+        Collections.sort(list, Comparator.comparingInt(GirdFlow::getCount).reversed());
+//        return list.subList(0,100);
         return list;
     }
 

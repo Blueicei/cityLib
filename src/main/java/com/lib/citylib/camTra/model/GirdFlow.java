@@ -18,4 +18,9 @@ public class GirdFlow {
 
     private int col;
 
+    private double left;
+    private double up;
+    private double right;
+    private double down;
+
 }

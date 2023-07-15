@@ -233,7 +233,7 @@
         camtrajectory
         WHERE
             cam_lon between #{gridLeft} and #{gridRight}
-        and cam_lat between #{gridUp} and #{gridDown}
+        and cam_lat between #{gridDown} and #{gridUp}
         AND cam_lon is not null
         and cam_lat is not null
         and photo_time between #{startTime} AND #{endTime}
