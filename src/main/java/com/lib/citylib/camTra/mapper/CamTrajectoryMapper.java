@@ -6,6 +6,7 @@ import java.util.Map;
 import com.lib.citylib.camTra.model.CamInfo;
 import com.lib.citylib.camTra.model.CarInfo;
 import com.lib.citylib.camTra.model.TableInfo;
+import com.lib.citylib.camTra.query.QueryCamCountByCar;
 import org.apache.ibatis.annotations.Param;
 
 import com.lib.citylib.camTra.model.CamTrajectory;
@@ -27,6 +28,7 @@ public interface CamTrajectoryMapper extends BaseMapper<CamTrajectory> {
     Long countCityFlow(@Param("camId")String camId,  @Param("startTime") Date startTime, @Param("endtTime") Date endTime);
 
     List<CamInfo> getAllCamInfo();
+    CamInfo getCamInfo(@Param("camId")String camId);
 
     List<TableInfo> getTableNameList(@Param("tableNameList") List<String> tableNameList);
 
@@ -34,7 +36,12 @@ public interface CamTrajectoryMapper extends BaseMapper<CamTrajectory> {
     TableInfo getTableInfo();
 
     List<CarInfo> getCarNumberList();
+    List<CarInfo> getCarNumberListInCondition(@Param("carNumber") List<String> carNumber, @Param("carType") List<String> carType);
+    List<CamTrajectory> getPartialCarPointInCondition(@Param("carInfoList") List<CarInfo> carInfoList, @Param("filterTraRange") Boolean filterTraRange);
+    List<CamTrajectory> getAllPointInCondition(@Param("carNumber") List<String> carNumber, @Param("carType") List<String> carType, @Param("filterTraRange") Boolean filterTraRange);
 
+    List<QueryCamCountByCar> listCamCountByCar(@Param("carNumber") String carNumber, @Param("startTime") Date startTime, @Param("endTime") Date endTime);
+    Long getClusterFlow(@Param("carNumber") String carNumber, @Param("points") List<String> points);
 }
 
 

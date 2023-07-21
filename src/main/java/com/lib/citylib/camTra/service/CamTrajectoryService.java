@@ -1,11 +1,14 @@
 package com.lib.citylib.camTra.service;
 
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lib.citylib.camTra.dto.CamFlowDto;
 import com.lib.citylib.camTra.dto.CityFlowDto;
+import com.lib.citylib.camTra.dto.ClusterFlowDto;
 import com.lib.citylib.camTra.dto.TableProcessDto;
 import com.lib.citylib.camTra.mapper.CamTrajectoryMapper;
 import com.lib.citylib.camTra.model.*;
+import com.lib.citylib.camTra.query.QueryCamCountByCar;
 import com.lib.citylib.camTra.query.QueryCamFLow;
 import com.lib.citylib.camTra.query.QueryDataSource;
 import com.lib.citylib.camTra.query.QueryGenerateResult;
@@ -13,10 +16,7 @@ import com.lib.citylib.camTra.utils.GPSUtil;
 import com.lib.citylib.camTra.utils.ReplaceTableInterceptor;
 import com.opencsv.CSVReader;
 import org.apache.commons.lang3.ArrayUtils;
-import org.apache.flink.api.common.functions.FilterFunction;
-import org.apache.flink.api.common.functions.FlatMapFunction;
-import org.apache.flink.api.common.functions.MapFunction;
-import org.apache.flink.api.common.functions.ReduceFunction;
+import org.apache.flink.api.common.functions.*;
 import org.apache.flink.api.common.operators.Order;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;
@@ -38,7 +38,53 @@ public class CamTrajectoryService {
     @Resource
     private ReplaceTableInterceptor replaceTableInterceptor;
 
-    public QueryDataSource changeDataSource(String tableName){
+    public void getClusterFlow(List<ClusterFlowDto> clusterFlowDtoList){
+        for(ClusterFlowDto clusterFlowDto : clusterFlowDtoList){
+            System.out.println(clusterFlowDto);
+        }
+    }
+
+    public List<QueryCamCountByCar> getCamCountByCar(String carNumber){
+        List<QueryCamCountByCar> queryCamCountByCarList = camTrajectoryMapper.listCamCountByCar(carNumber, null, null);
+        List<QueryCamCountByCar> newCamCountByCarList = new ArrayList<>();
+        for(QueryCamCountByCar queryCamCountByCar : queryCamCountByCarList){
+            CamInfo camInfo = camTrajectoryMapper.getCamInfo(queryCamCountByCar.getCamId());
+            double[] gps = GPSUtil.gps84_To_bd09(camInfo.getCamLat(), camInfo.getCamLon());
+            camInfo.setCamLat(gps[0]);
+            camInfo.setCamLon(gps[1]);
+            queryCamCountByCar.setCamInfo(camInfo);
+            newCamCountByCarList.add(queryCamCountByCar);
+        }
+        return newCamCountByCarList;
+    }
+
+    public List<CarTrajectory> getTraByCar(String carNumber) throws Exception {
+        List<CamTrajectory> camPointList = camTrajectoryMapper.selectAllByCarNumber(carNumber);
+        ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
+        DataSet<CamTrajectory> points = env.fromCollection(camPointList).name("row-camtra-points");
+        DataSet<CarTrajectory> newPoints = points.
+                distinct().
+                groupBy(CamTrajectory::getCarNumber).
+                sortGroup(CamTrajectory::getPhotoTime, Order.ASCENDING).
+                reduceGroup(new MergeGroupPoints(30L, 1000L, 3L)).
+                name("points-to-trajectory");
+        List<CarTrajectory> newTraList = newPoints.collect();
+        List<CarTrajectory> tempTraList = new ArrayList<>();
+        for (CarTrajectory carTrajectory : newTraList){
+            List<CamTrajectory> tempPointList = new ArrayList<>();
+            for(CamTrajectory camTrajectory : carTrajectory.getPoints()){
+                double[] gps = GPSUtil.gps84_To_bd09(camTrajectory.getCamLat(), camTrajectory.getCamLon());
+                camTrajectory.setCamLat(gps[0]);
+                camTrajectory.setCamLon(gps[1]);
+                tempPointList.add(camTrajectory);
+            }
+            carTrajectory.setPoints(tempPointList);
+            tempTraList.add(carTrajectory);
+        }
+        return tempTraList;
+    }
+
+    public QueryDataSource changeDataSource(String tableName) {
         String oldTableName = replaceTableInterceptor.getTableName();
         replaceTableInterceptor.setTableName(tableName);
         QueryDataSource queryDataSource = new QueryDataSource();
@@ -47,83 +93,44 @@ public class CamTrajectoryService {
         return queryDataSource;
     }
 
-    public QueryGenerateResult generateTra(TableProcessDto tableProcessDto){
-        System.out.println(tableProcessDto);
+    public QueryGenerateResult generateTra(TableProcessDto tableProcessDto) {
         String tableName = tableProcessDto.getTableName();
         List<String> carTypeList = tableProcessDto.getCarType();
         List<String> carNumberList = tableProcessDto.getCarNumber();
+        Boolean filterTraRange = tableProcessDto.getFilterTraRange();
         String tempTableName = replaceTableInterceptor.getTableName();
         replaceTableInterceptor.setTableName(tableName);
-        List<CarInfo> carList = camTrajectoryMapper.getCarNumberList();
-        int carCount = 0;
-        int traCount = 0;
-        for (CarInfo car : carList) {
-            String carNumber = car.getCarNumber();
-            String carType = car.getCarType();
-            if (carTypeList.size() > 0 && !carTypeList.contains(carType)) {
-                continue;
-            }
-            if (carNumberList.size() > 0) {
-                Boolean isFilter = true;
-                for (String carNumberFilter : carNumberList) {
-                    if (carNumberFilter.equals("山东省济南市内") && carNumber.contains("鲁A")) {
-                        isFilter = false;
-                    }
-                    if (carNumberFilter.equals("山东省济南市外") && (carNumber.contains("鲁") && !carNumber.contains("鲁A"))) {
-                        isFilter = false;
-                    }
-                    if (carNumberFilter.equals("其他省份") && carNumber.contains("鲁")) {
-                        isFilter = false;
-                    }
-                }
-                if (isFilter) {
-                    continue;
-                }
-            }
-            try{ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
-                List<CamTrajectory> camPointList = camTrajectoryMapper.selectAllByCarNumber(carNumber);
-                if (camPointList.size() == 0) {
-                    continue;
-                }
-                if (tableProcessDto.getTraCut().equals(null))
-                {
-                    tableProcessDto.setTraCut(30l);
-                }
-                if (tableProcessDto.getPointNumber().equals(null))
-                {
-                    tableProcessDto.setPointNumber(0l);
-                }if (tableProcessDto.getTraLength().equals(null))
-                {
-                    tableProcessDto.setTraLength(0l);
-                }
-
-                CarTrajectory carTra = new CarTrajectory(carNumber, carType, camPointList);
-                DataSet<CamTrajectory> points = env.fromCollection(carTra.getPoints()).name("row-camtra-points");
-                DataSet<CarTrajectory> newPoints = points.filter(new LonLatNotNullFilter()).
-                        filter(new LonLatInRangeFilter(tableProcessDto.getFilterTraRange())).
-                        sortPartition(CamTrajectory::getPhotoTime, Order.ASCENDING).
-                        map(new PointListMap()).
-                        reduce(new MergePoints()).
-                        flatMap(new CutPointsToTrajectory(tableProcessDto.getTraCut())).
-                        filter((new PointNumberFilter(tableProcessDto.getPointNumber()))).
-                        map(new PointListToTraMap()).
-                        filter(new TraLengthFilter(tableProcessDto.getTraLength())).
+        List<CarInfo> carList = camTrajectoryMapper.getCarNumberListInCondition(carNumberList, carTypeList);
+        QueryGenerateResult queryGenerateResult = new QueryGenerateResult();
+        queryGenerateResult.setTableProcess(tableProcessDto);
+        int segmentSize = 1000;
+        for (int i = 0; i < carList.size(); i += segmentSize) {
+            int endIndex = Math.min(i + segmentSize, carList.size());
+            List<CarInfo> segment = carList.subList(i, endIndex);
+            List<CamTrajectory> camPointList = camTrajectoryMapper.getPartialCarPointInCondition(segment, filterTraRange);
+            try {
+                ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
+                DataSet<CamTrajectory> points = env.fromCollection(camPointList).name("row-camtra-points");
+                DataSet<CarTrajectory> newPoints = points.
+                        distinct().
+                        groupBy(CamTrajectory::getCarNumber).
+                        sortGroup(CamTrajectory::getPhotoTime, Order.ASCENDING).
+                        reduceGroup(new MergeGroupPoints(tableProcessDto.getTraCut(), tableProcessDto.getTraLength(), tableProcessDto.getPointNumber())).
                         name("points-to-trajectory");
                 List<CarTrajectory> newTraList = newPoints.collect();
-                System.out.printf(newTraList.toString());
-                FileWriteList("./out/"+tableName+"_"+carNumber+".csv", newTraList);
-                carCount++;
-                traCount = traCount + newTraList.size();
-                break;
-            }
-            catch(Exception e){
+                queryGenerateResult.update(newTraList);
+                FileWriteList("./out/trajectory_" + tableName + ".csv", newTraList, true);
+            } catch (Exception e) {
                 e.printStackTrace();
                 replaceTableInterceptor.setTableName(tempTableName);
-                return new QueryGenerateResult("failed", new Long((long)carCount), new Long((long)traCount));
+                queryGenerateResult.setMsg("error");
+                return queryGenerateResult;
             }
         }
+        writeObjectToJsonFile(queryGenerateResult,"./out/statistics_" + tableName + ".json");
         replaceTableInterceptor.setTableName(tempTableName);
-        return new QueryGenerateResult("success", new Long((long)carCount), new Long((long)traCount));
+        queryGenerateResult.setMsg("success");
+        return queryGenerateResult;
     }
 
     public List<TableInfo> getTableNameList(List<String> tableNameList) {
@@ -248,156 +255,10 @@ public class CamTrajectoryService {
         }
     }
 
-    public static double[] Mercator2lonLat(double mercatorX,double mercatorY)
-    {
-        double[] xy = new double[2];
-        double x = mercatorX/20037508.34*180;
-        double M_PI = Math.PI;
-        double y = mercatorY/20037508.34*180;
-        y= 180/M_PI*(2*Math.atan(Math.exp(y*M_PI/180))-M_PI/2);
-
-        xy[0] = x;
-        xy[1] = y;
-        return xy;
-
-    }
-
-    public static class LonLatInRangeFilter implements FilterFunction<CamTrajectory> {
-        private boolean rangeFilter;
-        public LonLatInRangeFilter(boolean rangeFilter){
-            this.rangeFilter = rangeFilter;
-        }
-        @Override
-        public boolean filter(CamTrajectory camTrajectory) throws Exception {
-            return !rangeFilter || (rangeInDefined(camTrajectory.getCamLon(), 116.85706169, 117.38795955) && rangeInDefined(camTrajectory.getCamLat(), 36.57828896, 36.78481367));
-        }
-        public boolean rangeInDefined(double current, double min, double max)
-        {
-            return Math.max(min, current) == Math.min(current, max);
-        }
-
-
-    }
-    public static Boolean filterCarNumber(String carNumber, List<String> carNumberList) {
-        if (carNumberList.size() > 0) {
-            Boolean isFilter = true;
-            for (String carNumberFilter : carNumberList) {
-                if (carNumberFilter.equals("山东省济南市内") && carNumber.contains("鲁A")) {
-                    isFilter = false;
-                }
-                if (carNumberFilter.equals("山东省济南市外") && (carNumber.contains("鲁") && !carNumber.contains("鲁A"))) {
-                    isFilter = false;
-                }
-                if (carNumberFilter.equals("其他省份") && carNumber.contains("鲁")) {
-                    isFilter = false;
-                }
-            }
-            return isFilter;
-        }
-        return false;
-    }
-
-    public static class LonLatNotNullFilter implements FilterFunction<CamTrajectory> {
-
-        @Override
-        public boolean filter(CamTrajectory camTrajectory) throws Exception {
-            return camTrajectory.getCamLon() != null && camTrajectory.getCamLat() != null;
-        }
-    }
-
-    public static class PointListToTraMap implements MapFunction<List<CamTrajectory>, CarTrajectory> {
-
-        @Override
-        public CarTrajectory map(List<CamTrajectory> camTrajectories) throws Exception {
-            String carNumber = camTrajectories.get(0).getCarNumber();
-            String carType = camTrajectories.get(0).getCarType();
-            Double distance = 0.0d;
-            for (int i = 1; i < camTrajectories.size(); i++) {
-                CamTrajectory beforePoint = camTrajectories.get(i - 1);
-                CamTrajectory afterPoint = camTrajectories.get(i);
-                distance += GetDistance(beforePoint.getCamLon(), beforePoint.getCamLat(), afterPoint.getCamLon(), afterPoint.getCamLat());
-            }
-            Date startTime = camTrajectories.get(0).getPhotoTime();
-            Date endTime = camTrajectories.get(camTrajectories.size() - 1).getPhotoTime();
-            Long timeInterval = (endTime.getTime() - startTime.getTime()) / 1000;
-            return new CarTrajectory(carNumber, carType, camTrajectories, distance, startTime, endTime, timeInterval);
-        }
-    }
-
-    public static class PointListMap implements MapFunction<CamTrajectory, List<CamTrajectory>> {
-
-        @Override
-        public List<CamTrajectory> map(CamTrajectory camTrajectory) throws Exception {
-            List<CamTrajectory> tempPoints = new ArrayList<>();
-            tempPoints.add(camTrajectory);
-            return tempPoints;
-        }
-    }
-
-    public static class MergePoints implements ReduceFunction<List<CamTrajectory>> {
-
-        @Override
-        public List<CamTrajectory> reduce(List<CamTrajectory> camTrajectories, List<CamTrajectory> t1) throws Exception {
-            camTrajectories.add(t1.get(0));
-            return camTrajectories;
-        }
-    }
-
-    public static class PointNumberFilter implements FilterFunction<List<CamTrajectory>> {
-
-        private Long pointNumber = 0l;
-
-        public PointNumberFilter(Long pointNumber) {this.pointNumber = pointNumber;}
-
-        @Override
-        public boolean filter(List<CamTrajectory> camTrajectoryList) throws Exception {
-            return camTrajectoryList.size() > this.pointNumber;
-        }
-    }
-    public static class TraLengthFilter implements FilterFunction<CarTrajectory> {
-
-        private Long traLength = 0l;
-
-        public TraLengthFilter(Long traLength) {this.traLength = traLength;}
-
-        @Override
-        public boolean filter(CarTrajectory carTrajectory) throws Exception {
-            return carTrajectory.getDistance() > this.traLength;
-        }
-    }
-
-    public static class CutPointsToTrajectory implements FlatMapFunction<List<CamTrajectory>, List<CamTrajectory>> {
-        private Long trajectoryCut = 0l; // 自定义间隔时间（单位：毫秒）
-
-        public CutPointsToTrajectory(Long trajectoryCut) {
-            this.trajectoryCut = trajectoryCut;
-        }
-
-        @Override
-        public void flatMap(List<CamTrajectory> camTrajectories, Collector<List<CamTrajectory>> collector) throws Exception {
-            List<CamTrajectory> tempPoints = new ArrayList<>();
-            CamTrajectory beforePoint = camTrajectories.get(0);
-            tempPoints.add(beforePoint);
-            for (int i = 1; i < camTrajectories.size(); i++) {
-                CamTrajectory afterPoint = camTrajectories.get(i);
-                if ((afterPoint.getPhotoTime().getTime() - beforePoint.getPhotoTime().getTime()) / (1000.0 * 60.0) > trajectoryCut) {
-                    collector.collect(tempPoints);
-                    tempPoints.clear();
-                    tempPoints.add(afterPoint);
-                } else {
-                    tempPoints.add(afterPoint);
-                }
-                beforePoint = afterPoint;
-            }
-            collector.collect(tempPoints);
-        }
-
-    }
-
-    public static <T> void FileWriteList(String path, List<T> list) {
+    public static <T> void FileWriteList(String path, List<T> list, Boolean append) {
         try {
             BufferedWriter bufferedWriter = new BufferedWriter(
-                    new OutputStreamWriter(new FileOutputStream(path), "UTF-8"));
+                    new OutputStreamWriter(new FileOutputStream(path, append), "UTF-8"));
             for (T s : list) {
                 bufferedWriter.write(s.toString());
                 bufferedWriter.newLine();
@@ -442,4 +303,87 @@ public class CamTrajectoryService {
         s = Math.round(s * 10000) / 10000;
         return s;
     }
+
+    public static class MergeGroupPoints implements GroupReduceFunction<CamTrajectory, CarTrajectory>{
+
+        private Long trajectoryCut = 30L;
+        private Long traLength = 0L;
+        private Long pointNumber = 0L;
+        public MergeGroupPoints(Long trajectoryCut, Long traLength, Long pointNumber) {
+            if(trajectoryCut != null)
+            {
+                this.trajectoryCut = trajectoryCut;
+            }
+            if(traLength != null) {
+                this.traLength = traLength;
+            }
+            if (pointNumber != null)
+            {
+                this.pointNumber = pointNumber;
+            }
+
+        }
+        private CarTrajectory convertCamListToCarTra(List<CamTrajectory> camTrajectoryList){
+
+            String carNumber = camTrajectoryList.get(0).getCarNumber();
+            String carType = camTrajectoryList.get(0).getCarType();
+            Double distance = 0.0d;
+            for (int i = 1; i < camTrajectoryList.size(); i++) {
+                CamTrajectory beforePoint = camTrajectoryList.get(i - 1);
+                CamTrajectory afterPoint = camTrajectoryList.get(i);
+                distance += GetDistance(beforePoint.getCamLon(), beforePoint.getCamLat(), afterPoint.getCamLon(), afterPoint.getCamLat());
+            }
+            Date startTime = camTrajectoryList.get(0).getPhotoTime();
+            Date endTime = camTrajectoryList.get(camTrajectoryList.size() - 1).getPhotoTime();
+            Long timeInterval = (endTime.getTime() - startTime.getTime()) / 1000;
+            Double avgSpeed = ( distance / timeInterval)*3.6d;
+            return new CarTrajectory(carNumber, carType, camTrajectoryList, distance, startTime, endTime, timeInterval, avgSpeed);
+        }
+        @Override
+        public void reduce(Iterable<CamTrajectory> iterable, Collector<CarTrajectory> collector) throws Exception {
+            List<CamTrajectory> camTrajectories = new ArrayList<>();
+            for(CamTrajectory c : iterable){
+                camTrajectories.add(c);
+            }
+            List<CamTrajectory> tempPoints = new ArrayList<>();
+            List<CarTrajectory> carTrajectoryList = new ArrayList<>();
+            CamTrajectory beforePoint = camTrajectories.get(0);
+            tempPoints.add(beforePoint);
+            for (int i = 1; i < camTrajectories.size(); i++) {
+                CamTrajectory afterPoint = camTrajectories.get(i);
+                if ((afterPoint.getPhotoTime().getTime() - beforePoint.getPhotoTime().getTime()) / (1000.0 * 60.0) > trajectoryCut) {
+                    carTrajectoryList.add(this.convertCamListToCarTra(tempPoints));
+                    tempPoints = new ArrayList<CamTrajectory>();
+                    tempPoints.add(afterPoint);
+                } else {
+                    tempPoints.add(afterPoint);
+                }
+                beforePoint = afterPoint;
+            }
+            carTrajectoryList.add(this.convertCamListToCarTra(tempPoints));
+            for(CarTrajectory c: carTrajectoryList){
+                if (c.getPoints().size() > pointNumber && c.getDistance() > traLength)
+                {
+                    collector.collect(c);
+                }
+            }
+        }
+    }
+    public static void writeObjectToJsonFile(Object object, String filePath) {
+        // 创建ObjectMapper对象
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        try {
+            // 将对象转换为JSON字符串
+            String jsonString = objectMapper.writeValueAsString(object);
+
+            // 将JSON字符串写入文件
+            objectMapper.writeValue(new File(filePath), object);
+
+            System.out.println("对象已成功写入到JSON文件。");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
 }

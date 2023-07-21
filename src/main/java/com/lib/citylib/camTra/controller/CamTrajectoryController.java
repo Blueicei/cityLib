@@ -1,7 +1,9 @@
 package com.lib.citylib.camTra.controller;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.lib.citylib.camTra.dto.CityFlowDto;
+import com.lib.citylib.camTra.dto.ClusterFlowDto;
 import com.lib.citylib.camTra.dto.TableProcessDto;
 import com.lib.citylib.camTra.model.CamInfo;
 import com.lib.citylib.camTra.model.CamTrajectory;
@@ -16,9 +18,11 @@ import com.lib.citylib.camTra.utils.CommonResult;
 import com.lib.citylib.camTra.utils.DirectoryStructure;
 import com.lib.citylib.camTra.utils.ReplaceTableInterceptor;
 import io.swagger.annotations.ApiOperation;
+import org.apache.commons.io.FileUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -129,8 +133,39 @@ public class CamTrajectoryController {
     }
     @ResponseBody
     @PostMapping("/changeDataSource")
-    public CommonResult changeDataSource(@RequestBody List<String> tableName){
-        QueryDataSource queryDataSource = camTrajectoryService.changeDataSource(tableName.get(0));
+    public CommonResult changeDataSource(String tableName){
+        QueryDataSource queryDataSource = camTrajectoryService.changeDataSource(tableName);
         return CommonResult.success(queryDataSource);
     }
+
+    @ResponseBody
+    @GetMapping("/getCarInfoList")
+    public CommonResult getCarInfoList() throws IOException {
+        File file = new File("./out/2.txt");
+        String json =  FileUtils.readFileToString(file);
+        QueryGenerateResult queryGenerateResult = JSON.parseObject(json, QueryGenerateResult.class);
+        return CommonResult.success(queryGenerateResult);
+    }
+
+    @ResponseBody
+    @GetMapping("/getCamCountByCar")
+    public CommonResult getCamCountByCar(String carNumber){
+        return CommonResult.success(camTrajectoryService.getCamCountByCar(carNumber));
+    }
+    @ResponseBody
+    @GetMapping("/getTraByCar")
+    public CommonResult getTraByCar(String carNumber) throws Exception {
+        return CommonResult.success(camTrajectoryService.getTraByCar(carNumber));
+    }
+
+    @ResponseBody
+    @PostMapping("/getClusterFlow")
+    public CommonResult getClusterFlow(@RequestBody List<ClusterFlowDto> clusterFlowDtoList) {
+        for(ClusterFlowDto clusterFlowDto : clusterFlowDtoList){
+            System.out.println(clusterFlowDto);
+
+        }
+        return CommonResult.success(null);
+    }
+
 }

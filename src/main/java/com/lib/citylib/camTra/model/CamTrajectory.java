@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import java.io.Serializable;
 import java.util.Date;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.annotations.ApiModel;
 import lombok.Data;
 
@@ -37,6 +38,7 @@ public class CamTrajectory implements Serializable {
     /**
      * 
      */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss",timezone="GMT+8")
     private Date photoTime;
 
     /**
@@ -92,6 +94,7 @@ public class CamTrajectory implements Serializable {
         sb.append(" [");
         sb.append("Hash = ").append(hashCode());
         sb.append(", carNumber=").append(carNumber);
+        sb.append(", carType=").append(carType);
         sb.append(", camId=").append(camId);
         sb.append(", direction=").append(direction);
         sb.append(", photoTime=").append(photoTime);

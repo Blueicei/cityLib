@@ -64,6 +64,12 @@
         order by cam_id
     </select>
 
+    <select id="getCamInfo" resultType="com.lib.citylib.camTra.model.CamInfo">
+        select cam_id as camId, cam_lon as camLon, cam_lat as camLat, cam_address as camAddress
+        from camdict
+        where cam_id  = #{camId}
+    </select>
+
     <select id="getTableNameList" resultMap="TableResultMap">
         SELECT name, name,metadata_modification_time FROM system.tables WHERE database = 'default' AND name NOT LIKE '%camdict%'
         <if test="tableNameList !=null and tableNameList.size() > 0">
@@ -85,4 +91,105 @@
     <select id="getCarNumberList" resultType="com.lib.citylib.camTra.model.CarInfo">
         SELECT DISTINCT car_number as carNumber, car_type as carType FROM camtrajectory
     </select>
+
+    <select id="getCarNumberListInCondition" resultType="com.lib.citylib.camTra.model.CarInfo">
+        SELECT DISTINCT car_number as carNumber, car_type as carType FROM camtrajectory
+        <trim prefix="WHERE" prefixOverrides="AND">
+            <if test="carNumber !=null and carNumber.size() > 0">
+                <foreach collection="carNumber" item="item" separator="or" open="(" close=")">
+                    <choose>
+                        <when test="item == '山东省济南市内'.toString()">
+                            car_number like '鲁A%'
+                        </when>
+                        <when test="item == '山东省济南市外'.toString()">
+                            (car_number like '鲁%' and car_number not like '鲁A%')
+                        </when>
+                        <otherwise>
+                            car_number not like '鲁%'
+                        </otherwise>
+                    </choose>
+                </foreach>
+            </if>
+            <if test="carType !=null and carType.size() > 0">
+                AND car_type in
+                <foreach collection="carType" item="item" separator="," open="(" close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </trim>
+    </select>
+
+    <select id="getPartialCarPointInCondition" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from camtrajectory
+        where cam_lon is not null and cam_lat is not null
+        <if test="carInfoList !=null and carInfoList.size() > 0">
+            AND car_number in
+            <foreach collection="carInfoList" item="item" separator="," open="(" close=")">
+                #{item.carNumber}
+            </foreach>
+        </if>
+        <if test="filterTraRange != null and filterTraRange == true">
+            AND (cam_lat between 36.57828896 and 36.78481367) AND (cam_lon between 116.85706169 and 117.38795955)
+        </if>
+        order by car_number,photo_time
+    </select>
+
+    <select id="getAllPointInCondition" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from camtrajectory
+        where cam_lon is not null and cam_lat is not null
+        <if test="carNumber !=null and carNumber.size() > 0">
+            AND
+            <foreach collection="carNumber" item="item" separator="or" open="(" close=")">
+                <choose>
+                    <when test="item == '山东省济南市内'.toString()">
+                        car_number like '鲁A%'
+                    </when>
+                    <when test="item == '山东省济南市外'.toString()">
+                        (car_number like '鲁%' and car_number not like '鲁A%')
+                    </when>
+                    <otherwise>
+                        car_number not like '鲁%'
+                    </otherwise>
+                </choose>
+            </foreach>
+        </if>
+        <if test="carType !=null and carType.size() > 0">
+            AND car_type in
+            <foreach collection="carType" item="item" separator="," open="(" close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="filterTraRange != null and filterTraRange == true">
+            AND (cam_lat between 36.57828896 and 36.78481367) AND (cam_lon between 116.85706169 and 117.38795955)
+        </if>
+        order by car_number,photo_time limit 100000
+    </select>
+
+    <select id="listCamCountByCar" resultType="com.lib.citylib.camTra.query.QueryCamCountByCar">
+        select cam_id as camId,COUNT(*) as count, MAX(photo_time) as lastTime
+        from camtrajectory
+        where car_number = #{param1}
+        <if test="startTime != null and endTime != null">
+            and photo_time between #{param2} and #{param3}
+        </if>
+        group by cam_id
+    </select>
+
+    <select id="getClusterFlow" resultType="Long">
+        select COUNT(*) as count
+        from camtrajectory
+        where car_number = #{carNumber}
+        <if test="points !=null and points.size() > 0">
+            AND cam_id in
+            <foreach collection="points" item="item" separator="," open="(" close=")">
+                #{item}
+            </foreach>
+        </if>
+        group by cam_id
+    </select>
+
 </mapper>

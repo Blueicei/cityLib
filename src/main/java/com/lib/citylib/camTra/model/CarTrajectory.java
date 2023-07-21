@@ -1,5 +1,6 @@
 package com.lib.citylib.camTra.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.annotations.ApiModel;
 import lombok.Data;
 
@@ -14,18 +15,33 @@ public class CarTrajectory {
     private String carType;
     private List<CamTrajectory> points;
     private Double distance;  // 米
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss",timezone="GMT+8")
     private Date startTime;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss",timezone="GMT+8")
     private Date endTime;
     private Long timeInterval;  // 秒
+    private Double avgSpeed;  // km/h
     public CarTrajectory(List<CamTrajectory> points) {
         this.points = points;
     }
-
+    public CarTrajectory(){}
     public CarTrajectory(CamTrajectory point) {
         List<CamTrajectory> tempPoints = new ArrayList<>();
         tempPoints.add(point);
         this.points = tempPoints;
     }
+
+    public CarTrajectory(String carNumber, String carType, List<CamTrajectory> points, Double distance, Date startTime, Date endTime, Long timeInterval, Double avgSpeed) {
+        this.carNumber = carNumber;
+        this.carType = carType;
+        this.points = points;
+        this.distance = distance;
+        this.startTime = startTime;
+        this.endTime = endTime;
+        this.timeInterval = timeInterval;
+        this.avgSpeed = avgSpeed;
+    }
+
     public CarTrajectory(String carNumber, CamTrajectory point) {
         List<CamTrajectory> tempPoints = new ArrayList<>();
         tempPoints.add(point);

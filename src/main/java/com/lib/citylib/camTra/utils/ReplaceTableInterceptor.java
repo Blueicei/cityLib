@@ -6,11 +6,13 @@ import org.apache.ibatis.mapping.MappedStatement;
 
 import org.apache.ibatis.mapping.SqlSource;
 import org.apache.ibatis.plugin.*;
+import org.apache.ibatis.reflection.MetaObject;
 import org.apache.ibatis.session.ResultHandler;
 import org.apache.ibatis.session.RowBounds;
 import org.springframework.stereotype.Component;
 
 
+import java.lang.reflect.Field;
 import java.util.*;
 
 
@@ -54,18 +56,25 @@ public class ReplaceTableInterceptor implements Interceptor {
         BoundSql boundSql = ms.getBoundSql(parameterObject);
         //获取到拥有占位符的sql语句
         String sql = boundSql.getSql();
-        System.out.println("拦截前sql :" + sql);
+//        System.out.println("拦截前sql :" + sql);
 
         //判断是否需要替换表名
         if(isReplaceTableName(sql)){
             for(Map.Entry<String, String> entry : tableMap.entrySet()){
                 sql = sql.replace(entry.getKey(),entry.getValue());
             }
-            System.out.println("拦截后sql :" + sql);
+//            System.out.println("拦截后sql :" + sql);
 
             //重新生成一个BoundSql对象
             BoundSql bs = new BoundSql(ms.getConfiguration(),sql,boundSql.getParameterMappings(),parameterObject);
-
+            if (Reflections.getFieldValue(boundSql, "additionalParameters") != null) {
+                HashMap mo = (HashMap) Reflections.getFieldValue(boundSql, "additionalParameters");
+                Reflections.setFieldValue(bs, "additionalParameters", mo);
+            }
+            if (Reflections.getFieldValue(boundSql, "metaParameters") != null) {
+                MetaObject mo = (MetaObject) Reflections.getFieldValue(boundSql, "metaParameters");
+                Reflections.setFieldValue(bs, "metaParameters", mo);
+            }
             //重新生成一个MappedStatement对象
             MappedStatement newMs = copyMappedStatement(ms, new BoundSqlSqlSource(bs));
 
