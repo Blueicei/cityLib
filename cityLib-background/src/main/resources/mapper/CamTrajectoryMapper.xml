@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.lib.citylib.camTra.mapper.CamTrajectoryMapper">
+
+    <resultMap id="BaseResultMap" type="com.lib.citylib.camTra.model.CamTrajectory">
+            <result property="carNumber" column="car_number"/>
+            <result property="carType" column="car_type"/>
+            <result property="camId" column="cam_id"/>
+            <result property="direction" column="direction"/>
+            <result property="photoTime" column="photo_time"/>
+            <result property="camLon" column="cam_lon"/>
+            <result property="camLat" column="cam_lat"/>
+    </resultMap>
+    <resultMap id="FlowStatsResultMap" type="com.lib.citylib.camTra.model.FlowStats">
+        <id property="startTime" column="startTime"/>
+        <result property="endTime" column="endTime"/>
+        <result property="flowCount" column="flowCount"/>
+    </resultMap>
+
+    <resultMap id="carFlowResultMap" type="com.lib.citylib.camTra.model.ForeignVehicleStats">
+        <id property="date" column="time_interval" />
+        <result property="provincial" column="provincial" />
+        <result property="nonProvincial" column="non_provincial" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        car_number,car_type,cam_id,direction,
+        photo_time,cam_lon,cam_lat
+    </sql>
+    <select id="selectAllByCarNumber" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from camtrajectory
+        where
+        car_number = #{carNumber,jdbcType=VARCHAR} order by photo_time
+    </select>
+    <select id="getAllCamInfo" resultType="com.lib.citylib.camTra.model.CamInfo">
+        select *
+        from camdict
+        order by cam_id
+    </select>
+
+    <select id="listByTrajectoryDto" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from camtrajectory
+        where
+        car_number = #{carNumber} and
+        photo_time between #{startTime} and #{endTime}
+        order by photo_time
+    </select>
+    <select id="vehicleCountByCam" resultType="String">
+        select car_number
+        from camtrajectory
+        where cam_id = #{param1}
+        and photo_time between #{param2} and #{param3}
+        order by photo_time DESC
+            LIMIT 50
+    </select>
+    <insert id="insertAll">
+        insert into camtrajectory
+        (car_number, car_type, cam_id, direction,
+         photo_time, cam_lon, cam_lat)
+        values (#{carNumber,jdbcType=VARCHAR}, #{carType,jdbcType=VARCHAR}, #{camId,jdbcType=VARCHAR}, #{direction,jdbcType=VARCHAR},
+                #{photoTime,jdbcType=TIMESTAMP}, #{camLon,jdbcType=DECIMAL}, #{camLat,jdbcType=DECIMAL})
+
+    </insert>
+    <select id="searchAllByCarNumberOrderInTimeRange" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from camtrajectory
+        where
+        car_number = #{param1} and photo_time between #{param2} and #{param3}
+        order by photo_time
+    </select>
+    <select id="cityFlowStats" resultType="com.lib.citylib.camTra.model.CityFlowStats">
+        SELECT direction,car_type,COUNT(*) AS flow
+        FROM camtrajectory
+        WHERE cam_id = #{camid}
+        AND photo_time between #{startTime} and #{endTime}
+        GROUP BY cam_id, direction,car_type;
+    </select>
+    <select id="foreignVehiclesStats" resultType="com.lib.citylib.camTra.model.CamTrajectory">
+        SELECT *
+        FROM
+            camtrajectory
+        WHERE
+        photo_time between #{startTime} AND #{endTime}
+        AND cam_id = #{camid}
+    </select>
+    <select id="compareVehiclesStats" resultType="com.lib.citylib.camTra.model.CamTrajectory">
+        SELECT *
+        FROM
+            camtrajectory
+        WHERE
+            photo_time between #{startTime} AND #{endTime}
+          AND cam_id = #{camid}
+    </select>
+    <select id="listCamCountByCar" resultType="com.lib.citylib.camTra.Query.QueryCamCountByCar">
+        select cam_id,COUNT(*) as count, MAX(photo_time) as lastTime
+        from camtrajectory
+        where car_number = #{param1}
+          and photo_time between #{param2} and #{param3}
+        group by cam_id
+    </select>
+    <select id="findFirstTime" resultType="Date">
+        select min(photo_time)
+        from camtrajectory
+        where car_number = #{param1}
+        and photo_time between #{param2} and #{param3}
+    </select>
+    <select id="getPoint" resultType="com.lib.citylib.camTra.model.Point">
+        select distinct cam_lon, cam_lat
+        from camtrajectory
+        where cam_id = #{param1}
+    </select>
+    <select id="listAllCarNumberAndCarTypeByCount" resultType="com.lib.citylib.camTra.model.CarNumberAndCarTypeByCount">
+        select car_number,car_type,COUNT(*) as count
+        from camtrajectory
+        group by car_number,car_type
+        order by count desc
+        LIMIT 1000
+    </select>
+    <select id="listAllCarNumberAndCarTypeByCountString" resultType="com.lib.citylib.camTra.model.CarNumberAndCarTypeByCount">
+        select car_number,car_type,COUNT(*) as count
+        from camtrajectory
+        where car_number LIKE CONCAT(#{carNumber}, '%')
+        group by car_number,car_type
+        order by count desc
+            LIMIT 1000
+    </select>
+    <select id="getAllCarCount" resultType="int">
+        SELECT COUNT(DISTINCT car_number) FROM camtrajectory
+    </select>
+    <select id="getAllCamCount" resultType="int">
+        SELECT COUNT(DISTINCT cam_id) FROM camtrajectory
+    </select>
+    <select id="getLocalCarCount" resultType="int">
+        SELECT COUNT(*) FROM camtrajectory WHERE car_number LIKE '鲁%'
+    </select>
+    <select id="getFlow" resultType="int">
+        SELECT COUNT(*) FROM camtrajectory
+    </select>
+    <select id="getAllCamTrajectory" resultType="Map">
+        SELECT HOUR(photo_time) AS hour, COUNT(*) AS count
+        FROM camtrajectory
+        WHERE photo_time BETWEEN #{startTime} AND #{endTime}
+        GROUP BY hour
+        ORDER BY count DESC
+            LIMIT 1
+    </select>
+    <select id="getAllCarNumber" resultType="String">
+        select distinct car_number
+        from camtrajectory
+    </select>
+    <select id="searchCamInfoCount" resultType="com.lib.citylib.camTra.model.CamInfoCount">
+        select cam_id,cam_lon,cam_lat,count(cam_id) as count
+        FROM
+            camtrajectory
+        WHERE
+            photo_time between #{startTime} AND #{endTime}
+          AND cam_lon is not null
+          and cam_lat is not null
+        group by cam_id,cam_lon,cam_lat
+    </select>
+    <select id="searchLocalCamInfoCount" resultType="com.lib.citylib.camTra.model.CamInfoCount">
+        select cam_id,cam_lon,cam_lat,count(cam_id) as count
+        FROM
+            camtrajectory
+        WHERE
+            photo_time between #{startTime} AND #{endTime}
+          AND cam_lon is not null
+          and cam_lat is not null
+          and car_number LIKE '鲁%'
+        group by cam_id,cam_lon,cam_lat
+    </select>
+    <select id="searchForeignCamInfoCount" resultType="com.lib.citylib.camTra.model.CamInfoCount">
+        select cam_id,cam_lon,cam_lat,count(cam_id) as count
+        FROM
+            camtrajectory
+        WHERE
+            photo_time between #{startTime} AND #{endTime}
+          AND cam_lon is not null
+          and cam_lat is not null
+          and car_number NOT LIKE '鲁%'
+        group by cam_id,cam_lon,cam_lat
+    </select>
+    <select id="getAllFlowStats" resultMap="FlowStatsResultMap">
+        SELECT
+            MIN(photo_time) AS startTime,
+            MAX(photo_time) AS endTime,
+            COUNT(*) AS flowCount
+        FROM camtrajectory
+        GROUP BY HOUR(photo_time)
+    </select>
+    <select id="getLocalFlowStats" resultMap="FlowStatsResultMap">
+        SELECT
+            MIN(photo_time) AS startTime,
+            MAX(photo_time) AS endTime,
+            COUNT(*) AS flowCount
+        FROM camtrajectory
+        WHERE car_number LIKE '鲁%'
+        GROUP BY HOUR(photo_time)
+    </select>
+    <select id="getForeignFlowStats" resultMap="FlowStatsResultMap">
+        SELECT
+            MIN(photo_time) AS startTime,
+            MAX(photo_time) AS endTime,
+            COUNT(*) AS flowCount
+        FROM camtrajectory
+        WHERE car_number NOT LIKE '鲁%'
+        GROUP BY HOUR(photo_time)
+    </select>
+    <select id="getHeatMapByCarNumber" resultType="com.lib.citylib.camTra.model.CamInfoCount">
+        select cam_id,cam_lon,cam_lat,count(cam_id) as count
+        FROM
+            camtrajectory
+        WHERE
+            photo_time between #{startTime} AND #{endTime}
+          AND cam_lon is not null
+          and cam_lat is not null
+        and car_number in
+        <foreach item="item" collection="carNumber" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        group by cam_id,cam_lon,cam_lat
+    </select>
+    <select id="getGridFlow" resultType="int">
+        select count(*)
+        FROM
+        camtrajectory
+        WHERE
+            cam_lon between #{gridLeft} and #{gridRight}
+        and cam_lat between #{gridDown} and #{gridUp}
+        AND cam_lon is not null
+        and cam_lat is not null
+        and photo_time between #{startTime} AND #{endTime}
+    </select>
+</mapper>
