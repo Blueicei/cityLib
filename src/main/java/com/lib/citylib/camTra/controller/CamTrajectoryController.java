@@ -2,18 +2,19 @@ package com.lib.citylib.camTra.controller;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.lib.citylib.camTra.dto.CityFlowDto;
 import com.lib.citylib.camTra.dto.ClusterFlowDto;
 import com.lib.citylib.camTra.dto.TableProcessDto;
-import com.lib.citylib.camTra.model.CamInfo;
-import com.lib.citylib.camTra.model.CamTrajectory;
-import com.lib.citylib.camTra.model.CarTrajectory;
-import com.lib.citylib.camTra.model.TableInfo;
+import com.lib.citylib.camTra.mapper.TrajectoryStatMapper;
+import com.lib.citylib.camTra.model.*;
+import com.lib.citylib.camTra.query.ListStatisticsParam;
 import com.lib.citylib.camTra.query.QueryCamFLow;
 import com.lib.citylib.camTra.query.QueryDataSource;
 import com.lib.citylib.camTra.query.QueryGenerateResult;
 import com.lib.citylib.camTra.service.CamTrajectoryService;
 
+import com.lib.citylib.camTra.service.TrajectoryStatService;
 import com.lib.citylib.camTra.utils.CommonResult;
 import com.lib.citylib.camTra.utils.DirectoryStructure;
 import com.lib.citylib.camTra.utils.ReplaceTableInterceptor;
@@ -32,6 +33,8 @@ import java.util.*;
 public class CamTrajectoryController {
     @Resource
     private CamTrajectoryService camTrajectoryService;
+    @Resource
+    private TrajectoryStatService trajectoryStatService;
 
     @ApiOperation(value = "查询车辆轨迹", notes = "根据车牌号查询车辆轨迹")
     @GetMapping("/listByCarNum")
@@ -136,15 +139,6 @@ public class CamTrajectoryController {
     public CommonResult changeDataSource(String tableName){
         QueryDataSource queryDataSource = camTrajectoryService.changeDataSource(tableName);
         return CommonResult.success(queryDataSource);
-    }
-
-    @ResponseBody
-    @GetMapping("/getCarInfoList")
-    public CommonResult getCarInfoList() throws IOException {
-        File file = new File("./out/2.txt");
-        String json =  FileUtils.readFileToString(file);
-        QueryGenerateResult queryGenerateResult = JSON.parseObject(json, QueryGenerateResult.class);
-        return CommonResult.success(queryGenerateResult);
     }
 
     @ResponseBody

@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.lib.citylib.camTra.mapper.TrajectoryStatMapper">
+
+    <resultMap id="BaseResultMap" type="com.lib.citylib.camTra.model.CarTrajectory">
+            <result property="carNumber" column="car_number"/>
+            <result property="distance" column="distance"/>
+            <result property="startTime" column="start_time"/>
+            <result property="endTime" column="end_time"/>
+            <result property="timeInterval" column="time_interval"/>
+            <result property="avgSpeed" column="avg_speed"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        car_number,distance,start_time,end_time,
+        time_interval,avg_speed
+    </sql>
+
+    <insert id="insertBatch" parameterType="com.lib.citylib.camTra.model.CarTrajectory" useGeneratedKeys="false">
+        insert into trajectory_stat
+        values
+        <foreach collection="trajectories"  separator="," item="trajectory">
+            (#{trajectory.carNumber}, #{trajectory.distance}, #{trajectory.startTime},
+             #{trajectory.endTime}, #{trajectory.timeInterval}, #{trajectory.avgSpeed})
+        </foreach>
+    </insert>
+
+    <select id="getStatByCar" parameterType="com.lib.citylib.camTra.query.ListStatisticsParam" resultMap="BaseResultMap">
+        select *
+        from trajectory_stat
+        <where>
+            car_number = #{carNumber}
+            <if test="minTime != '' and minTime != null">
+                and start_time &gt;= #{minTime}
+            </if>
+            <if test="maxTime != '' and maxTime != null">
+                and start_time &lt;= #{maxTime}
+            </if>
+        </where>
+    </select>
+    <delete id="clear">
+        truncate table trajectory_stat
+    </delete>
+    <select id="listStatByAll" resultType="com.lib.citylib.camTra.model.TrajectoryStat">
+        select car_number as carNumber,
+               count(distinct DATE_FORMAT(start_time,'%Y-%m-%d')) as dayCount,
+               sum(distance) / 1000 as totalDistance,
+               avg(distance) / 1000 as avgDistance,
+               count(*) as traCount,
+               sum(time_interval) / 3600 as totalTime,
+               avg(time_interval) / 3600 as avgTime,
+               avg(avg_speed) as avgSpeed,
+               totalDistance / dayCount as avgDistancePerDay,
+               totalTime / dayCount as avgTimePerDay
+        from trajectory_stat
+        <where>
+            <if test="param.minTime != '' and param.minTime != null">
+                and start_time &gt;= #{param.minTime}
+            </if>
+            <if test="param.maxTime != '' and param.maxTime != null">
+                and start_time &lt;= #{param.maxTime}
+            </if>
+        </where>
+        group by car_number
+    </select>
+    <select id="getTotalStat" parameterType="com.lib.citylib.camTra.query.ListStatisticsParam" resultType="java.util.HashMap">
+        select count(distinct car_number) as carNum,
+               count(*) as traNum,
+               sum(point_num) as pointNum
+        from trajectory_stat
+        <where>
+            <if test="minTime != '' and minTime != null">
+                and start_time &gt;= #{minTime}
+            </if>
+            <if test="maxTime != '' and maxTime != null">
+                and start_time &lt;= #{maxTime}
+            </if>
+        </where>
+    </select>
+
+</mapper>
