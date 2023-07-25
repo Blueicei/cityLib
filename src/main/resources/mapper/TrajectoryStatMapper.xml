@@ -27,20 +27,12 @@
              #{trajectory.endTime}, #{trajectory.timeInterval}, #{trajectory.avgSpeed}, #{trajectory.pointNum})
         </foreach>
     </insert>
-    <update id="updateCarType">
-        update trajectory_stat
-        set car_type = #{carType}
-        where car_number = #{carNumber}
-    </update>
-
 
     <select id="getStatByCar" parameterType="com.lib.citylib.camTra.query.ListStatisticsParam" resultMap="BaseResultMap">
         select *
         from trajectory_stat
         <where>
-            point_num &gt; 3
-            and distance > 1000
-            and car_number = #{carNumber}
+            car_number = #{carNumber}
             <if test="minTime != '' and minTime != null">
                 and start_time &gt;= #{minTime}
             </if>
@@ -66,8 +58,6 @@
                totalTime / dayCount as avgTimePerDay
         from trajectory_stat
         <where>
-            distance &gt; 1000
-            and point_num &gt; 3
             <if test="param.minTime != '' and param.minTime != null">
                 and start_time &gt;= #{param.minTime}
             </if>
@@ -91,10 +81,6 @@
                 and start_time &lt;= #{maxTime}
             </if>
         </where>
-    </select>
-    <select id="getCarNumberList" resultType="java.lang.String">
-        select distinct car_number
-        from trajectory_stat
     </select>
 
 </mapper>

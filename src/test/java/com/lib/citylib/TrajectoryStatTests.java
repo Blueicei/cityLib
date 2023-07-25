@@ -36,12 +36,4 @@ public class TrajectoryStatTests {
         param.setCarNumber("鲁A0001018635");
         trajectoryStatService.getStatByCar(param);
     }
-    @Test
-    public void dealCarType(){
-        Set<String> carNumbers = trajectoryStatMapper.getCarNumberList();
-        for (String carNumber : carNumbers){
-            String carType = camTrajectoryMapper.getCarType(carNumber);
-            trajectoryStatMapper.updateCarType(carNumber, carType);
-        }
-    }
 }
