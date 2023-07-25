@@ -11,8 +11,10 @@ import org.apache.flink.api.common.operators.Order;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
 
 @Component
@@ -27,16 +29,16 @@ public class PartitionTraUtil {
     final private Long pointNumber = 0L;
     final private boolean filterTraRange = true;
 
-
+    @Transactional(rollbackFor = Exception.class)
     public void partitionTraUtil(){
         //获取所有车辆
         List<CarInfo> carList = camTrajectoryMapper.getCarNumberList();
 
         trajectoryStatMapper.clear();
 
-        QueryGenerateResult queryGenerateResult = new QueryGenerateResult();
         int segmentSize = 1000;
         //分批取数据
+        List<CarTrajectory> newTraList = new ArrayList<>();
         for (int i = 0; i < carList.size(); i += segmentSize) {
             int endIndex = Math.min(i + segmentSize, carList.size());
             List<CarInfo> segment = carList.subList(i, endIndex);
@@ -49,13 +51,14 @@ public class PartitionTraUtil {
                         distinct().
                         groupBy(CamTrajectory::getCarNumber).
                         sortGroup(CamTrajectory::getPhotoTime, Order.ASCENDING).
-                        reduceGroup(new CamTrajectoryService.MergeGroupPoints(trajectoryCut, traLength, pointNumber)).
-                        name("points-to-trajectory");
-                List<CarTrajectory> newTraList = newPoints.collect();
-                trajectoryStatMapper.insertBatch(newTraList);
+                        reduceGroup(new CamTrajectoryService.MergeGroupPoints(trajectoryCut, traLength, pointNumber, false));
+                newTraList.addAll(newPoints.collect());
             } catch (Exception e) {
                 e.printStackTrace();
-                queryGenerateResult.setMsg("error");
+            }
+            if (newTraList.size() > 100000){
+                trajectoryStatMapper.insertBatch(newTraList);
+                newTraList = new ArrayList<>();
             }
         }
     }

@@ -191,5 +191,11 @@
         </if>
         group by cam_id
     </select>
+    <select id="getCarType" resultType="java.lang.String">
+        select car_type
+        from camtrajectory
+        where car_number = #{carNumber}
+        limit 1
+    </select>
 
 </mapper>

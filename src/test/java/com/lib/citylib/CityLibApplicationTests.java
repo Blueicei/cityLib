@@ -81,7 +81,7 @@ class CityLibApplicationTests {
             Date endTime = camTrajectoryList.get(camTrajectoryList.size() - 1).getPhotoTime();
             Long timeInterval = (endTime.getTime() - startTime.getTime()) / 1000;
             Double avgSpeed = ( distance / timeInterval)*3.6d;
-            return new CarTrajectory(carNumber, carType, camTrajectoryList, distance, startTime, endTime, timeInterval, avgSpeed);
+            return new CarTrajectory(carNumber, carType, camTrajectoryList, distance, startTime, endTime, timeInterval, avgSpeed, camTrajectoryList.size());
         }
         @Override
         public void reduce(Iterable<CamTrajectory> iterable, Collector<CarTrajectory> collector) throws Exception {

@@ -10,6 +10,7 @@ import org.apache.ibatis.annotations.Param;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 
 /**
 * @author fuke
@@ -25,6 +26,9 @@ public interface TrajectoryStatMapper extends BaseMapper<CamTrajectory> {
 
     IPage<TrajectoryStat> listStatByAll(IPage<TrajectoryStat> page, @Param("param")ListStatisticsParam param);
     List<CarTrajectory> getStatByCar(ListStatisticsParam param);
+
+    Set<String> getCarNumberList();
+    void updateCarType(@Param("carNumber")String carNumber, @Param("carType") String carType);
 }
 
 

@@ -16,10 +16,10 @@ public class TrajectoryStatController {
     @Resource
     private TrajectoryStatService trajectoryStatService;
 
-    @GetMapping ("/info")
-    public CommonResult getInfo(){
+    @PostMapping ("/info")
+    public CommonResult getInfo(@RequestBody ListStatisticsParam param){
 
-        return CommonResult.success(trajectoryStatService.getTotalStat(new ListStatisticsParam()));
+        return CommonResult.success(trajectoryStatService.getTotalStat(param));
     }
 
     @ResponseBody

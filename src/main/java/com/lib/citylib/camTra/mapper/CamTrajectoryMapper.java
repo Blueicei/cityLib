@@ -42,6 +42,8 @@ public interface CamTrajectoryMapper extends BaseMapper<CamTrajectory> {
 
     List<QueryCamCountByCar> listCamCountByCar(@Param("carNumber") String carNumber, @Param("startTime") Date startTime, @Param("endTime") Date endTime);
     Long getClusterFlow(@Param("carNumber") String carNumber, @Param("points") List<String> points);
+
+    String getCarType(String carNumber);
 }
 
 

@@ -6,6 +6,7 @@
 
     <resultMap id="BaseResultMap" type="com.lib.citylib.camTra.model.CarTrajectory">
             <result property="carNumber" column="car_number"/>
+            <result property="carType" column="car_type"/>
             <result property="distance" column="distance"/>
             <result property="startTime" column="start_time"/>
             <result property="endTime" column="end_time"/>
@@ -23,15 +24,23 @@
         values
         <foreach collection="trajectories"  separator="," item="trajectory">
             (#{trajectory.carNumber}, #{trajectory.distance}, #{trajectory.startTime},
-             #{trajectory.endTime}, #{trajectory.timeInterval}, #{trajectory.avgSpeed})
+             #{trajectory.endTime}, #{trajectory.timeInterval}, #{trajectory.avgSpeed}, #{trajectory.pointNum})
         </foreach>
     </insert>
+    <update id="updateCarType">
+        update trajectory_stat
+        set car_type = #{carType}
+        where car_number = #{carNumber}
+    </update>
+
 
     <select id="getStatByCar" parameterType="com.lib.citylib.camTra.query.ListStatisticsParam" resultMap="BaseResultMap">
         select *
         from trajectory_stat
         <where>
-            car_number = #{carNumber}
+            point_num &gt; 3
+            and distance > 1000
+            and car_number = #{carNumber}
             <if test="minTime != '' and minTime != null">
                 and start_time &gt;= #{minTime}
             </if>
@@ -45,6 +54,7 @@
     </delete>
     <select id="listStatByAll" resultType="com.lib.citylib.camTra.model.TrajectoryStat">
         select car_number as carNumber,
+               max(car_type) as carType,
                count(distinct DATE_FORMAT(start_time,'%Y-%m-%d')) as dayCount,
                sum(distance) / 1000 as totalDistance,
                avg(distance) / 1000 as avgDistance,
@@ -56,6 +66,8 @@
                totalTime / dayCount as avgTimePerDay
         from trajectory_stat
         <where>
+            distance &gt; 1000
+            and point_num &gt; 3
             <if test="param.minTime != '' and param.minTime != null">
                 and start_time &gt;= #{param.minTime}
             </if>
@@ -64,6 +76,7 @@
             </if>
         </where>
         group by car_number
+        having traCount >= 10
     </select>
     <select id="getTotalStat" parameterType="com.lib.citylib.camTra.query.ListStatisticsParam" resultType="java.util.HashMap">
         select count(distinct car_number) as carNum,
@@ -78,6 +91,10 @@
                 and start_time &lt;= #{maxTime}
             </if>
         </where>
+    </select>
+    <select id="getCarNumberList" resultType="java.lang.String">
+        select distinct car_number
+        from trajectory_stat
     </select>
 
 </mapper>

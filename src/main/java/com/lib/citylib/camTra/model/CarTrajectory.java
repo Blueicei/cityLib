@@ -21,6 +21,7 @@ public class CarTrajectory {
     private Date endTime;
     private Long timeInterval;  // 秒
     private Double avgSpeed;  // km/h
+    private Integer pointNum;
     public CarTrajectory(List<CamTrajectory> points) {
         this.points = points;
     }
@@ -31,7 +32,7 @@ public class CarTrajectory {
         this.points = tempPoints;
     }
 
-    public CarTrajectory(String carNumber, String carType, List<CamTrajectory> points, Double distance, Date startTime, Date endTime, Long timeInterval, Double avgSpeed) {
+    public CarTrajectory(String carNumber, String carType, List<CamTrajectory> points, Double distance, Date startTime, Date endTime, Long timeInterval, Double avgSpeed, Integer pointNum) {
         this.carNumber = carNumber;
         this.carType = carType;
         this.points = points;
@@ -40,6 +41,7 @@ public class CarTrajectory {
         this.endTime = endTime;
         this.timeInterval = timeInterval;
         this.avgSpeed = avgSpeed;
+        this.pointNum = pointNum;
     }
 
     public CarTrajectory(String carNumber, CamTrajectory point) {

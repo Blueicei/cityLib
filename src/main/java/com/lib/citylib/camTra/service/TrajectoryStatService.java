@@ -67,7 +67,7 @@ public class TrajectoryStatService {
                     .filter(e -> {
                         Calendar calendar = Calendar.getInstance();
                         calendar.setTime(e.getStartTime());
-                        return calendar.get(Calendar.HOUR) == finalI;
+                        return calendar.get(Calendar.HOUR_OF_DAY) == finalI;
                     }).count());
         }
         Map<Object, Long> traStartTimePerDay = new HashMap<>();

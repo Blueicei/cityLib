@@ -1,5 +1,7 @@
 package com.lib.citylib;
 
+import com.lib.citylib.camTra.mapper.CamTrajectoryMapper;
+import com.lib.citylib.camTra.mapper.TrajectoryStatMapper;
 import com.lib.citylib.camTra.model.CarTrajectory;
 import com.lib.citylib.camTra.query.ListStatisticsParam;
 import com.lib.citylib.camTra.service.TrajectoryStatService;
@@ -10,11 +12,16 @@ import org.springframework.boot.test.context.SpringBootTest;
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 @SpringBootTest
 public class TrajectoryStatTests {
     @Resource
     private TrajectoryStatService trajectoryStatService;
+    @Resource
+    private TrajectoryStatMapper trajectoryStatMapper;
+    @Resource
+    private CamTrajectoryMapper camTrajectoryMapper;
     @Resource
     private PartitionTraUtil partitionTraUtil;
 
@@ -28,5 +35,13 @@ public class TrajectoryStatTests {
         ListStatisticsParam param = new ListStatisticsParam();
         param.setCarNumber("鲁A0001018635");
         trajectoryStatService.getStatByCar(param);
+    }
+    @Test
+    public void dealCarType(){
+        Set<String> carNumbers = trajectoryStatMapper.getCarNumberList();
+        for (String carNumber : carNumbers){
+            String carType = camTrajectoryMapper.getCarType(carNumber);
+            trajectoryStatMapper.updateCarType(carNumber, carType);
+        }
     }
 }

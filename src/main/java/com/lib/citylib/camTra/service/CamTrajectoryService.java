@@ -66,7 +66,7 @@ public class CamTrajectoryService {
                 distinct().
                 groupBy(CamTrajectory::getCarNumber).
                 sortGroup(CamTrajectory::getPhotoTime, Order.ASCENDING).
-                reduceGroup(new MergeGroupPoints(30L, 1000L, 3L)).
+                reduceGroup(new MergeGroupPoints(30L, 1000L, 3L, true)).
                 name("points-to-trajectory");
         List<CarTrajectory> newTraList = newPoints.collect();
         List<CarTrajectory> tempTraList = new ArrayList<>();
@@ -115,7 +115,7 @@ public class CamTrajectoryService {
                         distinct().
                         groupBy(CamTrajectory::getCarNumber).
                         sortGroup(CamTrajectory::getPhotoTime, Order.ASCENDING).
-                        reduceGroup(new MergeGroupPoints(tableProcessDto.getTraCut(), tableProcessDto.getTraLength(), tableProcessDto.getPointNumber())).
+                        reduceGroup(new MergeGroupPoints(tableProcessDto.getTraCut(), tableProcessDto.getTraLength(), tableProcessDto.getPointNumber(), true)).
                         name("points-to-trajectory");
                 List<CarTrajectory> newTraList = newPoints.collect();
                 queryGenerateResult.update(newTraList);
@@ -309,7 +309,8 @@ public class CamTrajectoryService {
         private Long trajectoryCut = 30L;
         private Long traLength = 0L;
         private Long pointNumber = 0L;
-        public MergeGroupPoints(Long trajectoryCut, Long traLength, Long pointNumber) {
+        private Boolean savePoint = true;
+        public MergeGroupPoints(Long trajectoryCut, Long traLength, Long pointNumber, Boolean savePoint) {
             if(trajectoryCut != null)
             {
                 this.trajectoryCut = trajectoryCut;
@@ -321,7 +322,10 @@ public class CamTrajectoryService {
             {
                 this.pointNumber = pointNumber;
             }
-
+            if (savePoint != null)
+            {
+                this.savePoint = savePoint;
+            }
         }
         private CarTrajectory convertCamListToCarTra(List<CamTrajectory> camTrajectoryList){
 
@@ -337,7 +341,10 @@ public class CamTrajectoryService {
             Date endTime = camTrajectoryList.get(camTrajectoryList.size() - 1).getPhotoTime();
             Long timeInterval = (endTime.getTime() - startTime.getTime()) / 1000;
             Double avgSpeed = ( distance / timeInterval)*3.6d;
-            return new CarTrajectory(carNumber, carType, camTrajectoryList, distance, startTime, endTime, timeInterval, avgSpeed);
+            if(!this.savePoint)
+                return new CarTrajectory(carNumber, carType, null, distance, startTime, endTime, timeInterval, avgSpeed, camTrajectoryList.size());
+            else
+                return new CarTrajectory(carNumber, carType, camTrajectoryList, distance, startTime, endTime, timeInterval, avgSpeed, camTrajectoryList.size());
         }
         @Override
         public void reduce(Iterable<CamTrajectory> iterable, Collector<CarTrajectory> collector) throws Exception {
@@ -362,7 +369,7 @@ public class CamTrajectoryService {
             }
             carTrajectoryList.add(this.convertCamListToCarTra(tempPoints));
             for(CarTrajectory c: carTrajectoryList){
-                if (c.getPoints().size() > pointNumber && c.getDistance() > traLength)
+                if (c.getPointNum()> pointNumber && c.getDistance() > traLength)
                 {
                     collector.collect(c);
                 }
