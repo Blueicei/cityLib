@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.lib.citylib.camTra.mapper.TaxiTrajectoryMapper">
+
+    <resultMap id="BaseResultMap" type="com.lib.citylib.camTra.model.taxi.TaxiTrajectory">
+            <result property="traId" column="tra_id"/>
+            <result property="carNumber" column="car_number"/>
+            <result property="startTime" column="start_time"/>
+            <result property="endTime" column="end_time"/>
+            <result property="distanceCarry" column="distance_carry"/>
+            <result property="distanceEmpty" column="distance_empty"/>
+            <result property="distanceCal" column="distance_cal"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        tra_id, car_number, start_time, end_time, distance_carry, distance_empty, distance_cal
+    </sql>
+
+    <insert id="insertBatch" parameterType="com.lib.citylib.camTra.model.taxi.TaxiTrajectory" useGeneratedKeys="false">
+        insert into gps_trajectory_stat
+        (tra_id, car_number, start_time, end_time, distance_carry, distance_empty, distance_cal)
+        values
+        <foreach collection="trajectories"  separator="," item="trajectory">
+            (
+             #{trajectory.traId}, #{trajectory.carNumber}, #{trajectory.startTime}, #{trajectory.endTime},
+             #{trajectory.distanceCarry}, #{trajectory.distanceEmpty}, #{trajectory.distanceCal}
+             )
+        </foreach>
+    </insert>
+    <insert id="insertPoints" parameterType="com.lib.citylib.camTra.model.taxi.GpsPoint" useGeneratedKeys="false">
+        insert into gps_points
+        (car_number, lng, lat, `time`, tra_id)
+        values
+        <foreach collection="points"  separator="," item="point">
+            (
+            #{point.carNumber}, #{point.lng}, #{point.lat}, #{point.time}, #{point.traId}
+            )
+        </foreach>
+    </insert>
+
+    <select id="getStatByCar" parameterType="com.lib.citylib.camTra.query.ListStatisticsParam" resultMap="BaseResultMap">
+        select *
+        from gps_trajectory_stat
+        <where>
+            car_number = #{carNumber}
+            <if test="minTime != '' and minTime != null">
+                and start_time &gt;= #{minTime}
+            </if>
+            <if test="maxTime != '' and maxTime != null">
+                and start_time &lt;= #{maxTime}
+            </if>
+        </where>
+    </select>
+
+    <select id="listStatByAll" resultType="com.lib.citylib.camTra.model.TrajectoryStat">
+        select car_number as carNumber,
+               count(distinct DATE_FORMAT(start_time,'%Y-%m-%d')) as dayCount,
+               sum(distance_cal) as totalDistance,
+               avg(distance_cal) as avgDistance,
+               count(*) as traCount,
+               sum(timestampdiff(second, start_time, end_time)) / 3600 as totalTime,
+               avg(timestampdiff(second, start_time, end_time)) / 3600 as avgTime,
+               totalDistance / totalTime as avgSpeed,
+               totalDistance / dayCount as avgDistancePerDay,
+               totalTime / dayCount as avgTimePerDay
+        from gps_trajectory_stat
+        <where>
+            <if test="param.minTime != '' and param.minTime != null">
+                and start_time &gt;= #{param.minTime}
+            </if>
+            <if test="param.maxTime != '' and param.maxTime != null">
+                and start_time &lt;= #{param.maxTime}
+            </if>
+        </where>
+        group by car_number
+        having traCount >= 10
+    </select>
+    <select id="getTotalStat" parameterType="com.lib.citylib.camTra.query.ListStatisticsParam" resultType="java.util.HashMap">
+        select count(distinct car_number) as carNum,
+               count(*) as traNum
+        from gps_trajectory_stat
+        <where>
+            <if test="minTime != '' and minTime != null">
+                and start_time &gt;= #{minTime}
+            </if>
+            <if test="maxTime != '' and maxTime != null">
+                and start_time &lt;= #{maxTime}
+            </if>
+        </where>
+    </select>
+    <select id="getPointByTra" resultType="com.lib.citylib.camTra.model.taxi.GpsPoint">
+        select car_number as carNumber,
+               lng,
+               lat,
+               `time`,
+               tra_id as traId
+        from gps_points
+        where tra_id = #{traId}
+        order by `time`
+    </select>
+    <select id="getPointByCar" resultType="com.lib.citylib.camTra.model.taxi.GpsPoint">
+        select car_number as carNumber,
+               lng,
+               lat,
+               `time`,
+               tra_id as traId
+        from gps_points
+        <where>
+            car_number = #{carNumber}
+            <if test="minTime != null and minTime != ''">
+                and `time` &gt;= #{minTime}
+            </if>
+            <if test="maxTime != null and maxTime != ''">
+                and `time` &lt;= #{maxTime}
+            </if>
+        </where>
+        order by `time`
+    </select>
+
+</mapper>
