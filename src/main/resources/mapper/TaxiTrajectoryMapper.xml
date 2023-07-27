@@ -52,6 +52,7 @@
                 and start_time &lt;= #{maxTime}
             </if>
         </where>
+        order by start_time
     </select>
 
     <select id="listStatByAll" resultType="com.lib.citylib.camTra.model.TrajectoryStat">
