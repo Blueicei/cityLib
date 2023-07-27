@@ -12,6 +12,7 @@ import org.apache.ibatis.annotations.Param;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 
 /**
 * @author fuke
@@ -30,6 +31,9 @@ public interface TaxiTrajectoryMapper extends BaseMapper<CamTrajectory> {
     List<GpsPoint> getPointByTra(String traId);
 
     List<GpsPoint> getPointByCar(ListStatisticsParam param);
+
+    Set<String> getCarFromStat();
+    Set<String> getCarFromPoint();
 }
 
 

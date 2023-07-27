@@ -31,10 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.io.*;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Component
@@ -117,15 +114,15 @@ public class PartitionTraUtil {
     public static class TrajectoryOut{
         @Alias("tra_id")
         private String traId;
-        @Alias("车牌")
+        @Alias("car_number")
         private String carNumber;
-        @Alias("上车时间")
+        @Alias("start_time")
         private String startTime;
-        @Alias("下车时间")
+        @Alias("end_time")
         private String endTime;
-        @Alias("载客里程(km)")
+        @Alias("distance_carry")
         private Double distanceCarry;
-        @Alias("空驶里程(km)")
+        @Alias("distance_empty")
         private Double distanceEmpty;
         @Alias("distance_cal")
         private Double distanceCal;
@@ -225,12 +222,12 @@ public class PartitionTraUtil {
             }
 
             List<TrajectoryOut> trajectoryList = trajectoryInList.stream().map(TrajectoryIn::convertToTaxiTrajectoryOut).collect(Collectors.toList());
-            CsvWriter writer = CsvUtil.getWriter(traFolder+"/"+ carNumber + "Tra.csv", CharsetUtil.CHARSET_UTF_8);
+            CsvWriter writer = CsvUtil.getWriter(traFolder+"/"+ carNumber + ".csv", CharsetUtil.CHARSET_UTF_8);
             writer.writeBeans(trajectoryList);
             writer.close();
 
             List<GpsPointOut> pointList = pointInList.stream().map(GpsPointIn::convertToGpsPointOut).collect(Collectors.toList());
-            writer = CsvUtil.getWriter(pointFolder+"/" + carNumber + "Point.csv", CharsetUtil.CHARSET_UTF_8);
+            writer = CsvUtil.getWriter(pointFolder+"/" + carNumber + ".csv", CharsetUtil.CHARSET_UTF_8);
             writer.writeBeans(pointList);
             writer.close();
 
@@ -238,10 +235,28 @@ public class PartitionTraUtil {
             if (cnt >=5)
                 break;
         }
-        String cmd = "ls -1 "+ traFolder + " | xargs -P100 -I{} bash -c 'cat " + traFolder + "/\"{}\" | clickhouse-client --date_time_input_format best_effort --query \"INSERT INTO gps_trajectory_stat FORMAT CSVWithNames\"'";
-        this.executeCmd(cmd);
-        cmd = "ls -1 "+ pointFolder + " | xargs -P100 -I{} bash -c 'cat " + pointFolder + "/\"{}\" | clickhouse-client --date_time_input_format best_effort --query \"INSERT INTO gps_points FORMAT CSVWithNames\"'";
-        this.executeCmd(cmd);
+
+        File traDir = new File(traFolder);
+        File[] traFiles = traDir.listFiles();
+        Set<String> existCar = taxiTrajectoryMapper.getCarFromStat();
+        for (File traFile : traFiles) {
+            String carNumber = traFile.getName().split("\\.")[0];
+            if (!existCar.contains(carNumber)){
+                String cmd = "cat "+ traFolder + "/" + traFile.getName() + " | clickhouse-client --date_time_input_format best_effort --query=\"INSERT INTO gps_trajectory_stat FORMAT CSVWithNames\"";
+                this.executeCmd(cmd);
+            }
+        }
+
+        File pointDir = new File(pointFolder);
+        File[] pointFiles = pointDir.listFiles();
+        existCar = taxiTrajectoryMapper.getCarFromPoint();
+        for (File pointFile : pointFiles) {
+            String carNumber = pointFile.getName().split("\\.")[0];
+            if (!existCar.contains(carNumber)){
+                String cmd = "cat "+ pointFolder + "/" + pointFile.getName() + " | clickhouse-client --date_time_input_format best_effort --query=\"INSERT INTO gps_points FORMAT CSVWithNames\"";
+                this.executeCmd(cmd);
+            }
+        }
     }
 
     public void executeCmd(String cmd) {
@@ -250,7 +265,8 @@ public class PartitionTraUtil {
             // 执行脚本文件
             logger.info("开始执行命令:" + cmd);
             //主要在这步写入后调用命令
-            Process proc = Runtime.getRuntime().exec(cmd);
+            String[] cmds = new String[]{"sh","-c",cmd};
+            Process proc = Runtime.getRuntime().exec(cmds);
             proc.waitFor();
             try (
                  BufferedReader read =
@@ -260,6 +276,7 @@ public class PartitionTraUtil {
                     logger.info(line);
                 }
             }
+            logger.info("执行结束:" + cmd);
         } catch (Exception e) {
             logger.error("failed", e);
         }

@@ -119,5 +119,13 @@
         </where>
         order by `time`
     </select>
+    <select id="getCarFromStat" resultType="java.lang.String">
+        select distinct car_number
+        from gps_trajectory_stat
+    </select>
 
+    <select id="getCarFromPoint" resultType="java.lang.String">
+        select distinct car_number
+        from gps_points
+    </select>
 </mapper>

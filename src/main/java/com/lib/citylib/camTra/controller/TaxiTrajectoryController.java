@@ -52,9 +52,9 @@ public class TaxiTrajectoryController {
     }
 
 
-
     @GetMapping("/test")
-    public CommonResult test(){
+    public CommonResult test(String cmd){
+        partitionTraUtil.executeCmd(cmd);
         return CommonResult.success("hello");
     }
 
