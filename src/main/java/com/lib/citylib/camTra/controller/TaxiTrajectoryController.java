@@ -6,6 +6,7 @@ import com.lib.citylib.camTra.query.ListStatisticsParam;
 import com.lib.citylib.camTra.service.TaxiTrajectoryService;
 import com.lib.citylib.camTra.service.TrajectoryStatService;
 import com.lib.citylib.camTra.utils.CommonResult;
+import com.lib.citylib.camTra.utils.PartitionTraUtil;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -15,6 +16,8 @@ import javax.annotation.Resource;
 public class TaxiTrajectoryController {
     @Resource
     private TaxiTrajectoryService taxiTrajectoryService;
+    @Resource
+    private PartitionTraUtil partitionTraUtil;
 
     @PostMapping ("/stat")
     public CommonResult getInfo(@RequestBody ListStatisticsParam param){
@@ -46,5 +49,17 @@ public class TaxiTrajectoryController {
     @PostMapping("/getPointByCar")
     public CommonResult getPointByCar(@RequestBody ListStatisticsParam param) {
         return CommonResult.success(taxiTrajectoryService.getPointByCar(param));
+    }
+
+
+
+    @GetMapping("/test")
+    public CommonResult test(){
+        return CommonResult.success("hello");
+    }
+
+    @GetMapping("/saveGpsData")
+    public void saveGpsData(){
+        partitionTraUtil.saveGpsData();
     }
 }

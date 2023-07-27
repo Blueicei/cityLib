@@ -21,13 +21,15 @@ import lombok.Data;
 import org.apache.flink.api.common.operators.Order;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.io.File;
-import java.io.FilenameFilter;
+import java.io.*;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -45,6 +47,7 @@ public class PartitionTraUtil {
     private TaxiTrajectoryMapper taxiTrajectoryMapper;
     @Resource
     private CamTrajectoryService camTrajectoryService;
+    private static final Logger logger = LoggerFactory.getLogger(PartitionTraUtil.class);
 
     final private Long trajectoryCut = 30L;
     final private Long traLength = 0L;
@@ -87,6 +90,8 @@ public class PartitionTraUtil {
 
     @Data
     public static class TrajectoryIn{
+        @Alias("tra_id")
+        private String traId;
         @Alias("车牌")
         private String carNumber;
         @Alias("上车时间")
@@ -94,28 +99,87 @@ public class PartitionTraUtil {
         @Alias("下车时间")
         private Date endTime;
         @Alias("载客里程(km)")
-        @ApiModelProperty(value = "载客里程(km)")
         private Double distanceCarry;
         @Alias("空驶里程(km)")
-        @ApiModelProperty(value = "空驶里程(km)")
         private Double distanceEmpty;
+        @Alias("distance_cal")
+        private Double distanceCal;
 
-        public TaxiTrajectory convertToTaxiTrajectory(){
-            TaxiTrajectory taxiTrajectory = new TaxiTrajectory();
-            BeanUtils.copyProperties(this,taxiTrajectory);
-            return taxiTrajectory;
+        public TrajectoryOut convertToTaxiTrajectoryOut(){
+            TrajectoryOut trajectoryOut = new TrajectoryOut();
+            BeanUtils.copyProperties(this,trajectoryOut);
+            trajectoryOut.setStartTime(DateUtil.format(this.getStartTime(),"yyyy-MM-dd HH:mm:ss"));
+            trajectoryOut.setEndTime(DateUtil.format(this.getEndTime(),"yyyy-MM-dd HH:mm:ss"));
+            return trajectoryOut;
         }
     }
+    @Data
+    public static class TrajectoryOut{
+        @Alias("tra_id")
+        private String traId;
+        @Alias("车牌")
+        private String carNumber;
+        @Alias("上车时间")
+        private String startTime;
+        @Alias("下车时间")
+        private String endTime;
+        @Alias("载客里程(km)")
+        private Double distanceCarry;
+        @Alias("空驶里程(km)")
+        private Double distanceEmpty;
+        @Alias("distance_cal")
+        private Double distanceCal;
+    }
+    @Data
+    public class GpsPointIn {
+        @Alias("car_number")
+        private String carNumber;
+        private Double lng;
+        private Double lat;
+        private Date time;
+        @Alias("tra_id")
+        private String traId;
+        public GpsPointOut convertToGpsPointOut(){
+            GpsPointOut pointOut = new GpsPointOut();
+            BeanUtils.copyProperties(this,pointOut);
+            pointOut.setTime(DateUtil.format(this.getTime(),"yyyy-MM-dd HH:mm:ss"));
+            return pointOut;
+        }
+    }
+    @Data
+    public class GpsPointOut {
+        @Alias("car_number")
+        private String carNumber;
+        private Double lng;
+        private Double lat;
+        private String time;
+        @Alias("tra_id")
+        private String traId;
+    }
 
-    public void saveGpsData(String path){
-        path = "C:\\Users\\Zhang\\Desktop\\鲁AD00020";
-        File directory = new File(path);
-        if (directory.isDirectory()){
-            String carNumber = directory.getName();
+    @Value("${taxi.gps.folder}")
+    private String gpsFolder;
+    @Value("${taxi.gps.processed.tra}")
+    private String traFolder;
+    @Value("${taxi.gps.processed.point}")
+    private String pointFolder;
+
+    public void saveGpsData(){
+        File folder = new File(gpsFolder);
+//        File folder = new File("C:\\Users\\Zhang\\Desktop\\111");
+        File[] carDirs = folder.listFiles();
+        if (carDirs == null){
+            logger.error(folder + ", 文件夹为空");
+            return;
+        }
+        int cnt = 0;
+        logger.info("处理轨迹点文件,总车辆数:"+ carDirs.length + ", 当前处理" + cnt);
+        for (File carDir : carDirs) {
+            String carNumber = carDir.getName();
             //订单文件
-            File[] tripFiles = directory.listFiles((dir, name) -> name.matches("trip.*"));
+            File[] tripFiles = carDir.listFiles((dir, name) -> name.matches("trip.*"));
             //轨迹点文件
-            File[] posFiles = directory.listFiles((dir, name) -> name.matches(".*PosNew.*"));
+            File[] posFiles = carDir.listFiles((dir, name) -> name.matches(".*PosNew.*"));
             if(tripFiles == null || posFiles == null){
                 return;
             }
@@ -125,28 +189,27 @@ public class PartitionTraUtil {
             for (File tripFile : tripFiles) {
                 trajectoryInList.addAll(reader.read(ResourceUtil.getUtf8Reader(tripFile.getAbsolutePath()), TrajectoryIn.class));
             }
-            List<TaxiTrajectory> trajectoryList = trajectoryInList.stream().map(TrajectoryIn::convertToTaxiTrajectory).collect(Collectors.toList());
             //保存轨迹点数据
-            List<GpsPoint> pointList = new ArrayList<>();
+            List<GpsPointIn> pointInList = new ArrayList<>();
             for (File posFile : posFiles) {
-                pointList.addAll(reader.read(ResourceUtil.getUtf8Reader(posFile.getAbsolutePath()), GpsPoint.class));
+                pointInList.addAll(reader.read(ResourceUtil.getUtf8Reader(posFile.getAbsolutePath()), GpsPointIn.class));
             }
-            pointList = pointList.stream().filter(e -> e.getLat() > 0 && e.getLng() > 0).collect(Collectors.toList());
+            pointInList = pointInList.stream().filter(e -> e.getLat() > 0 && e.getLng() > 0).collect(Collectors.toList());
             //按时间排序
-            pointList.sort((o1, o2) -> DateUtil.compare(o1.getTime(),o2.getTime()));
+            pointInList.sort((o1, o2) -> DateUtil.compare(o1.getTime(),o2.getTime()));
             //维护车牌号信息, 经纬度的坐标系转换
-            pointList.forEach(e ->{
+            pointInList.forEach(e ->{
                 e.setCarNumber(carNumber);
                 double[] latLon = GPSUtil.gps84_To_bd09(e.getLat(),e.getLng());
                 e.setLat(latLon[0]);
                 e.setLng(latLon[1]);
             });
-            for (TaxiTrajectory taxiTrajectory : trajectoryList) {
+            for (TrajectoryIn taxiTrajectory : trajectoryInList) {
                 //为每个轨迹生成id
                 String traId = UUID.randomUUID().toString();
                 taxiTrajectory.setTraId(traId);
                 //将轨迹id分配给对应的轨迹点。按照轨迹的起始时间分配
-                List<GpsPoint> tempPoints = pointList
+                List<GpsPointIn> tempPoints = pointInList
                         .stream()
                         .filter(
                                 e-> DateUtil.compare(e.getTime(),taxiTrajectory.getStartTime()) > 0 && DateUtil.compare(e.getTime(),taxiTrajectory.getEndTime()) <= 0
@@ -160,15 +223,45 @@ public class PartitionTraUtil {
                 }
                 taxiTrajectory.setDistanceCal(distanceCal / 1000);
             }
-            CsvWriter writer = CsvUtil.getWriter(path+"\\outTra.csv", CharsetUtil.CHARSET_UTF_8);
+
+            List<TrajectoryOut> trajectoryList = trajectoryInList.stream().map(TrajectoryIn::convertToTaxiTrajectoryOut).collect(Collectors.toList());
+            CsvWriter writer = CsvUtil.getWriter(traFolder+"/"+ carNumber + "Tra.csv", CharsetUtil.CHARSET_UTF_8);
             writer.writeBeans(trajectoryList);
             writer.close();
 
-            writer = CsvUtil.getWriter(path+"\\outPoint.csv", CharsetUtil.CHARSET_UTF_8);
+            List<GpsPointOut> pointList = pointInList.stream().map(GpsPointIn::convertToGpsPointOut).collect(Collectors.toList());
+            writer = CsvUtil.getWriter(pointFolder+"/" + carNumber + "Point.csv", CharsetUtil.CHARSET_UTF_8);
             writer.writeBeans(pointList);
             writer.close();
-//            taxiTrajectoryMapper.insertBatch(trajectoryList);
-//            taxiTrajectoryMapper.insertPoints(pointList);
+
+            logger.info("处理轨迹点文件,总车辆数:"+ carDirs.length + ", 当前处理" + (++cnt));
+            if (cnt >=5)
+                break;
+        }
+        String cmd = "ls -1"+ traFolder + " | xargs -P100 -I{} bash -c 'cat " + traFolder + "/\"{}\" | clickhouse-client --date_time_input_format best_effort --query \"INSERT INTO gps_trajectory_stat FORMAT CSVWithNames\"'";
+        this.executeCmd(cmd);
+        cmd = "ls -1"+ pointFolder + " | xargs -P100 -I{} bash -c 'cat " + pointFolder + "/\"{}\" | clickhouse-client --date_time_input_format best_effort --query \"INSERT INTO gps_points FORMAT CSVWithNames\"'";
+        this.executeCmd(cmd);
+    }
+
+    public void executeCmd(String cmd) {
+        try {
+
+            // 执行脚本文件
+            logger.info("开始执行命令:" + cmd);
+            //主要在这步写入后调用命令
+            Process proc = Runtime.getRuntime().exec(cmd);
+            proc.waitFor();
+            try (
+                 BufferedReader read =
+                         new BufferedReader(new InputStreamReader(proc.getInputStream()))) {
+                String line;
+                while ((line = read.readLine()) != null) {
+                    logger.info(line);
+                }
+            }
+        } catch (Exception e) {
+            logger.error("failed", e);
         }
     }
 

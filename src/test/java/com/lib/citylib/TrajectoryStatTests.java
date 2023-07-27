@@ -8,6 +8,8 @@ import com.lib.citylib.camTra.service.TrajectoryStatService;
 import com.lib.citylib.camTra.utils.GPSUtil;
 import com.lib.citylib.camTra.utils.PartitionTraUtil;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import javax.annotation.Resource;
@@ -41,11 +43,21 @@ public class TrajectoryStatTests {
 
     @Test
     public void saveTaxiTra() throws Exception {
-        partitionTraUtil.saveGpsData("");
+        partitionTraUtil.saveGpsData();
     }
 
-    @Test void testGps(){
+    @Test
+    public void testGps(){
         double lon = 116.98948, lat = 36.673418;
         System.out.println(Arrays.toString(GPSUtil.gps84_To_bd09(lat, lon)));
     }
+
+    private static final Logger logger = LoggerFactory.getLogger(PartitionTraUtil.class);
+    @Test
+    public void testLog(){
+        logger.error("error");
+        logger.warn("warn");
+        logger.info("info");
+    }
+
 }

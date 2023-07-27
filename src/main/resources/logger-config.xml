@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!-- 引入配置文件 -->
+    <property resource="application.properties"/>
+    <!-- %m输出的信息,%p日志级别,%t线程名,%d日期,%c类的全名,%i索引【从数字0开始递增】 -->
+
+    <!-- 定义控制台输出格式 -->
+    <!-- appender(附加)：是 configuration 的子节点，是负责写日志的组件 -->
+    <!--ConsoleAppender ：是将信息输出到控制台-->
+    <appender name="console" class="ch.qos.logback.core.ConsoleAppender" >
+        <encoder>
+            <!-- patter（模式）-->
+            <!--  %d{pattern}日期
+                    %m或者%msg为信息
+                    %M为method
+                    %L为行号
+                    %thread线程名称
+                    %n换行
+                    %-5level
+
+                    %C{length} |  %class{length}
+
+                    %c {length }  |  %lo {length }   |  %logger {length }
+                    输出日志的logger名，可有一个整形参数，功能是缩短logger名，设置为0表示只输入logger最右边点符号之后的字符串。 Conversion specifier Logger name Result
+            -->
+            <pattern>${log.txtPatternPolicy}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- 配置log 文件生成策略 -->
+    <!-- RollingFileAppender: 符合定义条件后，将会重新新建文件进行记录 -->
+    <appender name="server" class="ch.qos.logback.core.rolling.RollingFileAppender">
+
+        <File>${log.fileBackupPath}${log.fileName}</File>
+        <!-- TimeBasedRollingPolicy : 是一种基本的滚动策略，会根据时间来进行制定策略，既负责滚动，也负责触发-->
+        <rollingPolicy  class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <!-- fileNamePattern: 文件命名模式 -->
+            <fileNamePattern>${log.fileBackupPath}${log.backupFileNamePolicy}</fileNamePattern>
+            <!-- 文件存在时间 -->
+            <maxFileSize>${log.fileSize}</maxFileSize>
+            <maxHistory>${log.history}</maxHistory>
+            <totalSizeCap>${log.totalSize}</totalSizeCap>
+        </rollingPolicy >
+        <encoder>
+            <!-- pattern : 用来定义log 日志文件的输入格式 -->
+            <pattern>
+                ${log.txtPatternPolicy}
+            </pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+
+    <logger name="org.hibernate.type.descriptor.sql.BasicBinder" level="TRACE" />
+    <logger name="org.hibernate.type" level="TRACE" />
+    <logger name="org.hibernate.type.descriptor.sql.BasicExtractor" level="DEBUG" />
+    <logger name="org.hibernate.engine.QueryParameters" level="DEBUG" />
+    <logger name="org.hibernate.engine.query.HQLQueryPlan" level="DEBUG" />
+
+    <!-- 日志级别 -->
+    <!-- 级别依次为【从高到低】：FATAL > ERROR > WARN > INFO > DEBUG > TRACE  -->
+    <root level="INFO">
+        <appender-ref ref="console"/>
+        <appender-ref ref="server"/>
+    </root>
+
+</configuration>

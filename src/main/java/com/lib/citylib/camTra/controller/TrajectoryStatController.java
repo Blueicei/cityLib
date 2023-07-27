@@ -6,6 +6,7 @@ import com.lib.citylib.camTra.query.ListStatisticsParam;
 import com.lib.citylib.camTra.service.CamTrajectoryService;
 import com.lib.citylib.camTra.service.TrajectoryStatService;
 import com.lib.citylib.camTra.utils.CommonResult;
+import com.lib.citylib.camTra.utils.PartitionTraUtil;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
