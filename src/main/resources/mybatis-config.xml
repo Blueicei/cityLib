@@ -14,6 +14,7 @@
         <setting name="mapUnderscoreToCamelCase" value="false" />
     </settings>
 <!--    <plugins>-->
+<!--        <plugin interceptor="com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor"/>-->
 <!--        <plugin interceptor="com.lib.citylib.camTra.utils.ReplaceTableInterceptor"/>-->
 <!--    </plugins>-->
     <mappers>

@@ -3,13 +3,12 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-import com.lib.citylib.camTra.model.CamInfo;
-import com.lib.citylib.camTra.model.CarInfo;
-import com.lib.citylib.camTra.model.TableInfo;
+import com.lib.citylib.camTra.dto.StartToEndTime;
+import com.lib.citylib.camTra.model.*;
+import com.lib.citylib.camTra.query.QueryCamCount;
 import com.lib.citylib.camTra.query.QueryCamCountByCar;
 import org.apache.ibatis.annotations.Param;
 
-import com.lib.citylib.camTra.model.CamTrajectory;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 /**
@@ -42,6 +41,10 @@ public interface CamTrajectoryMapper extends BaseMapper<CamTrajectory> {
 
     List<QueryCamCountByCar> listCamCountByCar(@Param("carNumber") String carNumber, @Param("startTime") Date startTime, @Param("endTime") Date endTime);
     Long getClusterFlow(@Param("carNumber") String carNumber, @Param("points") List<String> points);
+
+    List<QueryCamCount> listCamCount(@Param("startTime") Date startTime, @Param("endTime") Date endTime);
+    List<QueryCamCount> listCamCountInRange(@Param("startToEndTimeList") List<StartToEndTime> startToEndTimeList);
+
 }
 
 

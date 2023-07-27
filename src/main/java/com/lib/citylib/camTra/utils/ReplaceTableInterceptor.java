@@ -33,7 +33,7 @@ import java.util.*;
         @Signature(type = Executor.class, method = "query", args = {MappedStatement.class, Object.class, RowBounds.class, ResultHandler.class}),
 })
 public class ReplaceTableInterceptor implements InnerInterceptor {
-    
+
     private Map<String,String> tableMap;
 
     public ReplaceTableInterceptor() {
