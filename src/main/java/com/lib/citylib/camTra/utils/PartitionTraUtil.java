@@ -238,9 +238,9 @@ public class PartitionTraUtil {
             if (cnt >=5)
                 break;
         }
-        String cmd = "ls -1"+ traFolder + " | xargs -P100 -I{} bash -c 'cat " + traFolder + "/\"{}\" | clickhouse-client --date_time_input_format best_effort --query \"INSERT INTO gps_trajectory_stat FORMAT CSVWithNames\"'";
+        String cmd = "ls -1 "+ traFolder + " | xargs -P100 -I{} bash -c 'cat " + traFolder + "/\"{}\" | clickhouse-client --date_time_input_format best_effort --query \"INSERT INTO gps_trajectory_stat FORMAT CSVWithNames\"'";
         this.executeCmd(cmd);
-        cmd = "ls -1"+ pointFolder + " | xargs -P100 -I{} bash -c 'cat " + pointFolder + "/\"{}\" | clickhouse-client --date_time_input_format best_effort --query \"INSERT INTO gps_points FORMAT CSVWithNames\"'";
+        cmd = "ls -1 "+ pointFolder + " | xargs -P100 -I{} bash -c 'cat " + pointFolder + "/\"{}\" | clickhouse-client --date_time_input_format best_effort --query \"INSERT INTO gps_points FORMAT CSVWithNames\"'";
         this.executeCmd(cmd);
     }
 
