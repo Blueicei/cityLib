@@ -17,7 +17,6 @@ import com.lib.citylib.camTra.service.CamTrajectoryService;
 import com.lib.citylib.camTra.service.TrajectoryStatService;
 import com.lib.citylib.camTra.utils.CommonResult;
 import com.lib.citylib.camTra.utils.DirectoryStructure;
-import com.lib.citylib.camTra.utils.ReplaceTableInterceptor;
 import io.swagger.annotations.ApiOperation;
 import org.apache.commons.io.FileUtils;
 import org.springframework.web.bind.annotation.*;

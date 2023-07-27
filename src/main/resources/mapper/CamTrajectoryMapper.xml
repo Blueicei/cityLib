@@ -71,7 +71,7 @@
     </select>
 
     <select id="getTableNameList" resultMap="TableResultMap">
-        SELECT name, name,metadata_modification_time FROM system.tables WHERE database = 'default' AND name NOT LIKE 'camdict%' AND name NOT LIKE 'trajectory%'
+        SELECT name, name,metadata_modification_time FROM system.tables WHERE database = 'default' AND name LIKE '%amtrajector%'
         <if test="tableNameList !=null and tableNameList.size() > 0">
             and name in
             <foreach collection="tableNameList" item="item" separator="," open="(" close=")">
