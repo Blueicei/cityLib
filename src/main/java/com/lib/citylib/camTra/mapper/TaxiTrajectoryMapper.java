@@ -28,9 +28,13 @@ public interface TaxiTrajectoryMapper extends BaseMapper<CamTrajectory> {
 
     IPage<TrajectoryStat> listStatByAll(IPage<TrajectoryStat> page, @Param("param")ListStatisticsParam param);
     List<TaxiTrajectory> getStatByCar(ListStatisticsParam param);
-    List<GpsPoint> getPointByTra(String traId);
 
-    List<GpsPoint> getPointByCar(ListStatisticsParam param);
+    //获取gps点
+    List<GpsPoint> getGpsPointByTra(String traId);
+    List<GpsPoint> getGpsPointByCar(ListStatisticsParam param);
+
+    //获取卡口点
+    List<CamTrajectory> getCamPointByCar(ListStatisticsParam param);
 
     Set<String> getCarFromStat();
     Set<String> getCarFromPoint();

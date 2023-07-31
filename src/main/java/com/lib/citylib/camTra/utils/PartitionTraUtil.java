@@ -161,7 +161,7 @@ public class PartitionTraUtil {
     @Value("${taxi.gps.processed.point}")
     private String pointFolder;
 
-    public void saveGpsData(){
+    public void saveGpsData(Set<String> carNumberList){
         File folder = new File(gpsFolder);
 //        File folder = new File("C:\\Users\\Zhang\\Desktop\\111");
         File[] carDirs = folder.listFiles();
@@ -169,10 +169,12 @@ public class PartitionTraUtil {
             logger.error(folder + ", 文件夹为空");
             return;
         }
-        int cnt = 0;
-        logger.info("处理轨迹点文件,总车辆数:"+ carDirs.length + ", 当前处理" + cnt);
         for (File carDir : carDirs) {
             String carNumber = carDir.getName();
+            if (!carNumberList.contains(carNumber))
+                continue;
+
+            logger.info("正在处理" + carNumber);
             //订单文件
             File[] tripFiles = carDir.listFiles((dir, name) -> name.matches("trip.*"));
             //轨迹点文件
@@ -231,9 +233,7 @@ public class PartitionTraUtil {
             writer.writeBeans(pointList);
             writer.close();
 
-            logger.info("处理轨迹点文件,总车辆数:"+ carDirs.length + ", 当前处理" + (++cnt));
-            if (cnt >=5)
-                break;
+            logger.info("处理完成" + carNumber);
         }
 
         File traDir = new File(traFolder);

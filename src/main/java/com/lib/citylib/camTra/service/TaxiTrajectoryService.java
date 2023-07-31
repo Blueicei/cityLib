@@ -2,23 +2,29 @@ package com.lib.citylib.camTra.service;
 
 import cn.hutool.core.date.DateUnit;
 import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.io.resource.ResourceUtil;
+import cn.hutool.core.text.csv.CsvReader;
+import cn.hutool.core.text.csv.CsvUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.metadata.OrderItem;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.lib.citylib.camTra.mapper.TaxiTrajectoryMapper;
 import com.lib.citylib.camTra.mapper.TrajectoryStatMapper;
+import com.lib.citylib.camTra.model.CamTrajectory;
 import com.lib.citylib.camTra.model.CarTrajectory;
 import com.lib.citylib.camTra.model.TrajectoryStat;
 import com.lib.citylib.camTra.model.taxi.GpsPoint;
 import com.lib.citylib.camTra.model.taxi.TaxiTrajectory;
 import com.lib.citylib.camTra.query.ListStatisticsParam;
+import com.lib.citylib.camTra.utils.PartitionTraUtil;
+import javafx.beans.binding.ObjectExpression;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.Calendar;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.io.File;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class TaxiTrajectoryService {
@@ -116,11 +122,53 @@ public class TaxiTrajectoryService {
         return taxiTrajectoryMapper.getStatByCar(param);
     }
 
-    public List<GpsPoint> getPointByTra(String traId) {
-        return taxiTrajectoryMapper.getPointByTra(traId);
+    public List<GpsPoint> getGpsPointByTra(String traId) {
+        return taxiTrajectoryMapper.getGpsPointByTra(traId);
     }
 
-    public List<GpsPoint> getPointByCar(ListStatisticsParam param) {
-        return taxiTrajectoryMapper.getPointByCar(param);
+    public List<GpsPoint> getGpsPointByCar(ListStatisticsParam param) {
+        return taxiTrajectoryMapper.getGpsPointByCar(param);
+    }
+
+    public List<CamTrajectory> getCamPointByCar(ListStatisticsParam param) {
+        return taxiTrajectoryMapper.getCamPointByCar(param);
+    }
+    @Value("${taxi.gps.folder}")
+    private String gpsFolder;
+    public IPage<HashMap<String,Object>> taxiList(int pageNum, int pageSize){
+        IPage<HashMap<String,Object>> res = new Page<>();
+        res.setSize(pageSize);
+        res.setCurrent(pageNum);
+        List<HashMap<String, Object>> list = new ArrayList<>();
+        CsvReader reader = CsvUtil.getReader();
+        if (pageNum < 1 || pageSize < 0){
+            return res;
+        }
+        File folder = new File(gpsFolder);
+//        File folder = new File("C:\\Users\\Zhang\\Desktop\\111");
+        File[] carDirs = folder.listFiles();
+        if (carDirs == null){
+            return null;
+        }
+        res.setTotal(carDirs.length);
+        if (pageSize * (pageNum - 1) > carDirs.length){
+            return res;
+        }
+
+        for(int i = pageSize * (pageNum - 1); i < Math.min(pageNum * pageSize, carDirs.length); i ++){
+            File carDir = carDirs[i];
+            HashMap<String, Object> map = new HashMap<>();
+            String carNumber = carDir.getName();
+            int traCount = 0;
+            File[] tripFiles = carDir.listFiles((dir, name) -> name.matches("trip.*"));
+            for (File tripFile : tripFiles) {
+                traCount += (reader.read(ResourceUtil.getUtf8Reader(tripFile.getAbsolutePath()), PartitionTraUtil.TrajectoryIn.class).size());
+            }
+            map.put("carNumber",carNumber);
+            map.put("traCount",traCount);
+            list.add(map);
+        }
+        res.setRecords(list);
+        return res;
     }
 }

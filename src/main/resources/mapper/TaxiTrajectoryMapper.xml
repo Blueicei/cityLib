@@ -14,6 +14,15 @@
             <result property="distanceCal" column="distance_cal"/>
     </resultMap>
 
+    <resultMap id="CamPointMap" type="com.lib.citylib.camTra.model.CamTrajectory">
+        <result property="carNumber" column="car_number"/>
+        <result property="carType" column="car_type"/>
+        <result property="camId" column="cam_id"/>
+        <result property="photoTime" column="photo_time"/>
+        <result property="camLon" column="cam_lon"/>
+        <result property="camLat" column="cam_lat"/>
+    </resultMap>
+
     <sql id="Base_Column_List">
         tra_id, car_number, start_time, end_time, distance_carry, distance_empty, distance_cal
     </sql>
@@ -91,7 +100,7 @@
             </if>
         </where>
     </select>
-    <select id="getPointByTra" resultType="com.lib.citylib.camTra.model.taxi.GpsPoint">
+    <select id="getGpsPointByTra" resultType="com.lib.citylib.camTra.model.taxi.GpsPoint">
         select car_number as carNumber,
                lng,
                lat,
@@ -101,7 +110,7 @@
         where tra_id = #{traId}
         order by `time`
     </select>
-    <select id="getPointByCar" resultType="com.lib.citylib.camTra.model.taxi.GpsPoint">
+    <select id="getGpsPointByCar" resultType="com.lib.citylib.camTra.model.taxi.GpsPoint">
         select car_number as carNumber,
                lng,
                lat,
@@ -127,5 +136,20 @@
     <select id="getCarFromPoint" resultType="java.lang.String">
         select distinct car_number
         from gps_points
+    </select>
+    <select id="getCamPointByCar" resultMap="CamPointMap">
+        select *
+        from camtrajectory_taxi
+        <where>
+            car_number = #{carNumber}
+            and cam_lat is not null
+            and cam_lon is not null
+            <if test="minTime != null and minTime != ''">
+                and photo_time &gt;= #{minTime}
+            </if>
+            <if test="maxTime != null and maxTime != ''">
+                and photo_time &lt;= #{maxTime}
+            </if>
+        </where>
     </select>
 </mapper>
