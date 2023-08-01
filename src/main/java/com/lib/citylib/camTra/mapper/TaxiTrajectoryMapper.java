@@ -32,6 +32,7 @@ public interface TaxiTrajectoryMapper extends BaseMapper<CamTrajectory> {
     //获取gps点
     List<GpsPoint> getGpsPointByTra(String traId);
     List<GpsPoint> getGpsPointByCar(ListStatisticsParam param);
+    List<GpsPoint> getGpsPoints(ListStatisticsParam param);
 
     //获取卡口点
     List<CamTrajectory> getCamPointByCar(ListStatisticsParam param);

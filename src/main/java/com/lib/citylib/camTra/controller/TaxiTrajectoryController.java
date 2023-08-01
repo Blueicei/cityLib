@@ -57,10 +57,13 @@ public class TaxiTrajectoryController {
     public CommonResult getPointByCar(@RequestBody ListStatisticsParam param) {
         return CommonResult.success(taxiTrajectoryService.getGpsPointByCar(param));
     }
-
     @PostMapping("/getCamPointByCar")
     public CommonResult getCamPointByCar(@RequestBody ListStatisticsParam param) {
         return CommonResult.success(taxiTrajectoryService.getCamPointByCar(param));
+    }
+    @PostMapping("/getGpsPoints")
+    public CommonResult getGpsPoints(@RequestBody ListStatisticsParam param) throws Exception {
+        return CommonResult.success(taxiTrajectoryService.getGpsPoints(param));
     }
 
 

@@ -152,4 +152,21 @@
             </if>
         </where>
     </select>
+    <select id="getGpsPoints" resultType="com.lib.citylib.camTra.model.taxi.GpsPoint">
+        select car_number as carNumber,
+        lng,
+        lat,
+        `time`,
+        tra_id as traId
+        from gps_points
+        <where>
+            <if test="minTime != null and minTime != ''">
+                and `time` &gt;= #{minTime}
+            </if>
+            <if test="maxTime != null and maxTime != ''">
+                and `time` &lt;= #{maxTime}
+            </if>
+        </where>
+        order by `time`
+    </select>
 </mapper>
