@@ -23,9 +23,14 @@ public interface TrajectoryStatMapper extends BaseMapper<CamTrajectory> {
     //获取车辆总数、轨迹总数、轨迹点总数
     HashMap<String,Object> getTotalStat(ListStatisticsParam param);
     void insertBatch(@Param("trajectories") List<CarTrajectory> trajectories);
+    void insertBatchPlus(@Param("trajectories") List<CarTrajectoryPlus> trajectories);
 
     IPage<TrajectoryStat> listStatByAll(IPage<TrajectoryStat> page, @Param("param")ListStatisticsParam param);
     List<CarTrajectory> getStatByCar(ListStatisticsParam param);
+
+    List<ClusterFlowInfo> getFlowStatByStartCluster(@Param("points")List<String> points, @Param("startTime") Date startTime, @Param("endTime") Date endTime);
+    List<ClusterFlowInfo> getFlowStatByEndCluster(@Param("points")List<String> points, @Param("startTime") Date startTime, @Param("endTime") Date endTime);
+    List<CarTrajectoryPlus> getTableStatByTime(@Param("tableName")String tableName, @Param("startTime") Date startTime, @Param("endTime") Date endTime);
 }
 
 

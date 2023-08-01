@@ -152,15 +152,6 @@ public class CamTrajectoryController {
         return CommonResult.success(camTrajectoryService.getTraByCar(carNumber));
     }
 
-    @ResponseBody
-    @PostMapping("/getClusterFlow")
-    public CommonResult getClusterFlow(@RequestBody List<ClusterFlowDto> clusterFlowDtoList) {
-        for(ClusterFlowDto clusterFlowDto : clusterFlowDtoList){
-            System.out.println(clusterFlowDto);
-
-        }
-        return CommonResult.success(null);
-    }
 
     @ResponseBody
     @PostMapping("/getHotMapInfoByTime")
@@ -180,4 +171,6 @@ public class CamTrajectoryController {
         }
         return CommonResult.success(list);
     }
+
+
 }

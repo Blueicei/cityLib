@@ -1,5 +1,6 @@
 package com.lib.citylib;
 
+import com.lib.citylib.camTra.dto.StartToEndTime;
 import com.lib.citylib.camTra.mapper.CamTrajectoryMapper;
 import com.lib.citylib.camTra.mapper.TrajectoryStatMapper;
 import com.lib.citylib.camTra.model.CarTrajectory;
@@ -13,10 +14,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 @SpringBootTest
 public class TrajectoryStatTests {
@@ -30,10 +30,24 @@ public class TrajectoryStatTests {
     private PartitionTraUtil partitionTraUtil;
 
     @Test
+    public void testStat() throws ParseException {
+        StartToEndTime startToEndTime = new StartToEndTime();
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        Date startTime = sdf.parse("2021-2-1 0:00:00");
+        Date endTime = sdf.parse("2021-2-1 23:00:00");
+        startToEndTime.setStartTime(startTime);
+        startToEndTime.setEndTime(endTime);
+        trajectoryStatService.getTableStatByTime1(startToEndTime);
+    }
+
+    @Test
     public void testGen(){
         partitionTraUtil.partitionTraUtil();
     }
-
+    @Test
+    public void testGenPlus(){
+        partitionTraUtil.partitionTraUtilPlus();
+    }
     @Test
     public void testCarStat() throws Exception {
         ListStatisticsParam param = new ListStatisticsParam();

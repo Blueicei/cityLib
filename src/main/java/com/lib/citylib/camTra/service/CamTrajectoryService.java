@@ -30,6 +30,9 @@ public class CamTrajectoryService {
     @Resource
     private ReplaceTableInterceptor replaceTableInterceptor;
 
+
+
+
     public List<List<QueryCamCount>> getHotMapInfoByTimeAndCut(StartToEndTime startToEndTime) {
         Date currentDate = startToEndTime.getStartTime();
         Date endDate = startToEndTime.getEndTime();
@@ -121,10 +124,7 @@ public class CamTrajectoryService {
         return newList;
     }
 
-    public List<QueryClusterFlow> getClusterFlow(ClusterFlowDto clusterFlowDto){
 
-        return null;
-    }
 
     public List<QueryCamCountByCar> getCamCountByCar(String carNumber){
         List<QueryCamCountByCar> queryCamCountByCarList = camTrajectoryMapper.listCamCountByCar(carNumber, null, null);
@@ -472,6 +472,86 @@ public class CamTrajectoryService {
             System.out.println("对象已成功写入到JSON文件。");
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    public static class MergeGroupPointsPlus implements GroupReduceFunction<CamTrajectory, CarTrajectoryPlus>{
+
+        private Long trajectoryCut = 30L;
+        private Long traLength = 0L;
+        private Long pointNumber = 0L;
+        private Boolean savePoint = true;
+        private String tableName = null;
+        public MergeGroupPointsPlus(Long trajectoryCut, Long traLength, Long pointNumber, Boolean savePoint, String tableName) {
+            if(trajectoryCut != null)
+            {
+                this.trajectoryCut = trajectoryCut;
+            }
+            if(traLength != null) {
+                this.traLength = traLength;
+            }
+            if (pointNumber != null)
+            {
+                this.pointNumber = pointNumber;
+            }
+            if (savePoint != null)
+            {
+                this.savePoint = savePoint;
+            }
+            if (tableName != null)
+            {
+                this.tableName = tableName;
+            }
+        }
+        private CarTrajectoryPlus convertCamListToCarTra(List<CamTrajectory> camTrajectoryList){
+
+            String carNumber = camTrajectoryList.get(0).getCarNumber();
+            String carType = camTrajectoryList.get(0).getCarType();
+            Double distance = 0.0d;
+            for (int i = 1; i < camTrajectoryList.size(); i++) {
+                CamTrajectory beforePoint = camTrajectoryList.get(i - 1);
+                CamTrajectory afterPoint = camTrajectoryList.get(i);
+                distance += GetDistance(beforePoint.getCamLon(), beforePoint.getCamLat(), afterPoint.getCamLon(), afterPoint.getCamLat());
+            }
+            Date startTime = camTrajectoryList.get(0).getPhotoTime();
+            Date endTime = camTrajectoryList.get(camTrajectoryList.size() - 1).getPhotoTime();
+            Long timeInterval = (endTime.getTime() - startTime.getTime()) / 1000;
+            Double avgSpeed = ( distance / timeInterval)*3.6d;
+            String startCamId = camTrajectoryList.get(0).getCamId();
+            String endCamId = camTrajectoryList.get(camTrajectoryList.size()-1).getCamId();
+            if(!this.savePoint)
+                return new CarTrajectoryPlus(carNumber, carType, null, distance, startTime, endTime, timeInterval, avgSpeed, camTrajectoryList.size(), this.tableName, startCamId, endCamId);
+            else
+                return new CarTrajectoryPlus(carNumber, carType, camTrajectoryList, distance, startTime, endTime, timeInterval, avgSpeed, camTrajectoryList.size(), this.tableName, startCamId, endCamId);
+        }
+        @Override
+        public void reduce(Iterable<CamTrajectory> iterable, Collector<CarTrajectoryPlus> collector) throws Exception {
+            List<CamTrajectory> camTrajectories = new ArrayList<>();
+            for(CamTrajectory c : iterable){
+                camTrajectories.add(c);
+            }
+            List<CamTrajectory> tempPoints = new ArrayList<>();
+            List<CarTrajectoryPlus> carTrajectoryList = new ArrayList<>();
+            CamTrajectory beforePoint = camTrajectories.get(0);
+            tempPoints.add(beforePoint);
+            for (int i = 1; i < camTrajectories.size(); i++) {
+                CamTrajectory afterPoint = camTrajectories.get(i);
+                if ((afterPoint.getPhotoTime().getTime() - beforePoint.getPhotoTime().getTime()) / (1000.0 * 60.0) > trajectoryCut) {
+                    carTrajectoryList.add(this.convertCamListToCarTra(tempPoints));
+                    tempPoints = new ArrayList<CamTrajectory>();
+                    tempPoints.add(afterPoint);
+                } else {
+                    tempPoints.add(afterPoint);
+                }
+                beforePoint = afterPoint;
+            }
+            carTrajectoryList.add(this.convertCamListToCarTra(tempPoints));
+            for(CarTrajectoryPlus c: carTrajectoryList){
+                if (c.getPointNum()> pointNumber && c.getDistance() > traLength)
+                {
+                    collector.collect(c);
+                }
+            }
         }
     }
 

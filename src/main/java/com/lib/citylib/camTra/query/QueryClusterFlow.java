@@ -11,7 +11,7 @@ import java.util.List;
 @Data
 public class QueryClusterFlow implements Serializable {
 
-    private ClusterInfoDto targetCluster;
-    private ClusterInfoDto arrowToCluster;
+    private String targetCluster;
+    private String arrowToCluster;
     private Integer count;
 }
