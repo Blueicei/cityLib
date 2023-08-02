@@ -12,6 +12,7 @@ import com.lib.citylib.camTra.mapper.TrajectoryStatMapper;
 import com.lib.citylib.camTra.model.CamTrajectory;
 import com.lib.citylib.camTra.model.CarInfo;
 import com.lib.citylib.camTra.model.CarTrajectory;
+import com.lib.citylib.camTra.model.CarTrajectoryPlus;
 import com.lib.citylib.camTra.model.taxi.GpsPoint;
 import com.lib.citylib.camTra.model.taxi.TaxiTrajectory;
 import com.lib.citylib.camTra.query.QueryGenerateResult;
@@ -52,6 +53,38 @@ public class PartitionTraUtil {
     final private boolean filterTraRange = true;
 
 
+    public void partitionTraUtilPlus(){
+        //获取所有车辆
+        List<CarInfo> carList = camTrajectoryMapper.getCarNumberList();
+
+        int segmentSize = 1000;
+        //分批取数据
+        List<CarTrajectoryPlus> newTraList = new ArrayList<>();
+        for (int i = 0; i < carList.size(); i += segmentSize) {
+            int endIndex = Math.min(i + segmentSize, carList.size());
+            List<CarInfo> segment = carList.subList(i, endIndex);
+            List<CamTrajectory> camPointList = camTrajectoryMapper.getPartialCarPointInCondition(segment, filterTraRange);
+            try {
+                ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
+                DataSet<CamTrajectory> points = env.fromCollection(camPointList).name("row-camtra-points");
+                //划分轨迹
+                DataSet<CarTrajectoryPlus> newPoints = points.
+                        distinct().
+                        groupBy(CamTrajectory::getCarNumber).
+                        sortGroup(CamTrajectory::getPhotoTime, Order.ASCENDING).
+                        reduceGroup(new CamTrajectoryService.MergeGroupPointsPlus(trajectoryCut, traLength, pointNumber, false,"camtrajectory"));
+                newTraList.addAll(newPoints.collect());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            if (newTraList.size() > 10000){
+                trajectoryStatMapper.insertBatchPlus(newTraList);
+                newTraList = new ArrayList<>();
+            }
+        }
+    }
+
+
     public void partitionTraUtil(){
         //获取所有车辆
         List<CarInfo> carList = camTrajectoryMapper.getCarNumberList();
@@ -78,7 +111,7 @@ public class PartitionTraUtil {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            if (newTraList.size() > 100000){
+            if (newTraList.size() > 10000){
                 trajectoryStatMapper.insertBatch(newTraList);
                 newTraList = new ArrayList<>();
             }

@@ -32,7 +32,7 @@
         <include refid="Base_Column_List"/>
         from camtrajectory
         where
-        car_number = #{carNumber,jdbcType=VARCHAR} order by photo_time
+        car_number = #{carNumber,jdbcType=VARCHAR} and cam_lon is not null and cam_lat is not null order by photo_time
     </select>
     <insert id="insertAll">
         insert into camtrajectory
@@ -71,7 +71,7 @@
     </select>
 
     <select id="getTableNameList" resultMap="TableResultMap">
-        SELECT name, name,metadata_modification_time FROM system.tables WHERE database = 'default' AND name LIKE '%amtrajector%'
+        SELECT name, name,metadata_modification_time FROM system.tables WHERE database = 'default' AND name LIKE '%mtrajectory%'
         <if test="tableNameList !=null and tableNameList.size() > 0">
             and name in
             <foreach collection="tableNameList" item="item" separator="," open="(" close=")">
@@ -172,7 +172,7 @@
     <select id="listCamCountByCar" resultType="com.lib.citylib.camTra.query.QueryCamCountByCar">
         select cam_id as camId,COUNT(*) as count, MAX(photo_time) as lastTime
         from camtrajectory
-        where car_number = #{param1}
+        where car_number = #{param1} and cam_lon is not null and cam_lat is not null
         <if test="startTime != null and endTime != null">
             and photo_time between #{param2} and #{param3}
         </if>
@@ -192,4 +192,26 @@
         group by cam_id
     </select>
 
+    <select id="listCamCount" resultType="com.lib.citylib.camTra.query.QueryCamCount">
+        select cam_id as camId,COUNT(*) as count
+        from camtrajectory
+        where cam_lon is not null and cam_lat is not null
+        <if test="startTime != null and endTime != null">
+            and photo_time between #{startTime} and #{endTime}
+        </if>
+        group by cam_id
+    </select>
+
+    <select id="listCamCountInRange" resultType="com.lib.citylib.camTra.query.QueryCamCount">
+        select cam_id as camId,COUNT(*) as count
+        from camtrajectory
+        where cam_lon is not null and cam_lat is not null
+        <if test="startToEndTimeList !=null and startToEndTimeList.size() > 0">
+            AND
+            <foreach collection="startToEndTimeList" item="item" separator="or" open="(" close=")">
+                photo_time between #{item.startTime} and #{item.endTime}
+            </foreach>
+        </if>
+        group by cam_id
+    </select>
 </mapper>

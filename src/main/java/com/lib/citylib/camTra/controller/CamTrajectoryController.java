@@ -5,9 +5,11 @@ import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.lib.citylib.camTra.dto.CityFlowDto;
 import com.lib.citylib.camTra.dto.ClusterFlowDto;
+import com.lib.citylib.camTra.dto.StartToEndTime;
 import com.lib.citylib.camTra.dto.TableProcessDto;
-import com.lib.citylib.camTra.mapper.TrajectoryStatMapper;
 import com.lib.citylib.camTra.model.*;
+import com.lib.citylib.camTra.query.QueryCamCount;
+import com.lib.citylib.camTra.mapper.TrajectoryStatMapper;
 import com.lib.citylib.camTra.query.ListStatisticsParam;
 import com.lib.citylib.camTra.query.QueryCamFLow;
 import com.lib.citylib.camTra.query.QueryDataSource;
@@ -90,9 +92,8 @@ public class CamTrajectoryController {
     public CommonResult getInfo() {
         HashMap<String, Object> stringObjectHashMap = new HashMap<>();
         DirectoryStructure d = new DirectoryStructure();
-//        d.scan("/home/fuke/data/origin");
-        d.scan("D:\\CodeSearchNet");
-//        System.out.println(d.getBuf().toString());
+        d.scan("/home/fuke");
+//        d.scan("D:\\workspace_py\\TrajMatchV1\\data");
         JSONObject jsonObject = JSONObject.parseObject(d.getBuf().toString());
         return CommonResult.success(jsonObject);
     }
@@ -151,14 +152,25 @@ public class CamTrajectoryController {
         return CommonResult.success(camTrajectoryService.getTraByCar(carNumber));
     }
 
-    @ResponseBody
-    @PostMapping("/getClusterFlow")
-    public CommonResult getClusterFlow(@RequestBody List<ClusterFlowDto> clusterFlowDtoList) {
-        for(ClusterFlowDto clusterFlowDto : clusterFlowDtoList){
-            System.out.println(clusterFlowDto);
 
+    @ResponseBody
+    @PostMapping("/getHotMapInfoByTime")
+    public CommonResult getHotMapInfoByTime(@RequestBody StartToEndTime startToEndTime) throws Exception{
+        List<QueryCamCount> list = camTrajectoryService.getHotMapInfoByTime(startToEndTime);
+        if(list.isEmpty()){
+            return CommonResult.error("暂无数据");
         }
-        return CommonResult.success(null);
+        return CommonResult.success(list);
     }
+    @ResponseBody
+    @PostMapping("/getHotMapInfoByTimeAndCut")
+    public CommonResult getHotMapInfoByTimeAndCut(@RequestBody StartToEndTime startToEndTime) throws Exception{
+        List<List<QueryCamCount>> list = camTrajectoryService.getHotMapInfoByTimeAndCut(startToEndTime);
+        if(list.isEmpty()){
+            return CommonResult.error("暂无数据");
+        }
+        return CommonResult.success(list);
+    }
+
 
 }

@@ -1,29 +1,21 @@
 package com.lib.citylib.camTra.service;
 
 
+import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.lib.citylib.camTra.dto.CamFlowDto;
-import com.lib.citylib.camTra.dto.CityFlowDto;
-import com.lib.citylib.camTra.dto.ClusterFlowDto;
-import com.lib.citylib.camTra.dto.TableProcessDto;
+import com.lib.citylib.camTra.dto.*;
 import com.lib.citylib.camTra.mapper.CamTrajectoryMapper;
 import com.lib.citylib.camTra.model.*;
-import com.lib.citylib.camTra.query.QueryCamCountByCar;
-import com.lib.citylib.camTra.query.QueryCamFLow;
-import com.lib.citylib.camTra.query.QueryDataSource;
-import com.lib.citylib.camTra.query.QueryGenerateResult;
+import com.lib.citylib.camTra.query.*;
 import com.lib.citylib.camTra.utils.GPSUtil;
 import com.lib.citylib.camTra.utils.ReplaceTableInterceptor;
 import com.opencsv.CSVReader;
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.flink.api.common.functions.*;
 import org.apache.flink.api.common.operators.Order;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.api.java.tuple.Tuple2;
-import org.apache.flink.api.java.tuple.Tuple3;
 import org.apache.flink.util.Collector;
-import org.apache.ibatis.annotations.Param;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -38,11 +30,101 @@ public class CamTrajectoryService {
     @Resource
     private ReplaceTableInterceptor replaceTableInterceptor;
 
-    public void getClusterFlow(List<ClusterFlowDto> clusterFlowDtoList){
-        for(ClusterFlowDto clusterFlowDto : clusterFlowDtoList){
-            System.out.println(clusterFlowDto);
+
+
+
+    public List<List<QueryCamCount>> getHotMapInfoByTimeAndCut(StartToEndTime startToEndTime) {
+        Date currentDate = startToEndTime.getStartTime();
+        Date endDate = startToEndTime.getEndTime();
+
+        List<Date> datesInRange = new ArrayList<>();
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(currentDate);
+
+        Calendar endCalendar = Calendar.getInstance();
+        endCalendar.setTime(endDate);
+        while (calendar.before(endCalendar) || calendar.equals(endCalendar)) {
+            Date result = calendar.getTime();
+            datesInRange.add(result);
+            calendar.add(Calendar.DATE, 1);
         }
+        Date firstDate = datesInRange.get(0);
+        calendar.setTime(firstDate);
+        calendar.add(Calendar.DATE, 1);
+        Date secondDate = calendar.getTime();
+        List<List<QueryCamCount>> queryCamCountList = new ArrayList<>();
+        while(datesInRange.get(0).compareTo(secondDate)<0){
+            List<StartToEndTime> startToEndTimeList = new ArrayList<>();
+            List<Date> newStartDateList = new ArrayList<>();
+            for(Date tempDate : datesInRange){
+                Calendar rightNow = Calendar.getInstance();
+                rightNow.setTime(tempDate);
+                rightNow.add(Calendar.HOUR, startToEndTime.getCutTime());
+                Date nextDate = rightNow.getTime();
+                StartToEndTime tempTimePair = new StartToEndTime();
+                tempTimePair.setStartTime(tempDate);
+                tempTimePair.setEndTime(nextDate);
+                startToEndTimeList.add(tempTimePair);
+                newStartDateList.add(nextDate);
+            }
+            queryCamCountList.add(camTrajectoryMapper.listCamCountInRange(startToEndTimeList));
+            datesInRange = newStartDateList;
+        }
+
+//        List<List<QueryCamCount>> queryCamCountList = new ArrayList<>();
+//        while(currentDate.compareTo(endDate)<0){
+//            Calendar rightNow = Calendar.getInstance();
+//            rightNow.setTime(currentDate);
+//            rightNow.add(Calendar.HOUR, startToEndTime.getCutTime());
+//            Date nextDate = rightNow.getTime();
+//            if(nextDate.compareTo(endDate)<0){
+//                List<QueryCamCount> camInfoCounts = camTrajectoryMapper.listCamCount(currentDate,nextDate);
+//                queryCamCountList.add(camInfoCounts);
+//            }else {
+//                List<QueryCamCount> camInfoCounts = camTrajectoryMapper.listCamCount(currentDate,endDate);
+//                queryCamCountList.add(camInfoCounts);
+//            }
+//            currentDate = nextDate;
+//        }
+        List<CamInfo> camInfoList = camTrajectoryMapper.getAllCamInfo();
+        Map<String,CamInfo> camInfoMap = new HashMap<>();
+        for(CamInfo c:camInfoList){
+            double[] gps = GPSUtil.gps84_To_bd09(c.getCamLat(), c.getCamLon());
+            c.setCamLat(gps[0]);
+            c.setCamLon(gps[1]);
+            camInfoMap.put(c.getCamId(),c);
+        }
+        List<List<QueryCamCount>> newList = new ArrayList<>();
+        for(List<QueryCamCount> queryCamCount : queryCamCountList){
+            List<QueryCamCount> list = new ArrayList<>();
+            for(QueryCamCount q:queryCamCount){
+                q.setCamInfo(camInfoMap.get(q.getCamId()));
+                list.add(q);
+            }
+            newList.add(list);
+        }
+        return newList;
     }
+
+    public List<QueryCamCount> getHotMapInfoByTime(StartToEndTime startToEndTime) {
+        List<QueryCamCount> queryCamCountList = camTrajectoryMapper.listCamCount(startToEndTime.getStartTime(),startToEndTime.getEndTime());
+        List<CamInfo> camInfoList = camTrajectoryMapper.getAllCamInfo();
+        Map<String,CamInfo> camInfoMap = new HashMap<>();
+        for(CamInfo c:camInfoList){
+            double[] gps = GPSUtil.gps84_To_bd09(c.getCamLat(), c.getCamLon());
+            c.setCamLat(gps[0]);
+            c.setCamLon(gps[1]);
+            camInfoMap.put(c.getCamId(),c);
+        }
+        List<QueryCamCount> newList = new ArrayList<>();
+        for(QueryCamCount queryCamCount : queryCamCountList){
+            queryCamCount.setCamInfo(camInfoMap.get(queryCamCount.getCamId()));
+            newList.add(queryCamCount);
+        }
+        return newList;
+    }
+
+
 
     public List<QueryCamCountByCar> getCamCountByCar(String carNumber){
         List<QueryCamCountByCar> queryCamCountByCarList = camTrajectoryMapper.listCamCountByCar(carNumber, null, null);
@@ -390,6 +472,86 @@ public class CamTrajectoryService {
             System.out.println("对象已成功写入到JSON文件。");
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    public static class MergeGroupPointsPlus implements GroupReduceFunction<CamTrajectory, CarTrajectoryPlus>{
+
+        private Long trajectoryCut = 30L;
+        private Long traLength = 0L;
+        private Long pointNumber = 0L;
+        private Boolean savePoint = true;
+        private String tableName = null;
+        public MergeGroupPointsPlus(Long trajectoryCut, Long traLength, Long pointNumber, Boolean savePoint, String tableName) {
+            if(trajectoryCut != null)
+            {
+                this.trajectoryCut = trajectoryCut;
+            }
+            if(traLength != null) {
+                this.traLength = traLength;
+            }
+            if (pointNumber != null)
+            {
+                this.pointNumber = pointNumber;
+            }
+            if (savePoint != null)
+            {
+                this.savePoint = savePoint;
+            }
+            if (tableName != null)
+            {
+                this.tableName = tableName;
+            }
+        }
+        private CarTrajectoryPlus convertCamListToCarTra(List<CamTrajectory> camTrajectoryList){
+
+            String carNumber = camTrajectoryList.get(0).getCarNumber();
+            String carType = camTrajectoryList.get(0).getCarType();
+            Double distance = 0.0d;
+            for (int i = 1; i < camTrajectoryList.size(); i++) {
+                CamTrajectory beforePoint = camTrajectoryList.get(i - 1);
+                CamTrajectory afterPoint = camTrajectoryList.get(i);
+                distance += GetDistance(beforePoint.getCamLon(), beforePoint.getCamLat(), afterPoint.getCamLon(), afterPoint.getCamLat());
+            }
+            Date startTime = camTrajectoryList.get(0).getPhotoTime();
+            Date endTime = camTrajectoryList.get(camTrajectoryList.size() - 1).getPhotoTime();
+            Long timeInterval = (endTime.getTime() - startTime.getTime()) / 1000;
+            Double avgSpeed = ( distance / timeInterval)*3.6d;
+            String startCamId = camTrajectoryList.get(0).getCamId();
+            String endCamId = camTrajectoryList.get(camTrajectoryList.size()-1).getCamId();
+            if(!this.savePoint)
+                return new CarTrajectoryPlus(carNumber, carType, null, distance, startTime, endTime, timeInterval, avgSpeed, camTrajectoryList.size(), this.tableName, startCamId, endCamId);
+            else
+                return new CarTrajectoryPlus(carNumber, carType, camTrajectoryList, distance, startTime, endTime, timeInterval, avgSpeed, camTrajectoryList.size(), this.tableName, startCamId, endCamId);
+        }
+        @Override
+        public void reduce(Iterable<CamTrajectory> iterable, Collector<CarTrajectoryPlus> collector) throws Exception {
+            List<CamTrajectory> camTrajectories = new ArrayList<>();
+            for(CamTrajectory c : iterable){
+                camTrajectories.add(c);
+            }
+            List<CamTrajectory> tempPoints = new ArrayList<>();
+            List<CarTrajectoryPlus> carTrajectoryList = new ArrayList<>();
+            CamTrajectory beforePoint = camTrajectories.get(0);
+            tempPoints.add(beforePoint);
+            for (int i = 1; i < camTrajectories.size(); i++) {
+                CamTrajectory afterPoint = camTrajectories.get(i);
+                if ((afterPoint.getPhotoTime().getTime() - beforePoint.getPhotoTime().getTime()) / (1000.0 * 60.0) > trajectoryCut) {
+                    carTrajectoryList.add(this.convertCamListToCarTra(tempPoints));
+                    tempPoints = new ArrayList<CamTrajectory>();
+                    tempPoints.add(afterPoint);
+                } else {
+                    tempPoints.add(afterPoint);
+                }
+                beforePoint = afterPoint;
+            }
+            carTrajectoryList.add(this.convertCamListToCarTra(tempPoints));
+            for(CarTrajectoryPlus c: carTrajectoryList){
+                if (c.getPointNum()> pointNumber && c.getDistance() > traLength)
+                {
+                    collector.collect(c);
+                }
+            }
         }
     }
 
