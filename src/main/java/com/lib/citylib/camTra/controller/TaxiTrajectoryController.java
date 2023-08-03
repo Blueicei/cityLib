@@ -65,6 +65,15 @@ public class TaxiTrajectoryController {
     public CommonResult getGpsPoints(@RequestBody ListStatisticsParam param) throws Exception {
         return CommonResult.success(taxiTrajectoryService.getGpsPoints(param));
     }
+    @Deprecated
+    @PostMapping("/getGpsPointsWithCut")
+    public CommonResult getGpsPointsWithCut(@RequestBody ListStatisticsParam param) throws Exception {
+        return CommonResult.success(taxiTrajectoryService.getGpsPointsWithCut(param));
+    }
+    @PostMapping("/getOD")
+    public CommonResult getOD(@RequestBody ListStatisticsParam param) throws Exception {
+        return CommonResult.success(taxiTrajectoryService.getGpsPointsWithCut(param));
+    }
 
 
     @GetMapping("/taxiList")

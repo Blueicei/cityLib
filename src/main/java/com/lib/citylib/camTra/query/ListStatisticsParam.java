@@ -15,4 +15,6 @@ public class ListStatisticsParam extends Pager{
     private String carType;
     @ApiModelProperty(value = "车牌号")
     private String carNumber;
+
+    private Integer cut;
 }

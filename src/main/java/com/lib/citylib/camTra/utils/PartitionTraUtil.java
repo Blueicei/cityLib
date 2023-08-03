@@ -134,6 +134,14 @@ public class PartitionTraUtil {
         private Double distanceEmpty;
         @Alias("distance_cal")
         private Double distanceCal;
+        @Alias("start_lng")
+        private Double startLng;
+        @Alias("start_lat")
+        private Double startLat;
+        @Alias("end_lng")
+        private Double endLng;
+        @Alias("end_lat")
+        private Double endLat;
 
         public TrajectoryOut convertToTaxiTrajectoryOut(){
             TrajectoryOut trajectoryOut = new TrajectoryOut();
@@ -159,6 +167,14 @@ public class PartitionTraUtil {
         private Double distanceEmpty;
         @Alias("distance_cal")
         private Double distanceCal;
+        @Alias("start_lng")
+        private Double startLng;
+        @Alias("start_lat")
+        private Double startLat;
+        @Alias("end_lng")
+        private Double endLng;
+        @Alias("end_lat")
+        private Double endLat;
     }
     @Data
     public class GpsPointIn {
@@ -247,6 +263,12 @@ public class PartitionTraUtil {
                                 e-> DateUtil.compare(e.getTime(),taxiTrajectory.getStartTime()) > 0 && DateUtil.compare(e.getTime(),taxiTrajectory.getEndTime()) <= 0
                         ).collect(Collectors.toList());
                 tempPoints.forEach(e -> e.setTraId(traId));
+
+                taxiTrajectory.setStartLng(tempPoints.get(0).getLng());
+                taxiTrajectory.setStartLat(tempPoints.get(0).getLat());
+                taxiTrajectory.setEndLng(tempPoints.get(tempPoints.size() - 1).getLng());
+                taxiTrajectory.setEndLat(tempPoints.get(tempPoints.size() - 1).getLat());
+
                 double distanceCal = 0D;
                 for (int i = 1; i < tempPoints.size(); i ++) {
                     distanceCal += camTrajectoryService.GetDistance(
@@ -275,7 +297,7 @@ public class PartitionTraUtil {
         for (File traFile : traFiles) {
             String carNumber = traFile.getName().split("\\.")[0];
             if (!existCar.contains(carNumber)){
-                String cmd = "cat "+ traFolder + "/" + traFile.getName() + " | clickhouse-client --date_time_input_format best_effort --query=\"INSERT INTO gps_trajectory_stat FORMAT CSVWithNames\"";
+                String cmd = "cat "+ traFolder + "/" + traFile.getName() + " | clickhouse-client --date_time_input_format best_effort --query=\"INSERT INTO gps_trajectory_stat_1 FORMAT CSVWithNames\"";
                 this.executeCmd(cmd);
             }
         }
@@ -286,7 +308,7 @@ public class PartitionTraUtil {
         for (File pointFile : pointFiles) {
             String carNumber = pointFile.getName().split("\\.")[0];
             if (!existCar.contains(carNumber)){
-                String cmd = "cat "+ pointFolder + "/" + pointFile.getName() + " | clickhouse-client --date_time_input_format best_effort --query=\"INSERT INTO gps_points FORMAT CSVWithNames\"";
+                String cmd = "cat "+ pointFolder + "/" + pointFile.getName() + " | clickhouse-client --date_time_input_format best_effort --query=\"INSERT INTO gps_points_1 FORMAT CSVWithNames\"";
                 this.executeCmd(cmd);
             }
         }

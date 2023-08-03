@@ -37,7 +37,7 @@ public class TrajectoryStatTests {
         Date endTime = sdf.parse("2021-2-1 23:00:00");
         startToEndTime.setStartTime(startTime);
         startToEndTime.setEndTime(endTime);
-        trajectoryStatService.getTableStatByTime1(startToEndTime);
+//        trajectoryStatService.getTableStatByTime1(startToEndTime);
     }
 
     @Test

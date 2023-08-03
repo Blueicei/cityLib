@@ -197,4 +197,43 @@ public class TaxiTrajectoryService {
         }
         return res;
     }
+    public List<List<Point>> getGpsPointsWithCut(ListStatisticsParam param) throws Exception {
+        if (DateUtil.between(DateUtil.parseDate(param.getMinTime()),DateUtil.parseDate(param.getMaxTime()),DateUnit.HOUR) > 24){
+            throw new Exception("时间范围不能超过一天");
+        }
+        List<List<Point>> res = new ArrayList<>();
+
+        List<GpsPoint> gpsPoints = taxiTrajectoryMapper.getGpsPoints(param);
+
+        List<List<GpsPoint>> tempList = new ArrayList<>();
+        Date cur = DateUtil.parseDateTime(param.getMinTime());
+        List<GpsPoint> tempPoint = new ArrayList<>();
+        for (GpsPoint gpsPoint : gpsPoints) {
+            if (DateUtil.compare(cur,gpsPoint.getTime()) <=0 && DateUtil.compare(DateUtil.offsetHour(cur,param.getCut()),gpsPoint.getTime()) > 0){
+                tempPoint.add(gpsPoint);
+            }else {
+                tempList.add(tempPoint);
+                cur = DateUtil.offsetHour(cur,param.getCut());
+                tempPoint = new ArrayList<>();
+            }
+        }
+
+        for (List<GpsPoint> points : tempList) {
+            List<Point> temp = new ArrayList<>();
+            Map<String,Integer> map = new HashMap<>();
+            points.forEach(e -> {
+                String key = e.getLng() + "," + e.getLat();
+                map.put(key, map.getOrDefault(key,0) + 1);
+            });
+            for (String key : map.keySet()) {
+                Point point = new Point();
+                point.setLng(Double.valueOf(key.split(",")[0]));
+                point.setLat(Double.valueOf(key.split(",")[1]));
+                point.setCount(map.get(key));
+                temp.add(point);
+            }
+            res.add(temp);
+        }
+        return res;
+    }
 }
