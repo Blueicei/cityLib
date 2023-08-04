@@ -137,6 +137,8 @@
         select distinct car_number
         from gps_points
     </select>
+
+
     <select id="getCamPointByCar" resultMap="CamPointMap">
         select *
         from camtrajectory_taxi
@@ -168,5 +170,42 @@
             </if>
         </where>
         order by `time`
+    </select>
+    <select id="getFromPoints" resultType="com.lib.citylib.camTra.model.taxi.Point">
+        select start_lng as lng,
+               start_lat as lat,
+               count(*) as `count`
+        from gps_trajectory_stat
+        where end_lng between #{minLng} and #{maxLng}
+        and end_lat between #{minLat} and #{maxLat}
+        and start_time &gt;= #{minTime} and end_time &lt;= #{maxTime}
+        group by start_lng, start_lat
+    </select>
+
+    <select id="getToPoints" resultType="com.lib.citylib.camTra.model.taxi.Point">
+        select end_lng as lng,
+               end_lat as lat,
+               count(*) as `count`
+        from gps_trajectory_stat
+        where start_lng between #{minLng} and #{maxLng}
+          and start_lat between #{minLat} and #{maxLat}
+          and start_time &gt;= #{minTime} and end_time &lt;= #{maxTime}
+        group by end_lng, end_lat
+    </select>
+    <select id="getOriginPoints" resultType="com.lib.citylib.camTra.model.taxi.Point">
+        select start_lng as lng,
+               start_lat as lat,
+               count(*) as `count`
+        from gps_trajectory_stat
+        where start_time &gt;= #{minTime} and start_time &lt;= #{maxTime}
+        group by start_lng, start_lat
+    </select>
+    <select id="getDestPoints" resultType="com.lib.citylib.camTra.model.taxi.Point">
+        select end_lng as lng,
+               end_lat as lat,
+               count(*) as `count`
+        from gps_trajectory_stat
+        where end_time &gt;= #{minTime} and end_time &lt;= #{maxTime}
+        group by end_lng, end_lat
     </select>
 </mapper>

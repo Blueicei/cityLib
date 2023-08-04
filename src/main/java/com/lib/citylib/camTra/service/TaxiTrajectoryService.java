@@ -14,9 +14,11 @@ import com.lib.citylib.camTra.model.CamTrajectory;
 import com.lib.citylib.camTra.model.CarTrajectory;
 import com.lib.citylib.camTra.model.TrajectoryStat;
 import com.lib.citylib.camTra.model.taxi.GpsPoint;
+import com.lib.citylib.camTra.model.taxi.ODResult;
 import com.lib.citylib.camTra.model.taxi.Point;
 import com.lib.citylib.camTra.model.taxi.TaxiTrajectory;
 import com.lib.citylib.camTra.query.ListStatisticsParam;
+import com.lib.citylib.camTra.query.QueryODParam;
 import com.lib.citylib.camTra.utils.PartitionTraUtil;
 import javafx.beans.binding.ObjectExpression;
 import org.apache.commons.lang3.time.DateUtils;
@@ -234,6 +236,20 @@ public class TaxiTrajectoryService {
             }
             res.add(temp);
         }
+        return res;
+    }
+
+    public ODResult getODsByCluster(QueryODParam param) {
+        ODResult res = new ODResult();
+        res.setFrom(taxiTrajectoryMapper.getFromPoints(param));
+        res.setTo(taxiTrajectoryMapper.getToPoints(param));
+        return res;
+    }
+
+    public List<Point> getOds(ListStatisticsParam param) {
+        List<Point> res = new ArrayList<>();
+        res.addAll(taxiTrajectoryMapper.getOriginPoints(param));
+        res.addAll(taxiTrajectoryMapper.getDestPoints(param));
         return res;
     }
 }

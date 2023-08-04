@@ -54,7 +54,6 @@ public class ReplaceTableInterceptor implements InnerInterceptor {
 
     public void beforeQuery(Executor executor, MappedStatement ms, Object parameter, RowBounds rowBounds, ResultHandler resultHandler, BoundSql boundSql) throws SQLException {
         String sql = boundSql.getSql();
-        System.out.println("拦截前sql :" + sql);
         //判断是否需要替换表名
         if(isReplaceTableName(sql)){
             for(Map.Entry<String, String> entry : tableMap.entrySet()){
@@ -95,7 +94,6 @@ public class ReplaceTableInterceptor implements InnerInterceptor {
             for(Map.Entry<String, String> entry : tableMap.entrySet()){
                 sql = sql.replace(entry.getKey(),entry.getValue());
             }
-//            System.out.println("拦截后sql :" + sql);
 
             //重新生成一个BoundSql对象
             BoundSql bs = new BoundSql(ms.getConfiguration(),sql,boundSql.getParameterMappings(),parameterObject);

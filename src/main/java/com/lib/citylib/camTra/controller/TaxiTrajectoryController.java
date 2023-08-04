@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.lib.citylib.camTra.mapper.TaxiTrajectoryMapper;
 import com.lib.citylib.camTra.model.TrajectoryStat;
 import com.lib.citylib.camTra.query.ListStatisticsParam;
+import com.lib.citylib.camTra.query.QueryODParam;
 import com.lib.citylib.camTra.service.TaxiTrajectoryService;
 import com.lib.citylib.camTra.service.TrajectoryStatService;
 import com.lib.citylib.camTra.utils.CommonResult;
@@ -11,10 +12,7 @@ import com.lib.citylib.camTra.utils.PartitionTraUtil;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @RestController
 @RequestMapping("/taxi")
@@ -70,9 +68,14 @@ public class TaxiTrajectoryController {
     public CommonResult getGpsPointsWithCut(@RequestBody ListStatisticsParam param) throws Exception {
         return CommonResult.success(taxiTrajectoryService.getGpsPointsWithCut(param));
     }
-    @PostMapping("/getOD")
-    public CommonResult getOD(@RequestBody ListStatisticsParam param) throws Exception {
-        return CommonResult.success(taxiTrajectoryService.getGpsPointsWithCut(param));
+    @PostMapping("/getODs")
+    public CommonResult getODs(@RequestBody ListStatisticsParam param) {
+        return CommonResult.success(taxiTrajectoryService.getOds(param));
+    }
+
+    @PostMapping("/getODsByCluster")
+    public CommonResult getODs(@RequestBody QueryODParam param) {
+        return CommonResult.success(taxiTrajectoryService.getODsByCluster(param));
     }
 
 
@@ -82,9 +85,21 @@ public class TaxiTrajectoryController {
     }
     @GetMapping("/saveGpsData")
     public CommonResult saveGpsData(String carNumber){
-        // TODO: 2023/7/27  出租车入库程序前端操作流程待更新
         Set<String> exist = taxiTrajectoryMapper.getCarFromStat();
         Set<String> carNumberSet = new HashSet<>(Arrays.asList(carNumber.split(",")));
+        carNumberSet.removeAll(exist);
+        partitionTraUtil.saveGpsData(carNumberSet);
+        return CommonResult.success(null);
+    }
+
+    @GetMapping("/saveGps")
+    public CommonResult saveGps(int size){
+        IPage<HashMap<String,Object>> taxiList = taxiTrajectoryService.taxiList(1, size);
+        Set<String> carNumberSet = new HashSet<>();
+        for (HashMap<String, Object> record : taxiList.getRecords()) {
+            carNumberSet.add((String) record.get("carNumber"));
+        }
+        Set<String> exist = taxiTrajectoryMapper.getCarFromStat();
         carNumberSet.removeAll(exist);
         partitionTraUtil.saveGpsData(carNumberSet);
         return CommonResult.success(null);

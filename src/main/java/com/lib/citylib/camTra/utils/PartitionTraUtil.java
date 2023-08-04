@@ -264,10 +264,12 @@ public class PartitionTraUtil {
                         ).collect(Collectors.toList());
                 tempPoints.forEach(e -> e.setTraId(traId));
 
-                taxiTrajectory.setStartLng(tempPoints.get(0).getLng());
-                taxiTrajectory.setStartLat(tempPoints.get(0).getLat());
-                taxiTrajectory.setEndLng(tempPoints.get(tempPoints.size() - 1).getLng());
-                taxiTrajectory.setEndLat(tempPoints.get(tempPoints.size() - 1).getLat());
+                if (tempPoints.size() > 0){
+                    taxiTrajectory.setStartLng(tempPoints.get(0).getLng());
+                    taxiTrajectory.setStartLat(tempPoints.get(0).getLat());
+                    taxiTrajectory.setEndLng(tempPoints.get(tempPoints.size() - 1).getLng());
+                    taxiTrajectory.setEndLat(tempPoints.get(tempPoints.size() - 1).getLat());
+                }
 
                 double distanceCal = 0D;
                 for (int i = 1; i < tempPoints.size(); i ++) {
@@ -296,7 +298,7 @@ public class PartitionTraUtil {
         Set<String> existCar = taxiTrajectoryMapper.getCarFromStat();
         for (File traFile : traFiles) {
             String carNumber = traFile.getName().split("\\.")[0];
-            if (!existCar.contains(carNumber)){
+            if (!existCar.contains(carNumber) && carNumberList.contains(carNumber)){
                 String cmd = "cat "+ traFolder + "/" + traFile.getName() + " | clickhouse-client --date_time_input_format best_effort --query=\"INSERT INTO gps_trajectory_stat_1 FORMAT CSVWithNames\"";
                 this.executeCmd(cmd);
             }
@@ -307,7 +309,7 @@ public class PartitionTraUtil {
         existCar = taxiTrajectoryMapper.getCarFromPoint();
         for (File pointFile : pointFiles) {
             String carNumber = pointFile.getName().split("\\.")[0];
-            if (!existCar.contains(carNumber)){
+            if (!existCar.contains(carNumber) && carNumberList.contains(carNumber)){
                 String cmd = "cat "+ pointFolder + "/" + pointFile.getName() + " | clickhouse-client --date_time_input_format best_effort --query=\"INSERT INTO gps_points_1 FORMAT CSVWithNames\"";
                 this.executeCmd(cmd);
             }
