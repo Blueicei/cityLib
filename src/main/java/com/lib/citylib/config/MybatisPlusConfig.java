@@ -24,7 +24,7 @@ public class MybatisPlusConfig {
         MybatisPlusInterceptor interceptor = new MybatisPlusInterceptor();
         PaginationInnerInterceptor paginationInnerInterceptor = new PaginationInnerInterceptor(DbType.MYSQL);
         paginationInnerInterceptor.setOverflow(true);
-        interceptor.addInnerInterceptor(replaceTableInterceptor);
+//        interceptor.addInnerInterceptor(replaceTableInterceptor);
         interceptor.addInnerInterceptor(paginationInnerInterceptor);
         return interceptor;
     }
