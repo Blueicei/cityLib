@@ -8,13 +8,11 @@ import com.lib.citylib.camTra.dto.ClusterInfoDto;
 import com.lib.citylib.camTra.dto.StartToEndTime;
 import com.lib.citylib.camTra.mapper.CamTrajectoryMapper;
 import com.lib.citylib.camTra.mapper.TrajectoryStatMapper;
-import com.lib.citylib.camTra.model.CarTrajectory;
-import com.lib.citylib.camTra.model.CarTrajectoryPlus;
-import com.lib.citylib.camTra.model.ClusterFlowInfo;
-import com.lib.citylib.camTra.model.TrajectoryStat;
+import com.lib.citylib.camTra.model.*;
 import com.lib.citylib.camTra.query.ListStatisticsParam;
 import com.lib.citylib.camTra.query.QueryClusterFlow;
 import com.lib.citylib.camTra.query.QueryTableStat;
+import com.lib.citylib.camTra.utils.PartitionTraUtil;
 import com.lib.citylib.camTra.utils.ReplaceTableInterceptor;
 import org.springframework.stereotype.Service;
 
@@ -29,6 +27,8 @@ public class TrajectoryStatService {
     private TrajectoryStatMapper trajectoryStatMapper;
     @Resource
     private CamTrajectoryMapper camTrajectoryMapper;
+    @Resource
+    private PartitionTraUtil partitionTraUtil;
     @Resource
     private ReplaceTableInterceptor replaceTableInterceptor;
 
@@ -179,6 +179,145 @@ public class TrajectoryStatService {
             currentDate = nextDate;
         }
         return newList;
+    }
+
+    public QueryTableStat getTableStatByTimePlus(StartToEndTime startToEndTime) {
+        String tableName = replaceTableInterceptor.getTableName();
+        Date startTime = startToEndTime.getStartTime();
+        Date endTime = startToEndTime.getEndTime();
+        Long traCount = trajectoryStatMapper.getTableStatTraCount(tableName, startTime, endTime);
+        Long carNumberCount = trajectoryStatMapper.getTableStatCarCount(tableName, startTime, endTime);
+        Long pointNumberCount = trajectoryStatMapper.getTableStatPointCount(tableName, startTime, endTime);
+        List<TableStatCarTypeCount> tableStatCarTypeCountList = trajectoryStatMapper.getTableStatCarTypeCount(tableName, startTime, endTime);
+        Long carTypeCount = (long)tableStatCarTypeCountList.size();
+        Map<String, Long> carTypeTraCountMap = new HashMap<>();
+        for(TableStatCarTypeCount t:tableStatCarTypeCountList){
+            carTypeTraCountMap.put(t.getCarType(),t.getCount());
+        }
+        List<TableStatDateTraCount> tableStatDateTraCountList = trajectoryStatMapper.getTableStatDateTraCount(tableName, startTime, endTime);
+        Map<String, Long> dateTraCountMap = new HashMap<>();
+        for(TableStatDateTraCount t: tableStatDateTraCountList){
+            dateTraCountMap.put(t.getTraDate(), t.getCount());
+        }
+        List<TableStatDistanceTraCount> tableStatDistanceTraCountList = trajectoryStatMapper.getTableStatDistanceTraCount(tableName, startTime, endTime);
+        Map<Object, Long> traDistanceDistribute =new HashMap<>();
+        for(TableStatDistanceTraCount t: tableStatDistanceTraCountList){
+            Long traDistance = t.getTraDistance();
+            for(int i = 0; i < 10; i ++){
+                String key = i + "-" + (i + 1) + "km";
+                int finalI = i;
+                if(traDistance >= finalI && traDistance < (finalI + 1)){
+                    if(traDistanceDistribute.containsKey(key)){
+                        traDistanceDistribute.put(key, traDistanceDistribute.get(key)+t.getCount());
+                    }
+                    else {
+                        traDistanceDistribute.put(key, t.getCount());
+                    }
+                }
+            }
+            for(int i = 10; i < 100; i += 10){
+                String key = i + "-" + (i + 10) + "km";
+                int finalI = i;
+                if(traDistance >= finalI && traDistance < (finalI + 10)){
+                    if(traDistanceDistribute.containsKey(key)){
+                        traDistanceDistribute.put(key, traDistanceDistribute.get(key)+t.getCount());
+                    }
+                    else {
+                        traDistanceDistribute.put(key, t.getCount());
+                    }
+                }
+            }
+            if(traDistance >= 100){
+                String key = "100km+";
+                if(traDistanceDistribute.containsKey(key)){
+                    traDistanceDistribute.put(key, traDistanceDistribute.get(key)+t.getCount());
+                }
+                else {
+                    traDistanceDistribute.put(key, t.getCount());
+                }
+            }
+        }
+        List<TableStatTimeIntervalTraCount> tableStatTimeIntervalTraCountList = trajectoryStatMapper.getTableStatTimeIntervalTraCount(tableName, startTime, endTime);
+        Map<Object, Long> traTimeDistribute = new HashMap<>();
+        for(TableStatTimeIntervalTraCount t: tableStatTimeIntervalTraCountList){
+            Long traTime = t.getTraTimeInterval();
+
+            if(traTime == 0){
+                traTimeDistribute.put("0-30min", t.getCount());
+            } else if (1 == traTime) {
+                traTimeDistribute.put("30min-1h", t.getCount());
+            } else if (2<= traTime && traTime < 4) {
+                if(traTimeDistribute.containsKey("1-2h")){
+                    traTimeDistribute.put("1-2h", traTimeDistribute.get("1-2h")+t.getCount());
+                }
+                else {
+                    traTimeDistribute.put("1-2h", t.getCount());
+                }
+            } else if (4<= traTime) {
+                if(traTimeDistribute.containsKey("2h+")){
+                    traTimeDistribute.put("2h+", traTimeDistribute.get("2h+")+t.getCount());
+                }
+                else {
+                    traTimeDistribute.put("2h+", t.getCount());
+                }
+            }
+        }
+        List<TableStatPerDayHourCount> tableStatPerDayHourCountList = trajectoryStatMapper.getTableStatPerDayHourCount(tableName, startTime, endTime);
+        Map<Object, Long> traStartTimePerHour = new HashMap<>();
+        for(TableStatPerDayHourCount t: tableStatPerDayHourCountList){
+            int hour = Integer.parseInt(t.getTraHour());
+            traStartTimePerHour.put(hour, t.getCount());
+        }
+        for (int i = 0; i < 24; i++){
+            if(!traStartTimePerHour.containsKey(i)){
+                traStartTimePerHour.put(i,0l);
+            }
+        }
+        List<TableStatPerDayTraCount> tableStatPerDayTraCountList = trajectoryStatMapper.getTableStatPerDayTraCount(tableName, startTime, endTime);
+
+        Map<Object, Long> traStartTimePerDay = new HashMap<>();
+        for(TableStatPerDayTraCount t: tableStatPerDayTraCountList){
+            int day = Integer.parseInt(t.getTraDay());
+            traStartTimePerDay.put(day, t.getCount());
+        }
+        for (int i = 1; i < 32; i++){
+            if(!traStartTimePerDay.containsKey(i)){
+                traStartTimePerDay.put(i,0l);
+            }
+        }
+
+        List<TableStatTraCount> tableStatTraCountList = trajectoryStatMapper.getTableStatTraCountByCar(tableName, startTime, endTime);
+        Map<Object, Long> traCountByCar = new HashMap<>();
+        for(int i=1; i<=60; i++){
+            if(!traCountByCar.containsKey(i)){
+                traCountByCar.put((long)i,0l);
+            }
+        }
+        for(TableStatTraCount tableStatTraCount:tableStatTraCountList){
+            if(tableStatTraCount.getTraCount() <60l){
+                traCountByCar.put(tableStatTraCount.getTraCount(),tableStatTraCount.getCount());
+            }
+            else{
+                traCountByCar.put(60l,traCountByCar.get(60l)+tableStatTraCount.getCount());
+            }
+        }
+
+        QueryTableStat queryTableStat = new QueryTableStat();
+        queryTableStat.setTableName(tableName);
+        queryTableStat.setQueryStartTime(startToEndTime.getStartTime());
+        queryTableStat.setQueryEndTime(startToEndTime.getEndTime());
+        queryTableStat.setTraCount(traCount);
+        queryTableStat.setCarTypeCount(carTypeCount);
+        queryTableStat.setCarNumberCount(carNumberCount);
+        queryTableStat.setPointNumberCount(pointNumberCount);
+        queryTableStat.setCarTypeTraCountMap(carTypeTraCountMap);
+        queryTableStat.setDateTraCountMap(dateTraCountMap);
+        queryTableStat.setTraTimeDistribute(traTimeDistribute);
+        queryTableStat.setTraDistanceDistribute(traDistanceDistribute);
+        queryTableStat.setTraStartTimePerHour(traStartTimePerHour);
+        queryTableStat.setTraStartTimePerDay(traStartTimePerDay);
+        queryTableStat.setTraCountByCar(traCountByCar);
+        return queryTableStat;
     }
 
     public QueryTableStat getTableStatByTime(StartToEndTime startToEndTime) {

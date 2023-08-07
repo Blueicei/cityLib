@@ -32,7 +32,9 @@ public class CamTrajectoryService {
 
 
 
-
+    public String getCurrentTable(){
+        return replaceTableInterceptor.getTableName();
+    }
     public List<List<QueryCamCount>> getHotMapInfoByTimeAndCut(StartToEndTime startToEndTime) {
         Date currentDate = startToEndTime.getStartTime();
         Date endDate = startToEndTime.getEndTime();
@@ -200,8 +202,8 @@ public class CamTrajectoryService {
                         reduceGroup(new MergeGroupPoints(tableProcessDto.getTraCut(), tableProcessDto.getTraLength(), tableProcessDto.getPointNumber(), true)).
                         name("points-to-trajectory");
                 List<CarTrajectory> newTraList = newPoints.collect();
-                queryGenerateResult.update(newTraList);
-                FileWriteList("./out/trajectory_" + tableName + ".csv", newTraList, true);
+//                queryGenerateResult.update(newTraList);
+                FileWriteList("/home/fuke/data/tra/trajectory_" + tableName + ".csv", newTraList, true);
             } catch (Exception e) {
                 e.printStackTrace();
                 replaceTableInterceptor.setTableName(tempTableName);
@@ -209,7 +211,7 @@ public class CamTrajectoryService {
                 return queryGenerateResult;
             }
         }
-        writeObjectToJsonFile(queryGenerateResult,"./out/statistics_" + tableName + ".json");
+//        writeObjectToJsonFile(queryGenerateResult,"./out/statistics_" + tableName + ".json");
         replaceTableInterceptor.setTableName(tempTableName);
         queryGenerateResult.setMsg("success");
         return queryGenerateResult;
@@ -228,6 +230,10 @@ public class CamTrajectoryService {
         }
         replaceTableInterceptor.setTableName(tempTableName);
         return tempTables;
+    }
+
+    public List<String> getCamTraTableNameList() {
+        return camTrajectoryMapper.getCamTraTableNameList();
     }
 
     public List<String> getCarTypeList() {

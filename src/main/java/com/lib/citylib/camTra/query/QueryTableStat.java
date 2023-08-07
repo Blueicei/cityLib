@@ -27,6 +27,6 @@ public class QueryTableStat {
     private Map<Object, Long> traDistanceDistribute;
     private Map<Object, Long> traStartTimePerHour;
     private Map<Object, Long> traStartTimePerDay;
-
+    private Map<Object, Long> traCountByCar;
 
 }
