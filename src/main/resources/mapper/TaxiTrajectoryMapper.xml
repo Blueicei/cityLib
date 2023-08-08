@@ -208,4 +208,13 @@
         where end_time &gt;= #{minTime} and end_time &lt;= #{maxTime}
         group by end_lng, end_lat
     </select>
+    <select id="getODPairs" resultType="com.lib.citylib.camTra.model.taxi.ODPair">
+    select start_lng as startLng,
+           start_lat as startLat,
+           end_lng as endLng,
+           end_lat as endLat
+    from gps_trajectory_stat
+    where start_time between #{minTime} and #{maxTime}
+      and end_time between #{minTime} and #{maxTime}
+</select>
 </mapper>

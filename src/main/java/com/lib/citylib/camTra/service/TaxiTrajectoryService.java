@@ -13,10 +13,7 @@ import com.lib.citylib.camTra.mapper.TrajectoryStatMapper;
 import com.lib.citylib.camTra.model.CamTrajectory;
 import com.lib.citylib.camTra.model.CarTrajectory;
 import com.lib.citylib.camTra.model.TrajectoryStat;
-import com.lib.citylib.camTra.model.taxi.GpsPoint;
-import com.lib.citylib.camTra.model.taxi.ODResult;
-import com.lib.citylib.camTra.model.taxi.Point;
-import com.lib.citylib.camTra.model.taxi.TaxiTrajectory;
+import com.lib.citylib.camTra.model.taxi.*;
 import com.lib.citylib.camTra.query.ListStatisticsParam;
 import com.lib.citylib.camTra.query.QueryODParam;
 import com.lib.citylib.camTra.utils.PartitionTraUtil;
@@ -251,5 +248,9 @@ public class TaxiTrajectoryService {
         res.addAll(taxiTrajectoryMapper.getOriginPoints(param));
         res.addAll(taxiTrajectoryMapper.getDestPoints(param));
         return res;
+    }
+
+    public List<ODPair> getOdPairs(ListStatisticsParam param) {
+        return taxiTrajectoryMapper.getODPairs(param);
     }
 }

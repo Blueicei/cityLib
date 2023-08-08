@@ -72,7 +72,10 @@ public class TaxiTrajectoryController {
     public CommonResult getODs(@RequestBody ListStatisticsParam param) {
         return CommonResult.success(taxiTrajectoryService.getOds(param));
     }
-
+    @PostMapping("/getODPairs")
+    public CommonResult getODPairs(@RequestBody ListStatisticsParam param) {
+        return CommonResult.success(taxiTrajectoryService.getOdPairs(param));
+    }
     @PostMapping("/getODsByCluster")
     public CommonResult getODs(@RequestBody QueryODParam param) {
         return CommonResult.success(taxiTrajectoryService.getODsByCluster(param));
