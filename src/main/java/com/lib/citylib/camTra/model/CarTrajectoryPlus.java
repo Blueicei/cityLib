@@ -3,6 +3,7 @@ package com.lib.citylib.camTra.model;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
@@ -51,14 +52,9 @@ public class CarTrajectoryPlus {
 
     @Override
     public String toString() {
-        String row = carNumber + "-" + carType + "#";
-        for (CamTrajectory point : points) {
-            String pointTime = String.valueOf(point.getPhotoTime().getTime() / 1000);
-            String pointLon = String.valueOf(point.getCamLon());
-            String pointLat = String.valueOf(point.getCamLat());
-            row += pointTime + "|" + pointLon + "|" + pointLat + "_";
-        }
-        row = row.substring(0,row.length()-1);
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String row = carNumber + "," + carType + "," + distance + "," + sdf.format(startTime) + "," + sdf.format(endTime) + "," +
+                timeInterval + "," + avgSpeed + "," + pointNum + "," + tableName  + "," + startCamId  + "," + endCamId;
         return row;
     }
 }

@@ -30,6 +30,7 @@ public interface CamTrajectoryMapper extends BaseMapper<CamTrajectory> {
     CamInfo getCamInfo(@Param("camId")String camId);
 
     List<TableInfo> getTableNameList(@Param("tableNameList") List<String> tableNameList);
+    List<String> getCamTraTableNameList();
 
     List<String> getCarTypeList();
     TableInfo getTableInfo();

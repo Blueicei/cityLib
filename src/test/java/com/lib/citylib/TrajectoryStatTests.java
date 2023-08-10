@@ -34,10 +34,10 @@ public class TrajectoryStatTests {
         StartToEndTime startToEndTime = new StartToEndTime();
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         Date startTime = sdf.parse("2021-2-1 0:00:00");
-        Date endTime = sdf.parse("2021-2-1 23:00:00");
+        Date endTime = sdf.parse("2021-2-1 23:59:59");
         startToEndTime.setStartTime(startTime);
         startToEndTime.setEndTime(endTime);
-//        trajectoryStatService.getTableStatByTime1(startToEndTime);
+        trajectoryStatService.getTableStatByTimePlus(startToEndTime);
     }
 
     @Test
@@ -46,7 +46,15 @@ public class TrajectoryStatTests {
     }
     @Test
     public void testGenPlus(){
-        partitionTraUtil.partitionTraUtilPlus();
+        partitionTraUtil.partitionTraUtilPlus("camtrajectory_onemonth");
+    }
+    @Test
+    public void testGenPlusByCSVFile(){
+        partitionTraUtil.partitionTraUtilPlusByCSVFile("camtrajectory_onemonth");
+    }
+    @Test
+    public void testDeleteTable(){
+        trajectoryStatMapper.deleteTable("camtrajectory_onemonth");
     }
     @Test
     public void testCarStat() throws Exception {
@@ -57,7 +65,7 @@ public class TrajectoryStatTests {
 
     @Test
     public void saveTaxiTra() throws Exception {
-        partitionTraUtil.saveGpsData(null);
+        partitionTraUtil.saveGpsData();
     }
 
     @Test

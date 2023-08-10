@@ -35,6 +35,8 @@ import java.nio.charset.Charset;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.lib.citylib.camTra.service.CamTrajectoryService.FileWriteList;
+
 @Component
 public class PartitionTraUtil {
     @Resource
@@ -45,6 +47,8 @@ public class PartitionTraUtil {
     private TaxiTrajectoryMapper taxiTrajectoryMapper;
     @Resource
     private CamTrajectoryService camTrajectoryService;
+    @Resource
+    private ReplaceTableInterceptor replaceTableInterceptor;
     private static final Logger logger = LoggerFactory.getLogger(PartitionTraUtil.class);
 
     final private Long trajectoryCut = 30L;
@@ -52,8 +56,10 @@ public class PartitionTraUtil {
     final private Long pointNumber = 0L;
     final private boolean filterTraRange = true;
 
-
-    public void partitionTraUtilPlus(){
+    public String partitionTraUtilPlusByCSVFile(String tableName){
+//        trajectoryStatMapper.deleteTable(tableName);
+        String tempTableName = replaceTableInterceptor.getTableName();
+        replaceTableInterceptor.setTableName(tableName);
         //获取所有车辆
         List<CarInfo> carList = camTrajectoryMapper.getCarNumberList();
 
@@ -72,7 +78,45 @@ public class PartitionTraUtil {
                         distinct().
                         groupBy(CamTrajectory::getCarNumber).
                         sortGroup(CamTrajectory::getPhotoTime, Order.ASCENDING).
-                        reduceGroup(new CamTrajectoryService.MergeGroupPointsPlus(trajectoryCut, traLength, pointNumber, false,"camtrajectory"));
+                        reduceGroup(new CamTrajectoryService.MergeGroupPointsPlus(trajectoryCut, traLength, pointNumber, false,tableName));
+                newTraList.addAll(newPoints.collect());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            if (newTraList.size() > 100000){
+//                trajectoryStatMapper.insertBatchPlus(newTraList);
+                FileWriteList("./out/tra_stat_" + tableName + ".csv", newTraList, true);
+                newTraList = new ArrayList<>();
+//                break;
+            }
+        }
+        FileWriteList("./out/tra_stat_" + tableName + ".csv", newTraList, true);
+        replaceTableInterceptor.setTableName(tempTableName);
+        return tableName;
+    }
+    public String partitionTraUtilPlus(String tableName){
+        trajectoryStatMapper.deleteTable(tableName);
+        String tempTableName = replaceTableInterceptor.getTableName();
+        replaceTableInterceptor.setTableName(tableName);
+        //获取所有车辆
+        List<CarInfo> carList = camTrajectoryMapper.getCarNumberList();
+
+        int segmentSize = 1000;
+        //分批取数据
+        List<CarTrajectoryPlus> newTraList = new ArrayList<>();
+        for (int i = 0; i < carList.size(); i += segmentSize) {
+            int endIndex = Math.min(i + segmentSize, carList.size());
+            List<CarInfo> segment = carList.subList(i, endIndex);
+            List<CamTrajectory> camPointList = camTrajectoryMapper.getPartialCarPointInCondition(segment, filterTraRange);
+            try {
+                ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
+                DataSet<CamTrajectory> points = env.fromCollection(camPointList).name("row-camtra-points");
+                //划分轨迹
+                DataSet<CarTrajectoryPlus> newPoints = points.
+                        distinct().
+                        groupBy(CamTrajectory::getCarNumber).
+                        sortGroup(CamTrajectory::getPhotoTime, Order.ASCENDING).
+                        reduceGroup(new CamTrajectoryService.MergeGroupPointsPlus(trajectoryCut, traLength, pointNumber, false,tableName));
                 newTraList.addAll(newPoints.collect());
             } catch (Exception e) {
                 e.printStackTrace();
@@ -82,6 +126,8 @@ public class PartitionTraUtil {
                 newTraList = new ArrayList<>();
             }
         }
+        replaceTableInterceptor.setTableName(tempTableName);
+        return tableName;
     }
 
 

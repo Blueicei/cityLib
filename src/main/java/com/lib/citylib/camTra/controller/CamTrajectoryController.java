@@ -121,6 +121,20 @@ public class CamTrajectoryController {
         List<TableInfo> tables = camTrajectoryService.getTableNameList(null);
         return CommonResult.success(tables);
     }
+
+
+    @ResponseBody
+    @GetMapping("/getCamTraTableNameList")
+    public CommonResult getCamTraTableNameList() {
+        List<String> tables = camTrajectoryService.getCamTraTableNameList();
+        return CommonResult.success(tables);
+    }
+    @ResponseBody
+    @GetMapping("/getCurrentTable")
+    public CommonResult getCurrentTable() {
+        String currentTable = camTrajectoryService.getCurrentTable();
+        return CommonResult.success(currentTable);
+    }
     @ResponseBody
     @GetMapping("/getCarTypes")
     public CommonResult getCarTypes() {

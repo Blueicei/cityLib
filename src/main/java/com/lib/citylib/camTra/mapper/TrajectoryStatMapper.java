@@ -31,6 +31,19 @@ public interface TrajectoryStatMapper extends BaseMapper<CamTrajectory> {
     List<ClusterFlowInfo> getFlowStatByStartCluster(@Param("points")List<String> points, @Param("startTime") Date startTime, @Param("endTime") Date endTime);
     List<ClusterFlowInfo> getFlowStatByEndCluster(@Param("points")List<String> points, @Param("startTime") Date startTime, @Param("endTime") Date endTime);
     List<CarTrajectoryPlus> getTableStatByTime(@Param("tableName")String tableName, @Param("startTime") Date startTime, @Param("endTime") Date endTime);
+    Long getTableStatTraCount(@Param("tableName")String tableName, @Param("startTime") Date startTime, @Param("endTime") Date endTime);
+    Long getTableStatCarCount(@Param("tableName")String tableName, @Param("startTime") Date startTime, @Param("endTime") Date endTime);
+    Long getTableStatPointCount(@Param("tableName")String tableName, @Param("startTime") Date startTime, @Param("endTime") Date endTime);
+    List<TableStatCarTypeCount> getTableStatCarTypeCount(@Param("tableName")String tableName, @Param("startTime") Date startTime, @Param("endTime") Date endTime);
+    List<TableStatDateTraCount> getTableStatDateTraCount(@Param("tableName")String tableName, @Param("startTime") Date startTime, @Param("endTime") Date endTime);
+    List<TableStatDistanceTraCount> getTableStatDistanceTraCount(@Param("tableName")String tableName, @Param("startTime") Date startTime, @Param("endTime") Date endTime);
+    List<TableStatTimeIntervalTraCount> getTableStatTimeIntervalTraCount(@Param("tableName")String tableName, @Param("startTime") Date startTime, @Param("endTime") Date endTime);
+    List<TableStatPerDayHourCount> getTableStatPerDayHourCount(@Param("tableName")String tableName, @Param("startTime") Date startTime, @Param("endTime") Date endTime);
+    List<TableStatPerDayTraCount> getTableStatPerDayTraCount(@Param("tableName")String tableName, @Param("startTime") Date startTime, @Param("endTime") Date endTime);
+    List<TableStatTraCount> getTableStatTraCountByCar(@Param("tableName")String tableName, @Param("startTime") Date startTime, @Param("endTime") Date endTime);
+
+    Boolean deleteTable(@Param("tableName")String tableName);
+
 }
 
 

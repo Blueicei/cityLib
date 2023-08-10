@@ -32,7 +32,9 @@
         car_number,distance,start_time,end_time,
         time_interval,avg_speed
     </sql>
-
+    <delete id="deleteTable">
+        delete from trajectory_stat_plus where table_name = #{tableName}
+    </delete>
     <insert id="insertBatch" parameterType="com.lib.citylib.camTra.model.CarTrajectory" useGeneratedKeys="false">
         insert into trajectory_stat
         values
@@ -54,9 +56,9 @@
 
     <select id="getStatByCar" parameterType="com.lib.citylib.camTra.query.ListStatisticsParam" resultMap="BaseResultMap">
         select *
-        from trajectory_stat
+        from trajectory_stat_plus
         <where>
-            car_number = #{carNumber}
+            car_number = #{carNumber} and table_name = 'camtrajectory'
             <if test="minTime != '' and minTime != null">
                 and start_time &gt;= #{minTime}
             </if>
@@ -80,8 +82,12 @@
                avg(avg_speed) as avgSpeed,
                totalDistance / dayCount as avgDistancePerDay,
                totalTime / dayCount as avgTimePerDay
-        from trajectory_stat
+        from trajectory_stat_plus
         <where>
+            table_name = 'camtrajectory'
+            <if test="param.carNumber != '' and param.carNumber != null">
+                and car_number like concat('%',#{param.carNumber},'%')
+            </if>
             <if test="param.minTime != '' and param.minTime != null">
                 and start_time &gt;= #{param.minTime}
             </if>
@@ -96,8 +102,9 @@
         select count(distinct car_number) as carNum,
                count(*) as traNum,
                sum(point_num) as pointNum
-        from trajectory_stat
+        from trajectory_stat_plus
         <where>
+            table_name = 'camtrajectory'
             <if test="minTime != '' and minTime != null">
                 and start_time &gt;= #{minTime}
             </if>
@@ -110,7 +117,7 @@
     <select id="getFlowStatByStartCluster" resultType="com.lib.citylib.camTra.model.ClusterFlowInfo">
         select end_cam_id as camId, count(*) as count
         from trajectory_stat_plus
-        where (start_time between #{startTime} and #{endTime}) and point_num > 2 and distance > 1000
+        where (start_time between #{startTime} and #{endTime}) and point_num > 2 and distance > 1000 and table_name = 'camtrajectory'
         <if test="points !=null and points.size() > 0">
             AND start_cam_id in
             <foreach collection="points" item="item" separator="," open="(" close=")">
@@ -123,7 +130,7 @@
     <select id="getFlowStatByEndCluster" resultType="com.lib.citylib.camTra.model.ClusterFlowInfo">
         select start_cam_id as camId, count(*) as count
         from trajectory_stat_plus
-        where (start_time between  #{startTime} and #{endTime}) and point_num > 2 and distance > 1000
+        where (start_time between  #{startTime} and #{endTime}) and point_num > 2 and distance > 1000 and table_name = 'camtrajectory'
         <if test="points !=null and points.size() > 0">
             AND end_cam_id in
             <foreach collection="points" item="item" separator="," open="(" close=")">
@@ -138,6 +145,76 @@
         select *
         from trajectory_stat_plus
         where (start_time between  #{startTime} and #{endTime}) and table_name = #{tableName}
+    </select>
+
+    <select id="getTableStatTraCount" resultType="Long">
+        select count(*)
+        from trajectory_stat_plus
+        where (start_time between  #{startTime} and #{endTime}) and table_name = #{tableName}
+    </select>
+
+    <select id="getTableStatCarCount" resultType="Long">
+        select count(distinct car_number)
+        from trajectory_stat_plus
+        where (start_time between  #{startTime} and #{endTime}) and table_name = #{tableName}
+    </select>
+
+    <select id="getTableStatPointCount" resultType="Long">
+        select sum(point_num)
+        from trajectory_stat_plus
+        where (start_time between  #{startTime} and #{endTime}) and table_name = #{tableName}
+    </select>
+
+    <select id="getTableStatCarTypeCount" resultType="com.lib.citylib.camTra.model.TableStatCarTypeCount">
+        select distinct car_type as carType, count(*) as count
+        from trajectory_stat_plus
+        where (start_time between  #{startTime} and #{endTime}) and table_name = #{tableName}
+        group by car_type
+    </select>
+
+    <select id="getTableStatDateTraCount" resultType="com.lib.citylib.camTra.model.TableStatDateTraCount">
+        select distinct DATE_FORMAT(start_time,'%m/%d') as traDate, count(*) as count
+        from trajectory_stat_plus
+        where (start_time between  #{startTime} and #{endTime}) and table_name = #{tableName}
+        group by traDate
+    </select>
+
+    <select id="getTableStatDistanceTraCount" resultType="com.lib.citylib.camTra.model.TableStatDistanceTraCount">
+        select FLOOR(distance / 1000) as traDistance, count(*) as count
+        from trajectory_stat_plus
+        where (start_time between  #{startTime} and #{endTime}) and table_name = #{tableName}
+        group by traDistance
+    </select>
+
+    <select id="getTableStatTimeIntervalTraCount" resultType="com.lib.citylib.camTra.model.TableStatTimeIntervalTraCount">
+        select FLOOR(time_interval / 1800) as traTimeInterval, count(*) as count
+        from trajectory_stat_plus
+        where (start_time between  #{startTime} and #{endTime}) and table_name = #{tableName}
+        group by traTimeInterval
+    </select>
+
+    <select id="getTableStatPerDayHourCount" resultType="com.lib.citylib.camTra.model.TableStatPerDayHourCount">
+        select distinct DATE_FORMAT(start_time,'%H') as traHour, count(*) as count
+        from trajectory_stat_plus
+        where (start_time between  #{startTime} and #{endTime}) and table_name = #{tableName}
+        group by traHour
+    </select>
+
+    <select id="getTableStatPerDayTraCount" resultType="com.lib.citylib.camTra.model.TableStatPerDayTraCount">
+        select distinct DATE_FORMAT(start_time,'%d') as traDay, count(*) as count
+        from trajectory_stat_plus
+        where (start_time between  #{startTime} and #{endTime}) and table_name = #{tableName}
+        group by traDay
+    </select>
+
+    <select id="getTableStatTraCountByCar" resultType="com.lib.citylib.camTra.model.TableStatTraCount">
+        select tra_count as traCount, count(*) as count
+        from (select count(*) as tra_count
+              from trajectory_stat_plus
+              where (start_time between  #{startTime} and #{endTime}) and table_name = #{tableName}
+              group by car_number)
+        group by traCount
+        order by traCount
     </select>
 
 </mapper>

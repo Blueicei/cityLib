@@ -71,13 +71,17 @@
     </select>
 
     <select id="getTableNameList" resultMap="TableResultMap">
-        SELECT name, name,metadata_modification_time FROM system.tables WHERE database = 'default' AND name LIKE '%mtrajectory%'
+        SELECT name, metadata_modification_time FROM system.tables WHERE database = 'default' AND name LIKE '%mtrajectory%'
         <if test="tableNameList !=null and tableNameList.size() > 0">
             and name in
             <foreach collection="tableNameList" item="item" separator="," open="(" close=")">
                 #{item}
             </foreach>
         </if>
+    </select>
+
+    <select id="getCamTraTableNameList" resultType="java.lang.String">
+        SELECT name FROM system.tables WHERE database = 'default' AND name LIKE '%mtrajectory%'
     </select>
 
     <select id="getCarTypeList" resultType="java.lang.String">

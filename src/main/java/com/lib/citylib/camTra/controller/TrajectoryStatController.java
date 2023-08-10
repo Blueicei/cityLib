@@ -19,6 +19,8 @@ import java.util.List;
 public class TrajectoryStatController {
     @Resource
     private TrajectoryStatService trajectoryStatService;
+    @Resource
+    private PartitionTraUtil partitionTraUtil;
 
     @PostMapping ("/info")
     public CommonResult getInfo(@RequestBody ListStatisticsParam param){
@@ -48,7 +50,18 @@ public class TrajectoryStatController {
     @PostMapping("/getTableStatByTime")
     public CommonResult getTableStatByTime(@RequestBody StartToEndTime startToEndTime){
         System.out.println(startToEndTime);
-        return CommonResult.success(trajectoryStatService.getTableStatByTime(startToEndTime));
+        return CommonResult.success(trajectoryStatService.getTableStatByTimePlus(startToEndTime));
     }
 
+    @ResponseBody
+    @GetMapping("/initStatTableByName")
+    public CommonResult initStatTableByName(String tableName) throws Exception {
+        return CommonResult.success(partitionTraUtil.partitionTraUtilPlus(tableName));
+    }
+
+    @ResponseBody
+    @GetMapping("/initStatTableByCSVFile")
+    public CommonResult initStatTableByCSVFile(String tableName) {
+        return CommonResult.success(partitionTraUtil.partitionTraUtilPlusByCSVFile(tableName));
+    }
 }
