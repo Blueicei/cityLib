@@ -217,4 +217,56 @@
     where start_time between #{minTime} and #{maxTime}
       and end_time between #{minTime} and #{maxTime}
 </select>
+    <select id="getTableStat" resultType="java.util.HashMap">
+        select count(*) as traCount,
+               count(distinct car_number) as carCount
+        from gps_trajectory_stat
+        where start_time between #{minTime} and #{maxTime}
+    </select>
+
+    <select id="getTableStatDateTraCount" resultType="com.lib.citylib.camTra.model.TableStatDateTraCount">
+        select distinct DATE_FORMAT(start_time,'%m/%d') as traDate, count(*) as count
+        from gps_trajectory_stat
+        where start_time between  #{minTime} and #{maxTime}
+        group by traDate
+    </select>
+
+    <select id="getTableStatDistanceTraCount" resultType="com.lib.citylib.camTra.model.TableStatDistanceTraCount">
+        select FLOOR(distance_cal / 1000) as traDistance, count(*) as count
+        from gps_trajectory_stat
+        where start_time between  #{minTime} and #{maxTime}
+        group by traDistance
+    </select>
+
+    <select id="getTableStatTimeIntervalTraCount" resultType="com.lib.citylib.camTra.model.TableStatTimeIntervalTraCount">
+        select TIMESTAMPDIFF(HOUR , start_time, end_time) as traTimeInterval, count(*) as count
+        from gps_trajectory_stat
+        where start_time between  #{minTime} and #{maxTime}
+        group by traTimeInterval
+    </select>
+
+    <select id="getTableStatPerDayHourCount" resultType="com.lib.citylib.camTra.model.TableStatPerDayHourCount">
+        select distinct DATE_FORMAT(start_time,'%H') as traHour, count(*) as count
+        from gps_trajectory_stat
+        where start_time between  #{minTime} and #{maxTime}
+        group by traHour
+    </select>
+
+    <select id="getTableStatPerDayTraCount" resultType="com.lib.citylib.camTra.model.TableStatPerDayTraCount">
+        select distinct DATE_FORMAT(start_time,'%d') as traDay, count(*) as count
+        from gps_trajectory_stat
+        where start_time between  #{minTime} and #{maxTime}
+        group by traDay
+    </select>
+
+    <select id="getTableStatTraCountByCar" resultType="com.lib.citylib.camTra.model.TableStatTraCount">
+        select tra_count as traCount, count(*) as count
+        from (select count(*) as tra_count
+            from gps_trajectory_stat
+            where start_time between  #{minTime} and #{maxTime}
+            group by car_number)
+        group by traCount
+        order by traCount
+    </select>
+
 </mapper>

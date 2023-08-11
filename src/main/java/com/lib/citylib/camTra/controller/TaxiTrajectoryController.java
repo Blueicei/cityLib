@@ -1,6 +1,7 @@
 package com.lib.citylib.camTra.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.lib.citylib.camTra.dto.StartToEndTime;
 import com.lib.citylib.camTra.mapper.TaxiTrajectoryMapper;
 import com.lib.citylib.camTra.model.TrajectoryStat;
 import com.lib.citylib.camTra.query.ListStatisticsParam;
@@ -28,6 +29,11 @@ public class TaxiTrajectoryController {
     public CommonResult getInfo(@RequestBody ListStatisticsParam param){
 
         return CommonResult.success(taxiTrajectoryService.getTotalStat(param));
+    }
+    @ResponseBody
+    @PostMapping("/getTableStat")
+    public CommonResult getTableStatByTime(@RequestBody ListStatisticsParam param){
+        return CommonResult.success(taxiTrajectoryService.getTableStatByTimePlus(param));
     }
 
     @ResponseBody

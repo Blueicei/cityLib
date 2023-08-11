@@ -2,9 +2,7 @@ package com.lib.citylib.camTra.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.lib.citylib.camTra.model.CamTrajectory;
-import com.lib.citylib.camTra.model.CarTrajectory;
-import com.lib.citylib.camTra.model.TrajectoryStat;
+import com.lib.citylib.camTra.model.*;
 import com.lib.citylib.camTra.model.taxi.GpsPoint;
 import com.lib.citylib.camTra.model.taxi.ODPair;
 import com.lib.citylib.camTra.model.taxi.Point;
@@ -13,6 +11,7 @@ import com.lib.citylib.camTra.query.ListStatisticsParam;
 import com.lib.citylib.camTra.query.QueryODParam;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
@@ -26,6 +25,7 @@ import java.util.Set;
 public interface TaxiTrajectoryMapper extends BaseMapper<CamTrajectory> {
     //获取车辆总数、轨迹总数
     HashMap<String,Object> getTotalStat(ListStatisticsParam param);
+    HashMap<String, Object> getTableStat(ListStatisticsParam param);
     void insertBatch(@Param("trajectories") List<TaxiTrajectory> trajectories);
     void insertPoints(@Param("points") List<GpsPoint> points);
 
@@ -50,6 +50,13 @@ public interface TaxiTrajectoryMapper extends BaseMapper<CamTrajectory> {
     // 流入该区域的起点
     List<Point> getFromPoints(QueryODParam param);
     List<Point> getToPoints(QueryODParam param);
+
+    List<TableStatDateTraCount> getTableStatDateTraCount(ListStatisticsParam param);
+    List<TableStatDistanceTraCount> getTableStatDistanceTraCount(ListStatisticsParam param);
+    List<TableStatTimeIntervalTraCount> getTableStatTimeIntervalTraCount(ListStatisticsParam param);
+    List<TableStatPerDayHourCount> getTableStatPerDayHourCount(ListStatisticsParam param);
+    List<TableStatPerDayTraCount> getTableStatPerDayTraCount(ListStatisticsParam param);
+    List<TableStatTraCount> getTableStatTraCountByCar(ListStatisticsParam param);
 }
 
 

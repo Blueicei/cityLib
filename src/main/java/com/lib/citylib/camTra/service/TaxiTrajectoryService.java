@@ -8,14 +8,15 @@ import cn.hutool.core.text.csv.CsvUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.metadata.OrderItem;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.clickhouse.data.value.UnsignedLong;
+import com.lib.citylib.camTra.dto.StartToEndTime;
 import com.lib.citylib.camTra.mapper.TaxiTrajectoryMapper;
 import com.lib.citylib.camTra.mapper.TrajectoryStatMapper;
-import com.lib.citylib.camTra.model.CamTrajectory;
-import com.lib.citylib.camTra.model.CarTrajectory;
-import com.lib.citylib.camTra.model.TrajectoryStat;
+import com.lib.citylib.camTra.model.*;
 import com.lib.citylib.camTra.model.taxi.*;
 import com.lib.citylib.camTra.query.ListStatisticsParam;
 import com.lib.citylib.camTra.query.QueryODParam;
+import com.lib.citylib.camTra.query.QueryTableStat;
 import com.lib.citylib.camTra.utils.PartitionTraUtil;
 import javafx.beans.binding.ObjectExpression;
 import org.apache.commons.lang3.time.DateUtils;
@@ -25,6 +26,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.awt.image.BufferStrategy;
 import java.io.File;
+import java.math.BigDecimal;
 import java.text.ParseException;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -252,5 +254,130 @@ public class TaxiTrajectoryService {
 
     public List<ODPair> getOdPairs(ListStatisticsParam param) {
         return taxiTrajectoryMapper.getODPairs(param);
+    }
+    public QueryTableStat getTableStatByTimePlus(ListStatisticsParam param) {
+        HashMap<String, Object> tableInfo = taxiTrajectoryMapper.getTableStat(param);
+        UnsignedLong traCount = (UnsignedLong) tableInfo.get("traCount");
+        UnsignedLong carCount = (UnsignedLong) tableInfo.get("carCount");
+        List<TableStatDateTraCount> tableStatDateTraCountList = taxiTrajectoryMapper.getTableStatDateTraCount(param);
+        Map<String, Long> dateTraCountMap = new HashMap<>();
+        for(TableStatDateTraCount t: tableStatDateTraCountList){
+            dateTraCountMap.put(t.getTraDate(), t.getCount());
+        }
+        List<TableStatDistanceTraCount> tableStatDistanceTraCountList = taxiTrajectoryMapper.getTableStatDistanceTraCount(param);
+        Map<Object, Long> traDistanceDistribute =new HashMap<>();
+        for(TableStatDistanceTraCount t: tableStatDistanceTraCountList){
+            Long traDistance = t.getTraDistance();
+            for(int i = 0; i < 10; i ++){
+                String key = i + "-" + (i + 1) + "km";
+                int finalI = i;
+                if(traDistance >= finalI && traDistance < (finalI + 1)){
+                    if(traDistanceDistribute.containsKey(key)){
+                        traDistanceDistribute.put(key, traDistanceDistribute.get(key)+t.getCount());
+                    }
+                    else {
+                        traDistanceDistribute.put(key, t.getCount());
+                    }
+                }
+            }
+            for(int i = 10; i < 100; i += 10){
+                String key = i + "-" + (i + 10) + "km";
+                int finalI = i;
+                if(traDistance >= finalI && traDistance < (finalI + 10)){
+                    if(traDistanceDistribute.containsKey(key)){
+                        traDistanceDistribute.put(key, traDistanceDistribute.get(key)+t.getCount());
+                    }
+                    else {
+                        traDistanceDistribute.put(key, t.getCount());
+                    }
+                }
+            }
+            if(traDistance >= 100){
+                String key = "100km+";
+                if(traDistanceDistribute.containsKey(key)){
+                    traDistanceDistribute.put(key, traDistanceDistribute.get(key)+t.getCount());
+                }
+                else {
+                    traDistanceDistribute.put(key, t.getCount());
+                }
+            }
+        }
+        List<TableStatTimeIntervalTraCount> tableStatTimeIntervalTraCountList = taxiTrajectoryMapper.getTableStatTimeIntervalTraCount(param);
+        Map<Object, Long> traTimeDistribute = new HashMap<>();
+        for(TableStatTimeIntervalTraCount t: tableStatTimeIntervalTraCountList){
+            Long traTime = t.getTraTimeInterval();
+
+            if(traTime == 0){
+                traTimeDistribute.put("0-30min", t.getCount());
+            } else if (1 == traTime) {
+                traTimeDistribute.put("30min-1h", t.getCount());
+            } else if (2<= traTime && traTime < 4) {
+                if(traTimeDistribute.containsKey("1-2h")){
+                    traTimeDistribute.put("1-2h", traTimeDistribute.get("1-2h")+t.getCount());
+                }
+                else {
+                    traTimeDistribute.put("1-2h", t.getCount());
+                }
+            } else if (4<= traTime) {
+                if(traTimeDistribute.containsKey("2h+")){
+                    traTimeDistribute.put("2h+", traTimeDistribute.get("2h+")+t.getCount());
+                }
+                else {
+                    traTimeDistribute.put("2h+", t.getCount());
+                }
+            }
+        }
+        List<TableStatPerDayHourCount> tableStatPerDayHourCountList = taxiTrajectoryMapper.getTableStatPerDayHourCount(param);
+        Map<Object, Long> traStartTimePerHour = new HashMap<>();
+        for(TableStatPerDayHourCount t: tableStatPerDayHourCountList){
+            int hour = Integer.parseInt(t.getTraHour());
+            traStartTimePerHour.put(hour, t.getCount());
+        }
+        for (int i = 0; i < 24; i++){
+            if(!traStartTimePerHour.containsKey(i)){
+                traStartTimePerHour.put(i,0l);
+            }
+        }
+        List<TableStatPerDayTraCount> tableStatPerDayTraCountList = taxiTrajectoryMapper.getTableStatPerDayTraCount(param);
+
+        Map<Object, Long> traStartTimePerDay = new HashMap<>();
+        for(TableStatPerDayTraCount t: tableStatPerDayTraCountList){
+            int day = Integer.parseInt(t.getTraDay());
+            traStartTimePerDay.put(day, t.getCount());
+        }
+        for (int i = 1; i < 32; i++){
+            if(!traStartTimePerDay.containsKey(i)){
+                traStartTimePerDay.put(i,0l);
+            }
+        }
+
+        List<TableStatTraCount> tableStatTraCountList = taxiTrajectoryMapper.getTableStatTraCountByCar(param);
+        Map<Object, Long> traCountByCar = new HashMap<>();
+        for(int i=1; i<=60; i++){
+            if(!traCountByCar.containsKey(i)){
+                traCountByCar.put((long)i,0l);
+            }
+        }
+        for(TableStatTraCount tableStatTraCount:tableStatTraCountList){
+            if(tableStatTraCount.getTraCount() <60l){
+                traCountByCar.put(tableStatTraCount.getTraCount(),tableStatTraCount.getCount());
+            }
+            else{
+                traCountByCar.put(60l,traCountByCar.get(60l)+tableStatTraCount.getCount());
+            }
+        }
+
+        QueryTableStat queryTableStat = new QueryTableStat();
+        queryTableStat.setQueryStartTime(DateUtil.parse(param.getMinTime(),"yyyy-MM-dd HH:mm:ss"));
+        queryTableStat.setQueryEndTime(DateUtil.parse(param.getMaxTime(),"yyyy-MM-dd HH:mm:ss"));
+        queryTableStat.setTraCount(traCount.longValue());
+        queryTableStat.setCarNumberCount(carCount.longValue());
+        queryTableStat.setDateTraCountMap(dateTraCountMap);
+        queryTableStat.setTraTimeDistribute(traTimeDistribute);
+        queryTableStat.setTraDistanceDistribute(traDistanceDistribute);
+        queryTableStat.setTraStartTimePerHour(traStartTimePerHour);
+        queryTableStat.setTraStartTimePerDay(traStartTimePerDay);
+        queryTableStat.setTraCountByCar(traCountByCar);
+        return queryTableStat;
     }
 }

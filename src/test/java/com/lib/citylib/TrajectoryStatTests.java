@@ -65,7 +65,7 @@ public class TrajectoryStatTests {
 
     @Test
     public void saveTaxiTra() throws Exception {
-        partitionTraUtil.saveGpsData();
+//        partitionTraUtil.saveGpsData();
     }
 
     @Test
